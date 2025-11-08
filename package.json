@@ -2,14 +2,20 @@
   "name": "stickbot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:dev": "cross-env NODE_ENV=development node dist/index.js",
+    "start:prod": "cross-env NODE_ENV=production node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
     "typescript": "^5.9.3"
   },
