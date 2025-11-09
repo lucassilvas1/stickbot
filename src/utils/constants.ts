@@ -1,0 +1,1 @@
+export const DEFAULT_COMMAND_COOLDOWN_MS = 1_000;
