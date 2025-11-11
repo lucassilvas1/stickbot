@@ -5,7 +5,7 @@ export const envSchema = z.object({
   BOT_TOKEN: z.string(),
   APPLICATION_ID: z.string(),
   GUILD_ID: z.string(),
-  DB_DIR_PATH: z.string(),
+  DB_PATH: z.string(),
   ASSETS_DIR_PATH: z.string(),
   FFMPEG_PATH: z.string(),
 });
