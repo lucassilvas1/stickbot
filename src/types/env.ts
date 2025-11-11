@@ -7,6 +7,7 @@ export const envSchema = z.object({
   GUILD_ID: z.string(),
   DB_DIR_PATH: z.string(),
   ASSETS_DIR_PATH: z.string(),
+  FFMPEG_PATH: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;
