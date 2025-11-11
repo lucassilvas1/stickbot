@@ -17,6 +17,7 @@ export type StickerTable = {
   time_added: ColumnType<number, number, never>;
   time_modified: number;
   time_last_used: number | null;
+  tag_string: string;
 };
 
 export type TagTable = {

@@ -19,6 +19,7 @@ export async function up(db: Kysely<any>) {
       .addColumn("time_added", "integer", (col) => col.notNull())
       .addColumn("time_modified", "integer", (col) => col.notNull())
       .addColumn("time_last_used", "integer")
+      .addColumn("tag_string", "text", (col) => col.notNull())
       .execute();
 
     await trx.schema
