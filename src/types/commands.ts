@@ -2,13 +2,12 @@ import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
   Collection,
-  InteractionResponse,
   SlashCommandBuilder,
 } from "discord.js";
 
 export type CommandExecutor = (
   interaction: ChatInputCommandInteraction
-) => Promise<InteractionResponse | void> | void;
+) => Promise<unknown> | unknown;
 
 export type CommandAutocomplete = (
   interaction: AutocompleteInteraction
