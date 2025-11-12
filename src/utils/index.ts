@@ -3,8 +3,11 @@ import fs from "node:fs";
 import type { CommandData } from "../types/commands.js";
 import type { Client } from "discord.js";
 
+export * from "./commands.js";
 export * as Constants from "./constants.js";
 export * from "./interactions.js";
+export * from "./stickers.js";
+export * from "./misc.js";
 
 export async function getCommands() {
   const foldersPath = path.join(import.meta.dirname, "../../dist/commands");
