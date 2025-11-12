@@ -4,8 +4,6 @@ import type {
   CommandExecutor,
 } from "../../types/commands.js";
 
-export const cooldown = 2_000;
-
 export const data = new SlashCommandBuilder()
   .setName("sticker")
   .setDescription("Choose a sticker by title")
