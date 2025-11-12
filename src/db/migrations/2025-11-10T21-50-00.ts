@@ -7,14 +7,8 @@ export async function up(db: Kysely<any>) {
       .addColumn("id", "text", (col) => col.primaryKey())
       .addColumn("title", "text", (col) => col.notNull().unique())
       .addColumn("description", "text")
-      .addColumn("format", "text", (col) => col.notNull())
-      .addColumn("width", "integer", (col) => col.notNull())
-      .addColumn("height", "integer", (col) => col.notNull())
-      .addColumn("file_size_bytes", "integer", (col) => col.notNull())
-      .addColumn("animated", "boolean", (col) => col.notNull())
       .addColumn("usage_count", "integer", (col) => col.notNull().defaultTo(0))
       .addColumn("source_url", "text")
-      .addColumn("checksum", "text", (col) => col.notNull().unique())
       .addColumn("uploader_id", "text")
       .addColumn("time_added", "integer", (col) => col.notNull())
       .addColumn("time_modified", "integer", (col) => col.notNull())
@@ -37,10 +31,11 @@ export async function up(db: Kysely<any>) {
         col.references("sticker.id").notNull().onDelete("cascade")
       )
       .addColumn("type", "text", (col) => col.notNull())
-      .addColumn("format", "text", (col) => col.notNull())
+      .addColumn("extension", "text", (col) => col.notNull())
       .addColumn("width", "integer", (col) => col.notNull())
       .addColumn("height", "integer", (col) => col.notNull())
       .addColumn("file_size_bytes", "integer", (col) => col.notNull())
+      .addColumn("animated", "boolean", (col) => col.notNull())
       .addPrimaryKeyConstraint("pk_variant", ["sticker_id", "type"])
       .execute();
 
@@ -69,11 +64,6 @@ export async function up(db: Kysely<any>) {
       .createIndex("idx_sticker_time_last_used")
       .on("sticker")
       .columns(["time_last_used"])
-      .execute();
-    await trx.schema
-      .createIndex("idx_sticker_checksum")
-      .on("sticker")
-      .columns(["checksum"])
       .execute();
     await trx.schema
       .createIndex("idx_sticker_time_added")

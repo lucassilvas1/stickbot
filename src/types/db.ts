@@ -1,44 +1,39 @@
 import type { ColumnType, Insertable, Selectable, Updateable } from "kysely";
-import type { AnimatedImageExt, ImageExt, StickerVariant } from "./stickers.js";
+import type { StickerVariant } from "./stickers.js";
 
 export type StickerTable = {
   id: ColumnType<string, string, never>;
   title: string;
   description: string | null;
-  format: ColumnType<string, string, never>;
-  width: ColumnType<number, number, never>;
-  height: ColumnType<number, number, never>;
-  file_size_bytes: ColumnType<number, number, never>;
-  animated: ColumnType<number, number, never>;
-  usage_count: ColumnType<number, number | undefined, number>;
-  source_url: ColumnType<string | null, string | null, never>;
-  checksum: string;
-  uploader_id: ColumnType<string | null, string | null, never>;
-  time_added: ColumnType<number, number, never>;
-  time_modified: number;
-  time_last_used: number | null;
-  tag_string: string;
+  usageCount: ColumnType<number, number | undefined, number>;
+  sourceUrl: ColumnType<string | null, string | null, never>;
+  uploaderId: ColumnType<string | null, string | null, never>;
+  timeAdded: ColumnType<number, number, never>;
+  timeModified: number;
+  timeLastUsed: number | null;
+  tagString: string;
 };
 
 export type TagTable = {
-  sticker_id: ColumnType<string, string, never>;
+  stickerId: ColumnType<string, string, never>;
   tag: ColumnType<string, string, never>;
 };
 
 export type VariantTable = {
-  sticker_id: ColumnType<string, string, never>;
+  stickerId: ColumnType<string, string, never>;
   type: StickerVariant;
-  format: ImageExt | AnimatedImageExt;
+  extension: string;
   width: number;
   height: number;
-  file_size_bytes: number;
+  fileSizeBytes: number;
+  animated: number;
 };
 
 export type UsageTable = {
-  sticker_id: ColumnType<string, string, never>;
-  user_id: ColumnType<string, string, never>;
+  stickerId: ColumnType<string, string, never>;
+  userId: ColumnType<string, string, never>;
   count: ColumnType<number, number | undefined, number>;
-  time_last_used: number;
+  timeLastUsed: number;
 };
 
 export type Database = {
