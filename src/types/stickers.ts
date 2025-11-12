@@ -1,9 +1,12 @@
-export type ImageExt = "webp";
+export type StickerVariant = "original" | "high" | "thumbnail";
 
-export type AnimatedImageExt = "webp";
-
-export type StickerVariant =
-  | "full"
-  | "thumbnail"
-  | "static_thumbnail"
-  | "sticker";
+export type StickerVariantEncodingConfig = {
+  name: string;
+  dirName: string;
+  height: number;
+  frameRate?: number;
+  maxBitrate?: string;
+  bufSize?: string;
+  method: 1 | 2 | 3 | 4 | 5 | 6;
+  quality: number;
+};
