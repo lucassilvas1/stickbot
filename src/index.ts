@@ -4,6 +4,8 @@ import { getCommands, registerEventHandlers } from "./utils/index.js";
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
+client.cooldowns = new Collection();
+
 const commands = new Collection(
   (await getCommands()).map((cmd) => [cmd.data.name, cmd])
 );
