@@ -39,5 +39,3 @@ export const VariantEncodingMap: Record<
     quality: 75,
   } as const,
 } as const;
-
-export const VariantEncodingValues = Object.values(VariantEncodingMap);
