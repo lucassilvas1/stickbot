@@ -1,23 +1,33 @@
 import SQLite from "better-sqlite3";
 import { env } from "../env.js";
-import { CamelCasePlugin, Kysely, SqliteDialect, Transaction } from "kysely";
+import { CamelCasePlugin, Kysely, SqliteDialect } from "kysely";
 import type { Database, NewSticker, NewVariant } from "../types/db.js";
-import { mkdirSync } from "fs";
 import { migrateToLatest } from "./migrate.js";
 import { join } from "path";
 import { Constants, treatString } from "../utils/index.js";
+import { mkdir } from "fs/promises";
 
 function createDbDir() {
-  mkdirSync(
-    join(env.ASSETS_DIR_PATH, Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
-    { recursive: true }
-  );
-  Object.values(Constants.VariantEncodingMap).forEach(({ dirName }) => {
-    mkdirSync(join(env.ASSETS_DIR_PATH, dirName), { recursive: true });
-  });
-  mkdirSync(env.DB_DIR_PATH, {
+  const promises = [];
+  const mkdirOptions = {
     recursive: true,
-  });
+  };
+
+  promises.push(
+    mkdir(join(env.ASSETS_DIR_PATH, Constants.TEMP_DIR_NAME), mkdirOptions),
+    mkdir(
+      join(env.ASSETS_DIR_PATH, Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
+      mkdirOptions
+    ),
+    mkdir(env.DB_DIR_PATH, mkdirOptions)
+  );
+  promises.push(
+    Object.values(Constants.VariantEncodingMap).map(({ dirName }) =>
+      mkdir(join(env.ASSETS_DIR_PATH, dirName), mkdirOptions)
+    )
+  );
+
+  return Promise.all(promises);
 }
 
 function createDb() {
@@ -30,7 +40,7 @@ function createDb() {
 }
 
 export const db = await (async () => {
-  createDbDir();
+  await createDbDir();
   await migrateToLatest(createDb());
 
   const db = createDb();
