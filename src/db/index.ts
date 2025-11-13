@@ -15,7 +15,7 @@ function createDbDir() {
   Object.values(Constants.VariantEncodingMap).forEach(({ dirName }) => {
     mkdirSync(join(env.ASSETS_DIR_PATH, dirName), { recursive: true });
   });
-  mkdirSync(join(env.DB_DIR_PATH, Constants.VariantEncodingMap.high.dirName), {
+  mkdirSync(env.DB_DIR_PATH, {
     recursive: true,
   });
 }
