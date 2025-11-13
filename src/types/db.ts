@@ -11,12 +11,7 @@ export type StickerTable = {
   timeAdded: ColumnType<number, number, never>;
   timeModified: number;
   timeLastUsed: number | null;
-  tagString: string;
-};
-
-export type TagTable = {
-  stickerId: ColumnType<string, string, never>;
-  tag: ColumnType<string, string, never>;
+  tags: string;
 };
 
 export type VariantTable = {
@@ -38,7 +33,6 @@ export type UsageTable = {
 
 export type Database = {
   sticker: StickerTable;
-  tag: TagTable;
   variant: VariantTable;
   usage: UsageTable;
 };
@@ -46,9 +40,6 @@ export type Database = {
 export type Sticker = Selectable<StickerTable>;
 export type NewSticker = Insertable<StickerTable>;
 export type StickerUpdate = Updateable<StickerTable>;
-
-export type Tag = Selectable<TagTable>;
-export type NewTag = Insertable<TagTable>;
 
 export type Variant = Selectable<VariantTable>;
 export type NewVariant = Insertable<VariantTable>;

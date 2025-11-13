@@ -50,17 +50,12 @@ export function insertSticker(
 ) {
   return db.transaction().execute(async (trx) => {
     sticker.title = treatString(sticker.title);
-    const tags = treatString(sticker.tagString)
-      .split(",")
-      .map((tag) => ({ stickerId: sticker.id, tag: tag.trim() }));
     const now = Date.now();
 
     await trx
       .insertInto("sticker")
       .values({ timeAdded: now, timeModified: now, ...sticker })
       .execute();
-
-    await trx.insertInto("tag").values(tags).execute();
 
     await trx.insertInto("variant").values(variants).execute();
   });

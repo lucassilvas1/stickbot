@@ -13,16 +13,7 @@ export async function up(db: Kysely<any>) {
       .addColumn("time_added", "integer", (col) => col.notNull())
       .addColumn("time_modified", "integer", (col) => col.notNull())
       .addColumn("time_last_used", "integer")
-      .addColumn("tag_string", "text", (col) => col.notNull())
-      .execute();
-
-    await trx.schema
-      .createTable("tag")
-      .addColumn("sticker_id", "text", (col) =>
-        col.references("sticker.id").notNull().onDelete("cascade")
-      )
-      .addColumn("tag", "text", (col) => col.notNull())
-      .addPrimaryKeyConstraint("pk_tag", ["sticker_id", "tag"])
+      .addColumn("tags", "text", (col) => col.notNull())
       .execute();
 
     await trx.schema
@@ -69,12 +60,6 @@ export async function up(db: Kysely<any>) {
       .createIndex("idx_sticker_time_added")
       .on("sticker")
       .columns(["time_added"])
-      .execute();
-
-    await trx.schema
-      .createIndex("idx_tag_tag")
-      .on("tag")
-      .columns(["tag"])
       .execute();
 
     await trx.schema
