@@ -204,7 +204,7 @@ export const execute: CommandExecutor = async (interaction) => {
         description: interaction.options.getString("description"),
         sourceUrl: url,
         uploaderId: interaction.user.id,
-        tagString: interaction.options.getString("tags", true),
+        tags: interaction.options.getString("tags", true),
       },
       variants
     );
