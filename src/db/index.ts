@@ -1,6 +1,6 @@
 import SQLite from "better-sqlite3";
 import { env } from "../env.js";
-import { CamelCasePlugin, Kysely, SqliteDialect } from "kysely";
+import { CamelCasePlugin, Kysely, SqliteDialect, Transaction } from "kysely";
 import type { Database, NewSticker, NewVariant } from "../types/db.js";
 import { mkdirSync } from "fs";
 import { migrateToLatest } from "./migrate.js";
@@ -49,12 +49,17 @@ export function insertSticker(
   variants: NewVariant[]
 ) {
   return db.transaction().execute(async (trx) => {
-    sticker.title = treatString(sticker.title);
     const now = Date.now();
 
     await trx
       .insertInto("sticker")
-      .values({ timeAdded: now, timeModified: now, ...sticker })
+      .values({
+        ...sticker,
+        title: treatString(sticker.title),
+        tags: treatString(sticker.tags),
+        timeAdded: now,
+        timeModified: now,
+      })
       .execute();
 
     await trx.insertInto("variant").values(variants).execute();
