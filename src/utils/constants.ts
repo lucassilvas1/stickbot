@@ -15,6 +15,15 @@ export const ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME = "original";
 export const TEMP_DIR_NAME = "tmp";
 export const STICKER_ID_LENGTH = 12;
 
+export const STICKER_CACHE_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000;
+export const SEARCH_CACHE_EXPIRATION_MS = 2 * 24 * 60 * 60 * 1000;
+
+export const MIN_TITLE_LENGTH = 8;
+export const MAX_TITLE_LENGTH = 64;
+export const MIN_TAGS_LENGTH = 10;
+export const MAX_TAGS_LENGTH = 256;
+export const MAX_DESCRIPTION_LENGTH = 512;
+
 export const VariantEncodingMap: Record<
   Exclude<StickerVariant, "original">,
   StickerVariantEncodingConfig
