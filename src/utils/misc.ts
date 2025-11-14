@@ -83,3 +83,38 @@ export class TypedError extends Error {
     this.code = code;
   }
 }
+
+export class Cache<K extends PropertyKey, V> {
+  private cache = new Map<K, V>();
+  private timeoutIds = new Map<K, NodeJS.Timeout>();
+  private expirationMs;
+
+  constructor(expirationMs: number) {
+    this.expirationMs = expirationMs;
+  }
+
+  set(key: K, value: V) {
+    this.cache.set(key, value);
+    clearTimeout(this.timeoutIds.get(key));
+    this.timeoutIds.set(
+      key,
+      setTimeout(() => this.cache.delete(key), this.expirationMs)
+    );
+  }
+
+  get(key: K) {
+    return this.cache.get(key);
+  }
+
+  delete(key: K) {
+    clearTimeout(this.timeoutIds.get(key));
+    this.timeoutIds.delete(key);
+    this.cache.delete(key);
+  }
+
+  clear() {
+    this.timeoutIds.forEach(clearTimeout);
+    this.timeoutIds.clear();
+    this.cache.clear();
+  }
+}
