@@ -3,25 +3,35 @@ import type {
   CommandAutocomplete,
   CommandExecutor,
 } from "../../types/commands.js";
+import { getStickerById, search } from "../../db/index.js";
 
 export const data = new SlashCommandBuilder()
   .setName("sticker")
   .setDescription("Choose a sticker by title")
   .addStringOption((opt) =>
     opt
-      .setName("title")
-      .setDescription("Title of the sticker")
+      .setName("query")
+      .setDescription("Describe the sticker to get suggestions")
       .setRequired(true)
       .setAutocomplete(true)
   );
 
 export const execute: CommandExecutor = async (interaction) => {
-  return interaction.reply("Not implemented");
+  const id = interaction.options.getString("query", true);
+  const sticker = await getStickerById(id);
+
+  return interaction.reply(JSON.stringify(sticker));
 };
 
 export const autocomplete: CommandAutocomplete = async (interaction) => {
-  return interaction.respond([
-    { name: "Not implemented", value: "not_implemented" },
-    { name: "Yet", value: "yet" },
-  ]);
+  const query = interaction.options.getString("query", true);
+
+  if (query.length < 3) return interaction.respond([]);
+
+  console.log(Array.from(interaction.options.data.entries()));
+
+  const suggestions = await search(query);
+  console.log(suggestions);
+
+  return interaction.respond(suggestions);
 };

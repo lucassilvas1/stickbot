@@ -1,4 +1,4 @@
-import { Kysely } from "kysely";
+import { Kysely, sql } from "kysely";
 
 export async function up(db: Kysely<any>) {
   await db.transaction().execute(async (trx) => {
@@ -15,6 +15,14 @@ export async function up(db: Kysely<any>) {
       .addColumn("time_last_used", "integer")
       .addColumn("tags", "text", (col) => col.notNull())
       .execute();
+
+    await sql`
+      CREATE VIRTUAL TABLE sticker_fts USING fts5(
+        title,
+        tags,
+        prefix='2 3 4'
+      )
+    `.execute(trx);
 
     await trx.schema
       .createTable("variant")
@@ -67,6 +75,26 @@ export async function up(db: Kysely<any>) {
       .on("variant")
       .columns(["type"])
       .execute();
+
+    await sql`
+      CREATE TRIGGER sticker_ai AFTER INSERT ON sticker BEGIN
+        INSERT INTO sticker_fts(rowid, title, tags)
+        VALUES (new.rowid, new.title, new.tags);
+      END`.execute(trx);
+
+    await sql`
+      CREATE TRIGGER sticker_ad AFTER DELETE ON sticker BEGIN
+        INSERT INTO sticker_fts(sticker_fts, rowid, title, tags)
+        VALUES ('delete', old.rowid, old.title, old.tags);
+      END`.execute(trx);
+
+    await sql`
+      CREATE TRIGGER sticker_au AFTER UPDATE ON sticker BEGIN
+        INSERT INTO sticker_fts(sticker_fts, rowid, title, tags)
+        VALUES ('delete', old.rowid, old.title, old.tags);
+        INSERT INTO sticker_fts(rowid, title, tags)
+        VALUES (new.rowid, new.title, new.tags);
+      END`.execute(trx);
   });
 }
 

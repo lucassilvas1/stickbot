@@ -1,6 +1,6 @@
 import SQLite from "better-sqlite3";
 import { env } from "../env.js";
-import { CamelCasePlugin, Kysely, SqliteDialect } from "kysely";
+import { CamelCasePlugin, Kysely, sql, SqliteDialect } from "kysely";
 import type { Database, NewSticker, NewVariant } from "../types/db.js";
 import { migrateToLatest } from "./migrate.js";
 import { join } from "path";
@@ -74,4 +74,28 @@ export function insertSticker(
 
     await trx.insertInto("variant").values(variants).execute();
   });
+}
+
+export function search(query: string) {
+  query = query
+    .split(" ")
+    .map((token) => token + "*")
+    .join(" ");
+
+  return db
+    .selectFrom("sticker")
+    .innerJoin("stickerFts", "sticker.rowid", "stickerFts.rowid")
+    .select(["sticker.id as value", "sticker.title as name"])
+    .where(() => sql`sticker_fts MATCH ${query}`)
+    .orderBy(sql`bm25(sticker_fts)`) // optional but recommended ranking
+    .limit(25)
+    .execute();
+}
+
+export function getStickerById(id: string) {
+  return db
+    .selectFrom("sticker")
+    .select(["id", "title", "tags"])
+    .where("id", "=", id)
+    .executeTakeFirst();
 }

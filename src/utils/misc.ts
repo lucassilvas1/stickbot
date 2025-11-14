@@ -20,6 +20,21 @@ export function treatString(string: string) {
   return string.toLowerCase().normalize("NFC");
 }
 
+export function findString(
+  text: string,
+  prefix: string,
+  suffix: string
+): string | null {
+  const startIndex = text.indexOf(prefix);
+  if (startIndex === -1) return null;
+
+  const from = startIndex + prefix.length;
+  const endIndex = text.indexOf(suffix, from);
+  if (endIndex === -1) return null;
+
+  return text.slice(from, endIndex);
+}
+
 export class TypedError extends Error {
   readonly code: TypedErrorCode;
 

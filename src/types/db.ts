@@ -2,6 +2,7 @@ import type { ColumnType, Insertable, Selectable, Updateable } from "kysely";
 import type { StickerVariant } from "./stickers.js";
 
 export type StickerTable = {
+  rowid: ColumnType<number, never, never>;
   id: ColumnType<string, string, never>;
   title: string;
   description: string | null;
@@ -31,10 +32,17 @@ export type UsageTable = {
   timeLastUsed: number;
 };
 
+export type StickerFTSTable = {
+  rowid: ColumnType<number, never, never>;
+  title: ColumnType<Sticker["title"], never, never>;
+  tags: ColumnType<Sticker["tags"], never, never>;
+};
+
 export type Database = {
   sticker: StickerTable;
   variant: VariantTable;
   usage: UsageTable;
+  stickerFts: StickerFTSTable;
 };
 
 export type Sticker = Selectable<StickerTable>;
@@ -48,3 +56,5 @@ export type VariantUpdate = Updateable<VariantTable>;
 export type Usage = Selectable<UsageTable>;
 export type NewUsage = Insertable<UsageTable>;
 export type UsageUpdate = Updateable<UsageTable>;
+
+export type StickerFTS = Selectable<StickerFTSTable>;

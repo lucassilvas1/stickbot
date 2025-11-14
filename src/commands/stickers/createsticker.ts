@@ -4,6 +4,7 @@ import {
   Constants,
   generateId,
   getVariantInfo,
+  getVariantPaths,
   processFile,
   rebuildCommand,
   saveFile,
@@ -175,18 +176,20 @@ export const execute: CommandExecutor = async (interaction) => {
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
+  const stickerId = generateId(Constants.STICKER_ID_LENGTH);
+  let originalExt = "";
+
   try {
-    const { response, extension } = await fetchMedia(url);
+    const { response, extension: originalExt } = await fetchMedia(url);
 
     await interaction.editReply({
       content: "Processing sticker. This could take several seconds",
     });
 
-    const stickerId = generateId(Constants.STICKER_ID_LENGTH);
     const originalPath = join(
       env.ASSETS_DIR_PATH,
       Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
-      `${stickerId}.${extension}`
+      `${stickerId}.${originalExt}`
     );
 
     const variants = await generateVariants(
@@ -214,6 +217,12 @@ export const execute: CommandExecutor = async (interaction) => {
     return interaction.followUp({ content: `Filename: ${stickerId}` });
   } catch (error) {
     console.error(error);
+
+    await Promise.all(
+      getVariantPaths(stickerId, originalExt).map((path) =>
+        rm(path, { force: true })
+      )
+    );
 
     const retryMessage = "Please try again later";
     const genericMessage = "Something went wrong...";
