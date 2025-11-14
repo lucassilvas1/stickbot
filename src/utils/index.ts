@@ -8,6 +8,7 @@ export * as Constants from "./constants.js";
 export * from "./interactions.js";
 export * from "./stickers.js";
 export * from "./misc.js";
+export * from "./processing.js";
 
 export async function getCommands() {
   const foldersPath = path.join(import.meta.dirname, "../../dist/commands");
