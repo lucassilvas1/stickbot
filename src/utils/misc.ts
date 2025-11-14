@@ -1,4 +1,5 @@
 import type { TypedErrorCode } from "../types/misc.js";
+import { spawn as _spawn, type SpawnOptionsWithoutStdio } from "child_process";
 
 /**
  * Generates a random alphanumeric ID (case insensitive)
@@ -33,6 +34,41 @@ export function findString(
   if (endIndex === -1) return null;
 
   return text.slice(from, endIndex);
+}
+
+export function spawn(
+  command: string,
+  args?: string[],
+  options?: SpawnOptionsWithoutStdio
+): Promise<string> {
+  const process = _spawn(command, args, options);
+
+  return new Promise((resolve, reject) => {
+    let stdout = "";
+    let stderr = "";
+
+    process.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    process.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    process.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`${command} failed with code ${code}: ${stderr}`));
+      } else resolve(stdout);
+    });
+
+    process.on("error", (error) => {
+      reject(new Error(`Failed to run ${command}: ${error}`));
+    });
+
+    process.stdin.on("error", (error) => {
+      reject(new Error("stdin error: ", error));
+    });
+  });
 }
 
 export class TypedError extends Error {
