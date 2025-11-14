@@ -1,4 +1,4 @@
-import { inlineCode, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import {
   Constants,
@@ -6,7 +6,6 @@ import {
   getVariantInfo,
   getVariantPaths,
   processFile,
-  rebuildCommand,
   saveFile,
   TypedError,
 } from "../../utils/index.js";
@@ -167,9 +166,7 @@ export const execute: CommandExecutor = async (interaction) => {
 
   if (!url) {
     return interaction.reply({
-      content: `You must provide either a URL or an attachment! Try again:\n${inlineCode(
-        rebuildCommand(interaction, "title", "url", "tags", "description")
-      )}`,
+      content: "You must provide either a URL or an attachment!",
       flags: MessageFlags.Ephemeral,
     });
   }
