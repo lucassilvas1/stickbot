@@ -30,8 +30,8 @@ export const data = new SlashCommandBuilder()
       .setName("title")
       .setDescription("Title of the sticker. Should be unique")
       .setRequired(true)
-      .setMinLength(8)
-      .setMaxLength(64)
+      .setMinLength(Constants.MIN_TITLE_LENGTH)
+      .setMaxLength(Constants.MAX_TITLE_LENGTH)
   )
   .addStringOption((opt) =>
     opt
@@ -40,8 +40,8 @@ export const data = new SlashCommandBuilder()
         "Tags to help find the sticker. Comma separated, supports spaces"
       )
       .setRequired(true)
-      .setMinLength(10)
-      .setMaxLength(256)
+      .setMinLength(Constants.MIN_TAGS_LENGTH)
+      .setMaxLength(Constants.MAX_TAGS_LENGTH)
   )
   .addAttachmentOption((opt) =>
     opt
@@ -64,7 +64,7 @@ export const data = new SlashCommandBuilder()
         "Long form description of the sticker. Not currently used"
       )
       .setRequired(false)
-      .setMaxLength(512)
+      .setMaxLength(Constants.MAX_DESCRIPTION_LENGTH)
   );
 
 async function fetchMedia(url: string) {
