@@ -1,9 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
-import type {
-  CommandAutocomplete,
-  CommandExecutor,
-} from "../../types/commands.js";
-import { getStickerById, search } from "../../db/index.js";
+import type { CommandExecutor } from "../../types/commands.js";
+import { getStickerById } from "../../db/index.js";
 
 export const data = new SlashCommandBuilder()
   .setName("sticker")
@@ -23,15 +20,4 @@ export const execute: CommandExecutor = async (interaction) => {
   return interaction.reply(JSON.stringify(sticker));
 };
 
-export const autocomplete: CommandAutocomplete = async (interaction) => {
-  const query = interaction.options.getString("query", true);
-
-  if (query.length < 3) return interaction.respond([]);
-
-  console.log(Array.from(interaction.options.data.entries()));
-
-  const suggestions = await search(query);
-  console.log(suggestions);
-
-  return interaction.respond(suggestions);
-};
+export { autocomplete } from "../../utils/index.js";
