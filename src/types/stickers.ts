@@ -1,3 +1,7 @@
+import type { Sticker } from "./db.js";
+
+export type SimplifiedSticker = Pick<Sticker, "id" | "title" | "tags">;
+
 export type StickerVariant = "original" | "high" | "thumbnail";
 
 export type StickerVariantEncodingConfig = {
