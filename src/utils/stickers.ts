@@ -7,12 +7,30 @@ import type { NewVariant } from "../types/db.js";
 import { spawn, TypedError } from "./misc.js";
 import type { CommandAutocomplete } from "../types/commands.js";
 import { search } from "../db/index.js";
+import { rm } from "fs/promises";
 
 export const autocomplete: CommandAutocomplete = async (interaction) => {
   const query = interaction.options.getString("query", true);
   if (query.length < 3) return interaction.respond([]);
   return interaction.respond(await search(query));
 };
+
+export function deleteVariants(
+  id: string,
+  variants: { type: StickerVariant; extension: string }[]
+) {
+  const promises = Object.values(Constants.VariantEncodingMap).map(
+    ({ dirName }) =>
+      rm(join(env.ASSETS_DIR_PATH, dirName, id + ".webp"), { force: true })
+  );
+  const original = variants.find((variant) => variant.type === "original");
+  promises.push(
+    rm(join(env.ASSETS_DIR_PATH, "original", `${id}.${original?.extension}`), {
+      force: true,
+    })
+  );
+  return Promise.all(promises);
+}
 
 export async function getVariantInfo(
   stickerId: string,
@@ -85,7 +103,11 @@ export function getVariantPaths(stickerId: string, originalExtension: string) {
 
   if (originalExtension) {
     paths.push(
-      join(env.ASSETS_DIR_PATH, "original", `${stickerId}.${originalExtension}`)
+      join(
+        env.ASSETS_DIR_PATH,
+        Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+        `${stickerId}.${originalExtension}`
+      )
     );
   }
 
