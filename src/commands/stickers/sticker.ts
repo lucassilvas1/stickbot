@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import { getStickerById } from "../../db/index.js";
 
@@ -17,7 +17,13 @@ export const execute: CommandExecutor = async (interaction) => {
   const id = interaction.options.getString("query", true);
   const sticker = await getStickerById(id);
 
-  return interaction.reply(JSON.stringify(sticker));
+  if (sticker) {
+    return interaction.reply(JSON.stringify(sticker));
+  }
+  return interaction.reply({
+    content: "No sticker matches the criteria",
+    flags: MessageFlags.Ephemeral,
+  });
 };
 
 export { autocomplete } from "../../utils/index.js";
