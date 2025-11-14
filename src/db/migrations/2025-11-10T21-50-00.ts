@@ -20,7 +20,8 @@ export async function up(db: Kysely<any>) {
       CREATE VIRTUAL TABLE sticker_fts USING fts5(
         title,
         tags,
-        prefix='2 3 4'
+        content='',
+        prefix='2 3'
       )
     `.execute(trx);
 
@@ -82,19 +83,18 @@ export async function up(db: Kysely<any>) {
         VALUES (new.rowid, new.title, new.tags);
       END`.execute(trx);
 
-    await sql`
-      CREATE TRIGGER sticker_ad AFTER DELETE ON sticker BEGIN
+    await sql`CREATE TRIGGER sticker_ad AFTER DELETE ON sticker BEGIN
         INSERT INTO sticker_fts(sticker_fts, rowid, title, tags)
         VALUES ('delete', old.rowid, old.title, old.tags);
       END`.execute(trx);
 
-    await sql`
-      CREATE TRIGGER sticker_au AFTER UPDATE ON sticker BEGIN
+    await sql`CREATE TRIGGER sticker_au AFTER UPDATE ON sticker BEGIN
         INSERT INTO sticker_fts(sticker_fts, rowid, title, tags)
         VALUES ('delete', old.rowid, old.title, old.tags);
         INSERT INTO sticker_fts(rowid, title, tags)
         VALUES (new.rowid, new.title, new.tags);
-      END`.execute(trx);
+      END;
+    `.execute(trx);
   });
 }
 
