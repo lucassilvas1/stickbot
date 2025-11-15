@@ -3,6 +3,23 @@ import { Kysely, sql } from "kysely";
 export async function up(db: Kysely<any>) {
   await db.transaction().execute(async (trx) => {
     await trx.schema
+      .createTable("user")
+      .addColumn("id", "text", (col) => col.notNull().primaryKey())
+      .addColumn("username", "text", (col) => col.notNull())
+      .addColumn("can_add_sticker", "integer", (col) =>
+        col.notNull().defaultTo(0)
+      )
+      .addColumn("can_edit_sticker", "integer", (col) =>
+        col.notNull().defaultTo(0)
+      )
+      .addColumn("can_delete_sticker", "integer", (col) =>
+        col.notNull().defaultTo(0)
+      )
+      .addColumn("can_add_user", "integer", (col) => col.notNull().defaultTo(0))
+      .addColumn("can_add_user", "integer", (col) => col.notNull().defaultTo(0))
+      .execute();
+
+    await trx.schema
       .createTable("sticker")
       .addColumn("id", "text", (col) => col.primaryKey())
       .addColumn("title", "text", (col) => col.notNull().unique())

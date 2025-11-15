@@ -1,6 +1,16 @@
 import type { ColumnType, Insertable, Selectable, Updateable } from "kysely";
 import type { StickerVariant } from "./stickers.js";
 
+export type UserTable = {
+  id: ColumnType<string, never, never>;
+  username: string;
+  canAddSticker: number;
+  canEditSticker: number;
+  canDeleteSticker: number;
+  canAddUser: number;
+  canDeleteUser: number;
+};
+
 export type StickerTable = {
   rowid: ColumnType<number, never, never>;
   id: ColumnType<string, string, never>;
@@ -39,11 +49,16 @@ export type StickerFTSTable = {
 };
 
 export type Database = {
+  user: UserTable;
   sticker: StickerTable;
   variant: VariantTable;
   usage: UsageTable;
   stickerFts: StickerFTSTable;
 };
+
+export type User = Selectable<UserTable>;
+export type NewUser = Insertable<UserTable>;
+export type UserUpdate = Updateable<UserTable>;
 
 export type Sticker = Selectable<StickerTable>;
 export type NewSticker = Insertable<StickerTable>;
