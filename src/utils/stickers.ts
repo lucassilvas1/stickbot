@@ -15,6 +15,15 @@ export const autocomplete: CommandAutocomplete = async (interaction) => {
   return interaction.respond(await search(query));
 };
 
+export function getVariantUrl(
+  id: string,
+  variant: Exclude<StickerVariant, "original">
+) {
+  let hostName = env.ASSETS_SERVER_HOSTNAME;
+  if (hostName.at(-1) !== "/") hostName += "/";
+  return `${env.ASSETS_SERVER_HOSTNAME}${Constants.VariantEncodingMap[variant].dirName}/${id}.webp`;
+}
+
 export function deleteVariants(
   id: string,
   variants: { type: StickerVariant; extension: string }[]

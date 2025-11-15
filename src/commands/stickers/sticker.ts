@@ -1,6 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import { getStickerById } from "../../db/index.js";
+import { getVariantUrl } from "../../utils/index.js";
 
 export const data = new SlashCommandBuilder()
   .setName("sticker")
@@ -18,7 +19,7 @@ export const execute: CommandExecutor = async (interaction) => {
   const sticker = await getStickerById(id);
 
   if (sticker) {
-    return interaction.reply(JSON.stringify(sticker));
+    return interaction.reply(getVariantUrl(id, "high"));
   }
   return interaction.reply({
     content: "No sticker matches the criteria",

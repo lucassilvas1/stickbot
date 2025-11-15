@@ -5,6 +5,7 @@ import {
   generateId,
   getVariantInfo,
   getVariantPaths,
+  getVariantUrl,
   processFile,
   saveFile,
   TypedError,
@@ -211,7 +212,7 @@ export const execute: CommandExecutor = async (interaction) => {
 
     await interaction.deleteReply();
 
-    return interaction.followUp({ content: `Filename: ${stickerId}` });
+    return interaction.followUp(getVariantUrl(stickerId, "high"));
   } catch (error) {
     console.error(error);
 
