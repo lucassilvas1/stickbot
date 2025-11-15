@@ -10,7 +10,7 @@ import type { CommandExecutor } from "../../types/commands.js";
 import { type Align, padStringToWidth } from "discord-button-width";
 
 export const data = new SlashCommandBuilder()
-  .setName("stickers")
+  .setName("liststickers")
   .setDescription("Browse through stickers")
   .addStringOption((opt) =>
     opt.setName("query").setDescription("Narrow down results")
