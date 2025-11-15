@@ -1,14 +1,20 @@
-import type { ColumnType, Insertable, Selectable, Updateable } from "kysely";
+import type {
+  ColumnType,
+  Generated,
+  Insertable,
+  Selectable,
+  Updateable,
+} from "kysely";
 import type { StickerVariant } from "./stickers.js";
 
 export type UserTable = {
-  id: ColumnType<string, never, never>;
+  id: ColumnType<string, string, never>;
   username: string;
-  canAddSticker: number;
-  canEditSticker: number;
-  canDeleteSticker: number;
-  canAddUser: number;
-  canDeleteUser: number;
+  canAddSticker: Generated<number>;
+  canEditSticker: Generated<number>;
+  canDeleteSticker: Generated<number>;
+  canAddUser: Generated<number>;
+  canDeleteUser: Generated<number>;
 };
 
 export type StickerTable = {
