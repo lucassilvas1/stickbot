@@ -66,9 +66,11 @@ export const db = await (async () => {
   return new Kysely<Database>({
     dialect: new SqliteDialect({ database: db }),
     plugins: [new CamelCasePlugin()],
-    log: (event) => {
-      console.dir(event.query, { depth: null });
-    },
+    log: env.VERBOSE_LOGGING
+      ? (event) => {
+          console.dir(event.query, { depth: null });
+        }
+      : () => {},
   });
 })();
 
