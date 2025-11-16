@@ -85,7 +85,7 @@ export class TypedError extends Error {
   }
 }
 
-export class Cache<K extends PropertyKey, V> {
+export class Cache<K extends PropertyKey | undefined, V> {
   private cache = new Map<K, V>();
   private timeoutIds = new Map<K, NodeJS.Timeout>();
   private expirationMs;
