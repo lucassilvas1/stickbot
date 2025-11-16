@@ -249,6 +249,7 @@ export async function updateSticker(id: string, sticker: StickerUpdate) {
       title: sticker.title ? treatString(sticker.title) : undefined,
       tags: sticker.tags ? treatString(sticker.tags) : undefined,
       description: sticker.description,
+      timeModified: Date.now(),
     })
     .where("id", "=", id)
     .executeTakeFirstOrThrow();
