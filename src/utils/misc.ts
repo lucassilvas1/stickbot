@@ -118,6 +118,10 @@ export class Cache<K extends PropertyKey | undefined, V> {
     this.cache.delete(key);
   }
 
+  entries() {
+    return this.cache.entries();
+  }
+
   clear() {
     this.timeoutIds.forEach(clearTimeout);
     this.timeoutIds.clear();
