@@ -7,6 +7,7 @@ export * from "./commands.js";
 export * as Constants from "./constants.js";
 export * from "./interactions.js";
 export * from "./stickers.js";
+export * from "./users.js";
 export * from "./misc.js";
 export * from "./processing.js";
 

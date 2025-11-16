@@ -1,7 +1,7 @@
 import { statSync } from "fs";
 import { env } from "../env.js";
 import type { StickerVariant } from "../types/stickers.js";
-import { Constants } from "./index.js";
+import { Constants, isFromAppUser } from "./index.js";
 import { extname, join } from "path";
 import type { NewVariant } from "../types/db.js";
 import { spawn, TypedError } from "./misc.js";
@@ -10,6 +10,10 @@ import { search } from "../db/index.js";
 import { rm } from "fs/promises";
 
 export const autocomplete: CommandAutocomplete = async (interaction) => {
+  if (!(await isFromAppUser(interaction))) {
+    return interaction.respond([]);
+  }
+
   const query = interaction.options.getString("query", true);
   if (query.length < 3) return interaction.respond([]);
   return interaction.respond(await search(query));

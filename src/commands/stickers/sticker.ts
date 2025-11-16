@@ -1,9 +1,25 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+  MessageFlags,
+  SlashCommandBuilder,
+} from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
-import { getStickerById } from "../../db/index.js";
-import { getVariantUrl } from "../../utils/index.js";
+import { getStickerById, getUserPermissionsById } from "../../db/index.js";
+import { Constants, getVariantUrl, isFromOwner } from "../../utils/index.js";
+
+export const isGlobal = true;
 
 export const data = new SlashCommandBuilder()
+  .setContexts([
+    InteractionContextType.PrivateChannel,
+    InteractionContextType.Guild,
+    InteractionContextType.BotDM,
+  ])
+  .setIntegrationTypes([
+    ApplicationIntegrationType.GuildInstall,
+    ApplicationIntegrationType.UserInstall,
+  ])
   .setName("sticker")
   .setDescription("Choose a sticker by title")
   .addStringOption((opt) =>
@@ -15,6 +31,16 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute: CommandExecutor = async (interaction) => {
+  if (
+    !isFromOwner(interaction) &&
+    !(await getUserPermissionsById(interaction.user.id))
+  ) {
+    return interaction.reply({
+      content: Constants.PERMISSION_PUNT_MESSAGE,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
   const id = interaction.options.getString("query", true);
   const sticker = await getStickerById(id);
 

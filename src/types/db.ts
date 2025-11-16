@@ -7,14 +7,15 @@ import type {
 } from "kysely";
 import type { StickerVariant } from "./stickers.js";
 
-export type UserTable = {
+export type UserPermissionsTable = {
   id: ColumnType<string, string, never>;
   username: string;
-  canAddSticker: Generated<number>;
-  canEditSticker: Generated<number>;
-  canDeleteSticker: Generated<number>;
-  canAddUser: Generated<number>;
-  canDeleteUser: Generated<number>;
+  addSticker: Generated<number>;
+  editSticker: Generated<number>;
+  deleteSticker: Generated<number>;
+  addUser: Generated<number>;
+  editUser: Generated<number>;
+  deleteUser: Generated<number>;
 };
 
 export type StickerTable = {
@@ -55,16 +56,17 @@ export type StickerFTSTable = {
 };
 
 export type Database = {
-  user: UserTable;
+  userPermissions: UserPermissionsTable;
   sticker: StickerTable;
   variant: VariantTable;
   usage: UsageTable;
   stickerFts: StickerFTSTable;
 };
 
-export type User = Selectable<UserTable>;
-export type NewUser = Insertable<UserTable>;
-export type UserUpdate = Updateable<UserTable>;
+export type UserPermissions = Selectable<UserPermissionsTable>;
+export type NewUserPermissions = Insertable<UserPermissionsTable>;
+export type UserPermissionsUpdate = Updateable<UserPermissionsTable>;
+export type Permissions = Omit<UserPermissions, "id" | "username">;
 
 export type Sticker = Selectable<StickerTable>;
 export type NewSticker = Insertable<StickerTable>;

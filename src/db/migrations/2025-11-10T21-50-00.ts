@@ -3,20 +3,17 @@ import { Kysely, sql } from "kysely";
 export async function up(db: Kysely<any>) {
   await db.transaction().execute(async (trx) => {
     await trx.schema
-      .createTable("user")
+      .createTable("user_permissions")
       .addColumn("id", "text", (col) => col.notNull().primaryKey())
       .addColumn("username", "text", (col) => col.notNull())
-      .addColumn("can_add_sticker", "integer", (col) =>
+      .addColumn("add_sticker", "integer", (col) => col.notNull().defaultTo(0))
+      .addColumn("edit_sticker", "integer", (col) => col.notNull().defaultTo(0))
+      .addColumn("delete_sticker", "integer", (col) =>
         col.notNull().defaultTo(0)
       )
-      .addColumn("can_edit_sticker", "integer", (col) =>
-        col.notNull().defaultTo(0)
-      )
-      .addColumn("can_delete_sticker", "integer", (col) =>
-        col.notNull().defaultTo(0)
-      )
-      .addColumn("can_add_user", "integer", (col) => col.notNull().defaultTo(0))
-      .addColumn("can_add_user", "integer", (col) => col.notNull().defaultTo(0))
+      .addColumn("add_user", "integer", (col) => col.notNull().defaultTo(0))
+      .addColumn("edit_user", "integer", (col) => col.notNull().defaultTo(0))
+      .addColumn("delete_user", "integer", (col) => col.notNull().defaultTo(0))
       .execute();
 
     await trx.schema

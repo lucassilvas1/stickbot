@@ -1,4 +1,9 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+  MessageFlags,
+  SlashCommandBuilder,
+} from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import {
   Constants,
@@ -6,6 +11,7 @@ import {
   getVariantInfo,
   getVariantPaths,
   getVariantUrl,
+  isUserAllowed,
   processFile,
   saveFile,
   TypedError,
@@ -17,9 +23,20 @@ import { insertSticker } from "../../db/index.js";
 import { rm } from "fs/promises";
 import type { TypedErrorCode } from "../../types/misc.js";
 
+export const isGlobal = true;
+
 export const cooldown = 5_000;
 
 export const data = new SlashCommandBuilder()
+  .setContexts([
+    InteractionContextType.PrivateChannel,
+    InteractionContextType.Guild,
+    InteractionContextType.BotDM,
+  ])
+  .setIntegrationTypes([
+    ApplicationIntegrationType.GuildInstall,
+    ApplicationIntegrationType.UserInstall,
+  ])
   .setName("addsticker")
   .setDescription(
     "Add a new sticker via URL or attachment. Videos will be trimmed to " +
@@ -161,6 +178,13 @@ async function generateVariants(
 }
 
 export const execute: CommandExecutor = async (interaction) => {
+  if (!(await isUserAllowed("addSticker", interaction))) {
+    return interaction.reply({
+      content: Constants.PERMISSION_PUNT_MESSAGE,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
   const url =
     interaction.options.getString("url") ??
     interaction.options.getAttachment("file")?.url;

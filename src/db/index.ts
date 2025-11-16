@@ -4,8 +4,11 @@ import { CamelCasePlugin, Kysely, sql, SqliteDialect } from "kysely";
 import type {
   Database,
   NewSticker,
+  NewUserPermissions,
   NewVariant,
   StickerUpdate,
+  UserPermissions,
+  UserPermissionsUpdate,
 } from "../types/db.js";
 import { migrateToLatest } from "./migrate.js";
 import { join } from "path";
@@ -23,6 +26,9 @@ const stickerCache = new Cache<string, SimplifiedSticker>(
 );
 const searchCache = new Cache<string, { name: string; value: string }[]>(
   Constants.SEARCH_CACHE_EXPIRATION_MS
+);
+const userPermissionsCache = new Cache<string, UserPermissions>(
+  Constants.USER_PERMISSIONS_CACHE_EXPIRATION_MS
 );
 
 function createDbDir() {
@@ -74,6 +80,57 @@ export const db = await (async () => {
   });
 })();
 
+export async function insertUserPermissions(
+  NewUserPermissions: NewUserPermissions
+) {
+  const userPermissions = await db
+    .insertInto("userPermissions")
+    .values(NewUserPermissions)
+    .returningAll()
+    .onConflict((oc) => oc.doNothing())
+    .executeTakeFirst();
+  if (!userPermissions) return false;
+  userPermissionsCache.set(userPermissions.id, userPermissions);
+  return true;
+}
+
+export async function getUserPermissionsById(id: string) {
+  const cachedUser = userPermissionsCache.get(id);
+  if (cachedUser) return cachedUser;
+
+  const userPermissions = await db
+    .selectFrom("userPermissions")
+    .selectAll()
+    .where("id", "=", id)
+    .executeTakeFirst();
+  if (userPermissions) userPermissionsCache.set(id, userPermissions);
+  return userPermissions;
+}
+
+export async function updateUserPermissions(
+  id: string,
+  userPermissions: UserPermissionsUpdate
+) {
+  const updatedUserPermissions = await db
+    .updateTable("userPermissions")
+    .set(userPermissions)
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst();
+  if (updatedUserPermissions)
+    userPermissionsCache.set(id, updatedUserPermissions);
+  return !!updatedUserPermissions;
+}
+
+export async function deleteUserPermissions(id: string) {
+  const result = await db
+    .deleteFrom("userPermissions")
+    .where("id", "=", id)
+    .executeTakeFirst();
+  if (result.numDeletedRows) userPermissionsCache.delete(id);
+  return !!result.numDeletedRows;
+}
+
 export function insertSticker(
   newSticker: Omit<NewSticker, "timeAdded" | "timeModified">,
   variants: NewVariant[]
@@ -114,6 +171,7 @@ export async function search(query: string) {
 
   let results = searchCache.get(query);
   if (results) return results;
+
   results = await db
     .selectFrom("sticker")
     .innerJoin("stickerFts", "sticker.rowid", "stickerFts.rowid")
@@ -129,12 +187,15 @@ export async function search(query: string) {
 export async function getStickerById(id: string) {
   let sticker = stickerCache.get(id);
   if (sticker) return sticker;
+
   sticker = await db
     .selectFrom("sticker")
     .select(["id", "title", "tags"])
     .where("id", "=", id)
     .executeTakeFirst();
+
   if (!sticker) return;
+
   stickerCache.set(id, {
     id: sticker.id,
     title: sticker.title,

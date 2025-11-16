@@ -1,13 +1,29 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+  MessageFlags,
+  SlashCommandBuilder,
+} from "discord.js";
 import type {
   CommandAutocomplete,
   CommandExecutor,
 } from "../../types/commands.js";
 import { getStickerById, search, updateSticker } from "../../db/index.js";
 import type { SimplifiedSticker } from "../../types/stickers.js";
-import { Constants } from "../../utils/index.js";
+import { Constants, isFromAppUser, isUserAllowed } from "../../utils/index.js";
+
+export const isGlobal = true;
 
 export const data = new SlashCommandBuilder()
+  .setContexts([
+    InteractionContextType.PrivateChannel,
+    InteractionContextType.Guild,
+    InteractionContextType.BotDM,
+  ])
+  .setIntegrationTypes([
+    ApplicationIntegrationType.GuildInstall,
+    ApplicationIntegrationType.UserInstall,
+  ])
   .setName("editsticker")
   .setDescription("Edit a sticker by title")
   .addStringOption((opt) =>
@@ -43,6 +59,13 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute: CommandExecutor = async (interaction) => {
+  if (!(await isUserAllowed("editSticker", interaction))) {
+    return interaction.reply({
+      content: Constants.PERMISSION_PUNT_MESSAGE,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
   const id = interaction.options.getString("query", true);
   const title = interaction.options.getString("title") ?? undefined;
   const tags = interaction.options.getString("tags") ?? undefined;
@@ -64,6 +87,8 @@ export const execute: CommandExecutor = async (interaction) => {
 };
 
 export const autocomplete: CommandAutocomplete = async (interaction) => {
+  if (!(await isFromAppUser(interaction))) return interaction.respond([]);
+
   const prop = interaction.options.getFocused(true);
   if (prop.name === "query") {
     return interaction.respond(await search(prop.value));

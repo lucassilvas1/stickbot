@@ -1,15 +1,30 @@
 import {
+  ApplicationIntegrationType,
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
+  InteractionContextType,
   MediaGalleryBuilder,
   MessageFlags,
   SlashCommandBuilder,
 } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import { type Align, padStringToWidth } from "discord-button-width";
+import { getUserPermissionsById } from "../../db/index.js";
+import { Constants } from "../../utils/index.js";
+
+export const isGlobal = true;
 
 export const data = new SlashCommandBuilder()
+  .setContexts([
+    InteractionContextType.PrivateChannel,
+    InteractionContextType.Guild,
+    InteractionContextType.BotDM,
+  ])
+  .setIntegrationTypes([
+    ApplicationIntegrationType.GuildInstall,
+    ApplicationIntegrationType.UserInstall,
+  ])
   .setName("liststickers")
   .setDescription("Browse through stickers")
   .addStringOption((opt) =>
@@ -17,6 +32,13 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute: CommandExecutor = async (interaction) => {
+  if (!(await getUserPermissionsById(interaction.user.id))) {
+    return interaction.reply({
+      content: Constants.PERMISSION_PUNT_MESSAGE,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
   const _placeholderImgUrl =
     "https://media.discordapp.net/attachments/1436806338465235136/1437233183933464596/image.png?ex=69127f35&is=69112db5&hm=8263589e0c7e64d116ab19ce5b5fd0e069cc1072f54466d6f2b2e66e1aabb04e&=&format=webp&quality=lossless&width=599&height=266";
 

@@ -1,3 +1,4 @@
+import type { Permissions } from "../types/db.js";
 import type {
   StickerVariant,
   StickerVariantEncodingConfig,
@@ -17,12 +18,27 @@ export const STICKER_ID_LENGTH = 12;
 
 export const STICKER_CACHE_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000;
 export const SEARCH_CACHE_EXPIRATION_MS = 2 * 24 * 60 * 60 * 1000;
+export const USER_PERMISSIONS_CACHE_EXPIRATION_MS = 2147483647;
 
 export const MIN_TITLE_LENGTH = 8;
 export const MAX_TITLE_LENGTH = 64;
 export const MIN_TAGS_LENGTH = 10;
 export const MAX_TAGS_LENGTH = 256;
 export const MAX_DESCRIPTION_LENGTH = 512;
+
+export const USER_PERMISSION_WEIGHT_MAP: Record<keyof Permissions, number> = {
+  editSticker: 1,
+  deleteSticker: 2,
+  addSticker: 3,
+  editUser: 4,
+  deleteUser: 5,
+  addUser: 6,
+} as const;
+
+export const PERMISSION_PUNT_MESSAGE =
+  "You do not have permission to run this command";
+export const NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE =
+  "You do not have enough clearance to grant these permissions";
 
 export const VariantEncodingMap: Record<
   Exclude<StickerVariant, "original">,
