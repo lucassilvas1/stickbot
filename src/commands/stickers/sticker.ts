@@ -42,7 +42,7 @@ export const execute: CommandExecutor = async (interaction) => {
   }
 
   const id = interaction.options.getString("query", true);
-  const sticker = await getStickerById(id);
+  const sticker = await getStickerById(id, true, interaction.user.id);
 
   if (sticker) {
     return interaction.reply(getVariantUrl(id, "high"));

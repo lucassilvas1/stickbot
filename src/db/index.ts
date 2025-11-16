@@ -184,23 +184,61 @@ export async function search(query: string) {
   return results;
 }
 
-export async function getStickerById(id: string) {
+export async function getStickerById(
+  id: string
+): Promise<SimplifiedSticker | undefined>;
+export async function getStickerById(
+  id: string,
+  incrementUsage: true,
+  userId: string
+): Promise<SimplifiedSticker | undefined>;
+export async function getStickerById(
+  id: string,
+  incrementUsage?: boolean,
+  userId?: string
+) {
   let sticker = stickerCache.get(id);
-  if (sticker) return sticker;
 
-  sticker = await db
-    .selectFrom("sticker")
-    .select(["id", "title", "tags"])
-    .where("id", "=", id)
-    .executeTakeFirst();
+  await db.transaction().execute(async (trx) => {
+    if (incrementUsage && userId) {
+      const now = Date.now();
 
-  if (!sticker) return;
+      sticker = await trx
+        .updateTable("sticker")
+        .set((eb) => ({
+          usageCount: eb("usageCount", "+", 1),
+          timeLastUsed: now,
+        }))
+        .where("id", "=", id)
+        .returning(["id", "title", "tags"])
+        .executeTakeFirst();
+      await trx
+        .insertInto("usage")
+        .values({ userId, stickerId: id, count: 1, timeLastUsed: now })
+        .onConflict((oc) =>
+          oc.columns(["userId", "stickerId"]).doUpdateSet((eb) => ({
+            count: eb("count", "+", 1),
+            timeLastUsed: now,
+          }))
+        )
+        .execute();
+    } else if (!sticker) {
+      sticker = await trx
+        .selectFrom("sticker")
+        .select(["id", "title", "tags"])
+        .where("id", "=", id)
+        .executeTakeFirst();
+    }
 
-  stickerCache.set(id, {
-    id: sticker.id,
-    title: sticker.title,
-    tags: sticker.tags,
+    if (!sticker) return; // Don't update cache unless sticker is found
+
+    stickerCache.set(id, {
+      id: sticker.id,
+      title: sticker.title,
+      tags: sticker.tags,
+    });
   });
+
   return sticker;
 }
 

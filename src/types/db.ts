@@ -45,7 +45,7 @@ export type VariantTable = {
 export type UsageTable = {
   stickerId: ColumnType<string, string, never>;
   userId: ColumnType<string, string, never>;
-  count: ColumnType<number, number | undefined, number>;
+  count: Generated<number>;
   timeLastUsed: number;
 };
 
