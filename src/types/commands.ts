@@ -14,6 +14,7 @@ export type CommandAutocomplete = (
 ) => Promise<void> | void;
 
 export type CommandData = {
+  isGlobal?: boolean;
   cooldown?: number;
   data: SlashCommandBuilder;
   execute: CommandExecutor;
