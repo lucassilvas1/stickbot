@@ -18,7 +18,8 @@ export function generateId(length: number = 12): string {
 }
 
 export function treatString(string: string) {
-  return string.toLowerCase().trim().normalize("NFC");
+  // Escape apostrophes (single quotes), otherwise FTS5 will throw
+  return string.replaceAll("'", '"\'"').toLowerCase().trim().normalize("NFC");
 }
 
 export function findString(
