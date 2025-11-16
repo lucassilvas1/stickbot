@@ -4,6 +4,7 @@ export const name = Events.ClientReady;
 
 export const once = true;
 
-export function handle(client: Client<true>) {
+export async function handle(client: Client<true>) {
+  await client.application.fetch();
   console.log(`Ready! Logged in as ${client.user.tag}`);
 }
