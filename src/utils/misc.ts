@@ -18,7 +18,7 @@ export function generateId(length: number = 12): string {
 }
 
 export function treatString(string: string) {
-  return string.toLowerCase().normalize("NFC");
+  return string.toLowerCase().trim().normalize("NFC");
 }
 
 export function findString(
@@ -93,8 +93,7 @@ export class Cache<K extends PropertyKey, V> {
     this.expirationMs = expirationMs;
   }
 
-  set(key: K, value: V) {
-    this.cache.set(key, value);
+  private resetTimeout(key: K) {
     clearTimeout(this.timeoutIds.get(key));
     this.timeoutIds.set(
       key,
@@ -102,7 +101,13 @@ export class Cache<K extends PropertyKey, V> {
     );
   }
 
+  set(key: K, value: V) {
+    this.cache.set(key, value);
+    this.resetTimeout(key);
+  }
+
   get(key: K) {
+    this.resetTimeout(key);
     return this.cache.get(key);
   }
 
