@@ -1,6 +1,9 @@
 import type { Sticker } from "./db.js";
 
-export type SimplifiedSticker = Pick<Sticker, "id" | "title" | "tags">;
+export type SimplifiedSticker = Pick<
+  Sticker,
+  "id" | "title" | "tags" | "usageCount" | "timeLastUsed"
+>;
 
 export type StickerVariant = "original" | "high" | "thumbnail";
 
