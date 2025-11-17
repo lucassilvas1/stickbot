@@ -114,7 +114,7 @@ async function runQueryAndCacheIds(
     if (order === "usage.count") {
       sb = sb.orderBy(sql`coalesce(usage.count, 0)`, "desc");
     } else if (order === "usage.timeLastUsed") {
-      sb = sb.orderBy(sql`coalesce(usage.timeLastUsed, 0)`, "desc");
+      sb = sb.orderBy(sql`coalesce(usage.time_last_used, 0)`, "desc");
     }
   }
 
@@ -140,7 +140,8 @@ export async function search(opts: StickerSearchOptions = {}) {
   } = opts;
 
   // guard: blank autocomplete
-  if (!query && !userId) return [];
+  if (!query && !userId)
+    return { stickers: [], isLastPage: true, totalResultCount: 0 };
 
   const key = searchCacheKey({ query, userId, order });
 
@@ -158,12 +159,14 @@ export async function search(opts: StickerSearchOptions = {}) {
 
   // paginate the ids list (safe slicing)
   const start = offset ?? 0;
-  const pageIds = ids.slice(start, start + limit);
+  const end = start + limit;
+  const pageIds = ids.slice(start, end);
+  const isLastPage = end >= ids.length;
 
   // hydrate sticker objects (from stickerCache, fetching missing)
   const stickers = await hydrateStickers(pageIds);
 
-  return stickers;
+  return { stickers, isLastPage, totalResultCount: ids.length };
 }
 
 export function toAutocompleteType(stickers: SimplifiedSticker[]) {
