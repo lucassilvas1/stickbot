@@ -96,9 +96,8 @@ export const autocomplete: CommandAutocomplete = async (interaction) => {
 
   const prop = interaction.options.getFocused(true);
   if (prop.name === "query") {
-    return interaction.respond(
-      toAutocompleteType(await search({ query: prop.value }))
-    );
+    const { stickers } = await search({ query: prop.value });
+    return interaction.respond(toAutocompleteType(stickers));
   }
   const id = interaction.options.getString("query", true);
   const sticker = await getStickerById(id);

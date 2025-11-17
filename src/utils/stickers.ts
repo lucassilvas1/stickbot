@@ -16,7 +16,8 @@ export const autocomplete: CommandAutocomplete = async (interaction) => {
 
   const query = interaction.options.getString("query", true);
   if (query.length < 3) return interaction.respond([]);
-  return interaction.respond(toAutocompleteType(await search({ query })));
+  const { stickers } = await search({ query });
+  return interaction.respond(toAutocompleteType(stickers));
 };
 
 export function getVariantUrl(
