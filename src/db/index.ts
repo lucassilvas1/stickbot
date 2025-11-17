@@ -86,6 +86,7 @@ export function insertSticker(
         tags: treatString(newSticker.tags),
         timeAdded: now,
         timeModified: now,
+        timeLastUsed: now,
       })
       .returning(simplifiedStickerColumns)
       .executeTakeFirstOrThrow();
