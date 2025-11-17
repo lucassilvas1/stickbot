@@ -57,10 +57,10 @@ export const VariantEncodingMap: Record<
   thumbnail: {
     name: "thumbnail",
     dirName: "thumb",
-    height: 128,
+    height: 256,
     frameRate: 15,
-    maxBitrate: "200k",
-    bufSize: "400k",
+    maxBitrate: "250k",
+    bufSize: "500k",
     method: 5,
     quality: 75,
   } as const,
