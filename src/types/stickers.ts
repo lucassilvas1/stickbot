@@ -12,6 +12,8 @@ export const simplifiedStickerColumns: Readonly<(keyof SimplifiedSticker)[]> = [
   "timeLastUsed",
 ];
 
+export type StickerSearchOrder = "usage.timeLastUsed" | "usage.count";
+
 export type StickerVariant = "original" | "high" | "thumbnail";
 
 export type StickerVariantEncodingConfig = {

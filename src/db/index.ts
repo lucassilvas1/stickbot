@@ -1,4 +1,5 @@
 import type {
+  Database,
   NewSticker,
   NewUserPermissions,
   NewVariant,
@@ -16,6 +17,7 @@ import {
   stickerCache,
   userPermissionsCache,
 } from "./cache.js";
+import type { Transaction } from "kysely";
 export * from "./search.js";
 
 export async function insertUserPermissions(
@@ -88,10 +90,49 @@ export function insertSticker(
       .returning(simplifiedStickerColumns)
       .executeTakeFirstOrThrow();
 
-    onStickerUpdated(newSticker.id, sticker);
+    onStickerUpdated(newSticker.id, true, { sticker });
 
     await trx.insertInto("variant").values(variants).execute();
   });
+}
+
+export async function incrementStickerUsage(
+  stickerId: string,
+  userId: string,
+  transaction?: Transaction<Database>
+) {
+  const now = Date.now();
+
+  const run = async (trx: Transaction<Database>) => {
+    const sticker = await trx
+      .updateTable("sticker")
+      .set((eb) => ({
+        usageCount: eb("usageCount", "+", 1),
+        timeLastUsed: now,
+      }))
+      .where("id", "=", stickerId)
+      .returning(simplifiedStickerColumns)
+      .executeTakeFirst();
+    await trx
+      .insertInto("usage")
+      .values({ userId, stickerId, count: 1, timeLastUsed: now })
+      .onConflict((oc) =>
+        oc.columns(["userId", "stickerId"]).doUpdateSet((eb) => ({
+          count: eb("count", "+", 1),
+          timeLastUsed: now,
+        }))
+      )
+      .execute();
+
+    onStickerUpdated(stickerId, false, { sticker, userId });
+
+    return sticker;
+  };
+
+  if (transaction) {
+    return run(transaction);
+  }
+  return db.transaction().execute(run);
 }
 
 export async function getStickerById(
@@ -111,40 +152,16 @@ export async function getStickerById(
 
   await db.transaction().execute(async (trx) => {
     if (incrementUsage && userId) {
-      const now = Date.now();
-
-      sticker = await trx
-        .updateTable("sticker")
-        .set((eb) => ({
-          usageCount: eb("usageCount", "+", 1),
-          timeLastUsed: now,
-        }))
-        .where("id", "=", id)
-        .returning(simplifiedStickerColumns)
-        .executeTakeFirst();
-      await trx
-        .insertInto("usage")
-        .values({ userId, stickerId: id, count: 1, timeLastUsed: now })
-        .onConflict((oc) =>
-          oc.columns(["userId", "stickerId"]).doUpdateSet((eb) => ({
-            count: eb("count", "+", 1),
-            timeLastUsed: now,
-          }))
-        )
-        .execute();
+      sticker = await incrementStickerUsage(id, userId, trx);
     } else if (!sticker) {
       sticker = await trx
         .selectFrom("sticker")
         .select(simplifiedStickerColumns)
         .where("id", "=", id)
         .executeTakeFirst();
+      onStickerUpdated(id, false, { sticker });
     }
-
-    if (!sticker) return; // Don't update cache unless sticker is found
-
-    onStickerUpdated(id, sticker);
   });
-
   return sticker;
 }
 
@@ -161,7 +178,7 @@ export async function updateSticker(id: string, sticker: StickerUpdate) {
     .returning(simplifiedStickerColumns)
     .executeTakeFirstOrThrow();
 
-  onStickerUpdated(id, updatedSticker);
+  onStickerUpdated(id, true, { sticker: updatedSticker });
 }
 
 export async function deleteSticker(id: string) {
@@ -181,7 +198,7 @@ export async function deleteSticker(id: string) {
 
     if (!result.numDeletedRows) return false;
 
-    onStickerUpdated(id);
+    onStickerUpdated(id, true);
     return true;
   });
 }

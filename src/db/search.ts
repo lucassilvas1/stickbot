@@ -1,7 +1,10 @@
 import { sql } from "kysely";
-import type { SimplifiedSticker } from "../types/stickers.js";
+import type {
+  SimplifiedSticker,
+  StickerSearchOrder,
+} from "../types/stickers.js";
 import { treatString } from "../utils/misc.js";
-import { searchCache, stickerCache } from "./cache.js";
+import { searchCache, searchCacheKey, stickerCache } from "./cache.js";
 import { db } from "./db.js";
 
 type StickerSearchOptions = {
@@ -9,22 +12,8 @@ type StickerSearchOptions = {
   userId?: string;
   offset?: number;
   limit?: number;
-  order?: "usage.timeLastUsed" | "usage.count";
+  order?: StickerSearchOrder;
 };
-
-function searchCacheKey({
-  query,
-  userId,
-  order,
-}: {
-  query?: string;
-  userId?: string;
-  order?: string;
-}) {
-  if (!query && !userId) return ""; // should not happen; caller returns early
-  if (!userId && query) return `auto:${query}`;
-  return `browse:${userId ?? ""}:${query ?? ""}:${order ?? ""}`;
-}
 
 async function hydrateStickers(ids: string[]): Promise<SimplifiedSticker[]> {
   const out: (SimplifiedSticker | undefined)[] = new Array(ids.length);
@@ -84,7 +73,7 @@ function toFtsQuery(query?: string) {
 async function runQueryAndCacheIds(
   opts: StickerSearchOptions
 ): Promise<string[]> {
-  const { query, userId, order = "usage.timeLastUsed", limit = 25 } = opts;
+  const { query, userId, order, limit = 25 } = opts;
   let sb = db
     .selectFrom("sticker")
     .select([
@@ -131,22 +120,14 @@ async function runQueryAndCacheIds(
 }
 
 export async function search(opts: StickerSearchOptions = {}) {
-  const {
-    query,
-    userId,
-    offset,
-    limit = 25,
-    order = "usage.timeLastUsed",
-  } = opts;
-
-  // guard: blank autocomplete
-  if (!query && !userId)
-    return { stickers: [], isLastPage: true, totalResultCount: 0 };
+  const { query, userId, offset, limit = 25, order } = opts;
 
   const key = searchCacheKey({ query, userId, order });
-
   // check cache (if cache hit, we have an ordered array of ids)
   let ids = searchCache.get(key);
+  // guard: blank autocomplete
+  if (key === "invalid")
+    return { stickers: [], isLastPage: true, totalResultCount: 0 };
 
   if (!ids) {
     // cache miss: run query and cache ids
