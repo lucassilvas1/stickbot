@@ -8,7 +8,12 @@ import type {
   CommandAutocomplete,
   CommandExecutor,
 } from "../../types/commands.js";
-import { getStickerById, search, updateSticker } from "../../db/index.js";
+import {
+  getStickerById,
+  search,
+  toAutocompleteType,
+  updateSticker,
+} from "../../db/index.js";
 import type { SimplifiedSticker } from "../../types/stickers.js";
 import { Constants, isFromAppUser, isUserAllowed } from "../../utils/index.js";
 
@@ -91,7 +96,9 @@ export const autocomplete: CommandAutocomplete = async (interaction) => {
 
   const prop = interaction.options.getFocused(true);
   if (prop.name === "query") {
-    return interaction.respond(await search(prop.value));
+    return interaction.respond(
+      toAutocompleteType(await search({ query: prop.value }))
+    );
   }
   const id = interaction.options.getString("query", true);
   const sticker = await getStickerById(id);
@@ -105,7 +112,9 @@ export const autocomplete: CommandAutocomplete = async (interaction) => {
     ]);
   }
   if (!prop.value.length) {
-    const value = sticker[prop.name as keyof SimplifiedSticker];
+    // value can only be string because the only columns you can edit are text
+    // (title, tags, description)
+    const value = sticker[prop.name as keyof SimplifiedSticker] as string;
     return interaction.respond([{ name: value, value }]);
   }
   return interaction.respond([]);
