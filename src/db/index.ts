@@ -1,84 +1,19 @@
-import SQLite from "better-sqlite3";
-import { env } from "../env.js";
-import { CamelCasePlugin, Kysely, sql, SqliteDialect } from "kysely";
 import type {
-  Database,
   NewSticker,
   NewUserPermissions,
   NewVariant,
   StickerUpdate,
-  UserPermissions,
   UserPermissionsUpdate,
 } from "../types/db.js";
-import { migrateToLatest } from "./migrate.js";
-import { join } from "path";
-import {
-  Cache,
-  Constants,
-  deleteVariants,
-  treatString,
-} from "../utils/index.js";
-import { mkdir } from "fs/promises";
+import { deleteVariants, treatString } from "../utils/index.js";
 import type { SimplifiedSticker } from "../types/stickers.js";
-
-const stickerCache = new Cache<string, SimplifiedSticker>(
-  Constants.STICKER_CACHE_EXPIRATION_MS
-);
-const searchCache = new Cache<string, { name: string; value: string }[]>(
-  Constants.SEARCH_CACHE_EXPIRATION_MS
-);
-const userPermissionsCache = new Cache<string, UserPermissions>(
-  Constants.USER_PERMISSIONS_CACHE_EXPIRATION_MS
-);
-
-function createDbDir() {
-  const promises = [];
-  const mkdirOptions = {
-    recursive: true,
-  };
-
-  promises.push(
-    mkdir(join(env.ASSETS_DIR_PATH, Constants.TEMP_DIR_NAME), mkdirOptions),
-    mkdir(
-      join(env.ASSETS_DIR_PATH, Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
-      mkdirOptions
-    ),
-    mkdir(env.DB_DIR_PATH, mkdirOptions)
-  );
-  promises.push(
-    Object.values(Constants.VariantEncodingMap).map(({ dirName }) =>
-      mkdir(join(env.ASSETS_DIR_PATH, dirName), mkdirOptions)
-    )
-  );
-
-  return Promise.all(promises);
-}
-
-function createDb() {
-  const db = new SQLite(join(env.DB_DIR_PATH, "stickbot.db"), {
-    fileMustExist: false,
-    // verbose: (...args: any[]) => console.dir(...args, { depth: null }),
-  });
-  db.pragma("journal_mode = WAL");
-  return db;
-}
-
-export const db = await (async () => {
-  await createDbDir();
-  await migrateToLatest(createDb());
-
-  const db = createDb();
-
-  return new Kysely<Database>({
-    dialect: new SqliteDialect({ database: db }),
-    plugins: [new CamelCasePlugin()],
-    log: env.VERBOSE_LOGGING
-      ? (event) => {
-          console.dir(event.query, { depth: null });
-        }
-      : () => {},
-  });
-})();
+import { db } from "./db.js";
+import {
+  onStickerUpdated,
+  stickerCache,
+  userPermissionsCache,
+} from "./cache.js";
+export * from "./search.js";
 
 export async function insertUserPermissions(
   NewUserPermissions: NewUserPermissions
@@ -138,7 +73,7 @@ export function insertSticker(
   return db.transaction().execute(async (trx) => {
     const now = Date.now();
 
-    const sticker = await trx
+    await trx
       .insertInto("sticker")
       .values({
         ...newSticker,
@@ -150,38 +85,10 @@ export function insertSticker(
       .returningAll()
       .executeTakeFirstOrThrow();
 
-    stickerCache.set(sticker.id, {
-      id: sticker.id,
-      title: sticker.title,
-      tags: sticker.tags,
-    });
-    searchCache.clear();
+    onStickerUpdated(newSticker.id);
 
     await trx.insertInto("variant").values(variants).execute();
   });
-}
-
-export async function search(query: string) {
-  if (!query) return [];
-
-  query = treatString(query)
-    .split(" ")
-    .map((token) => (token ? token + "*" : ""))
-    .join(" ");
-
-  let results = searchCache.get(query);
-  if (results) return results;
-
-  results = await db
-    .selectFrom("sticker")
-    .innerJoin("stickerFts", "sticker.rowid", "stickerFts.rowid")
-    .select(["sticker.id as value", "sticker.title as name"])
-    .where(() => sql`sticker_fts MATCH ${query}`)
-    .orderBy(sql`bm25(sticker_fts)`) // optional but recommended ranking
-    .limit(25)
-    .execute();
-  searchCache.set(query, results);
-  return results;
 }
 
 export async function getStickerById(
@@ -200,6 +107,14 @@ export async function getStickerById(
   let sticker = stickerCache.get(id);
 
   await db.transaction().execute(async (trx) => {
+    const columns = [
+      "id",
+      "title",
+      "tags",
+      "usageCount",
+      "timeLastUsed",
+    ] as const;
+
     if (incrementUsage && userId) {
       const now = Date.now();
 
@@ -210,7 +125,7 @@ export async function getStickerById(
           timeLastUsed: now,
         }))
         .where("id", "=", id)
-        .returning(["id", "title", "tags"])
+        .returning(columns)
         .executeTakeFirst();
       await trx
         .insertInto("usage")
@@ -225,18 +140,14 @@ export async function getStickerById(
     } else if (!sticker) {
       sticker = await trx
         .selectFrom("sticker")
-        .select(["id", "title", "tags"])
+        .select(columns)
         .where("id", "=", id)
         .executeTakeFirst();
     }
 
     if (!sticker) return; // Don't update cache unless sticker is found
 
-    stickerCache.set(id, {
-      id: sticker.id,
-      title: sticker.title,
-      tags: sticker.tags,
-    });
+    stickerCache.set(id, sticker);
   });
 
   return sticker;
@@ -254,10 +165,7 @@ export async function updateSticker(id: string, sticker: StickerUpdate) {
     .where("id", "=", id)
     .executeTakeFirstOrThrow();
 
-  searchCache.clear();
-
-  // Need to SELECT after updating because RETURNING doesn't work with FTS5...
-  await getStickerById(id);
+  onStickerUpdated(id);
 }
 
 export async function deleteSticker(id: string) {
@@ -277,8 +185,7 @@ export async function deleteSticker(id: string) {
 
     if (!result.numDeletedRows) return false;
 
-    stickerCache.delete(id);
-    searchCache.clear();
+    onStickerUpdated(id);
     return true;
   });
 }
