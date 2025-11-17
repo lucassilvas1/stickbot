@@ -85,46 +85,58 @@ export class TypedError extends Error {
   }
 }
 
-export class Cache<K extends PropertyKey | undefined, V> {
+export class Cache<K extends PropertyKey, V> {
   private cache = new Map<K, V>();
-  private timeoutIds = new Map<K, NodeJS.Timeout>();
-  private expirationMs;
+  private timers = new Map<K, NodeJS.Timeout>();
+  constructor(private expirationMs: number, private maxSize?: number) {}
 
-  constructor(expirationMs: number) {
-    this.expirationMs = expirationMs;
+  private clearIfOverLimit() {
+    if (!this.maxSize) return;
+    while (this.cache.size > this.maxSize) {
+      // evict oldest
+      const oldestKey = this.cache.keys().next().value;
+      this.delete(oldestKey!);
+    }
   }
 
-  private resetTimeout(key: K) {
-    clearTimeout(this.timeoutIds.get(key));
-    this.timeoutIds.set(
-      key,
-      setTimeout(() => this.cache.delete(key), this.expirationMs)
-    );
+  private resetTimer(key: K) {
+    const prev = this.timers.get(key);
+    if (prev) clearTimeout(prev);
+    const t = setTimeout(() => {
+      this.cache.delete(key);
+      this.timers.delete(key);
+    }, this.expirationMs);
+    this.timers.set(key, t);
   }
 
   set(key: K, value: V) {
     this.cache.set(key, value);
-    this.resetTimeout(key);
+    this.resetTimer(key);
+    this.clearIfOverLimit();
   }
 
-  get(key: K) {
-    this.resetTimeout(key);
-    return this.cache.get(key);
+  get(key: K): V | undefined {
+    const v = this.cache.get(key);
+    if (v !== undefined) {
+      this.resetTimer(key);
+      return v;
+    }
   }
 
   delete(key: K) {
-    clearTimeout(this.timeoutIds.get(key));
-    this.timeoutIds.delete(key);
+    const t = this.timers.get(key);
+    if (t) clearTimeout(t);
+    this.timers.delete(key);
     this.cache.delete(key);
   }
 
-  entries() {
-    return this.cache.entries();
+  clear() {
+    for (const t of this.timers.values()) clearTimeout(t);
+    this.timers.clear();
+    this.cache.clear();
   }
 
-  clear() {
-    this.timeoutIds.forEach(clearTimeout);
-    this.timeoutIds.clear();
-    this.cache.clear();
+  entries(): IterableIterator<[K, V]> {
+    return this.cache.entries();
   }
 }
