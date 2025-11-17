@@ -6,7 +6,10 @@ import type {
   UserPermissionsUpdate,
 } from "../types/db.js";
 import { deleteVariants, treatString } from "../utils/index.js";
-import type { SimplifiedSticker } from "../types/stickers.js";
+import {
+  simplifiedStickerColumns,
+  type SimplifiedSticker,
+} from "../types/stickers.js";
 import { db } from "./db.js";
 import {
   onStickerUpdated,
@@ -73,7 +76,7 @@ export function insertSticker(
   return db.transaction().execute(async (trx) => {
     const now = Date.now();
 
-    await trx
+    const sticker = await trx
       .insertInto("sticker")
       .values({
         ...newSticker,
@@ -82,10 +85,10 @@ export function insertSticker(
         timeAdded: now,
         timeModified: now,
       })
-      .returningAll()
+      .returning(simplifiedStickerColumns)
       .executeTakeFirstOrThrow();
 
-    onStickerUpdated(newSticker.id);
+    onStickerUpdated(newSticker.id, sticker);
 
     await trx.insertInto("variant").values(variants).execute();
   });
@@ -107,14 +110,6 @@ export async function getStickerById(
   let sticker = stickerCache.get(id);
 
   await db.transaction().execute(async (trx) => {
-    const columns = [
-      "id",
-      "title",
-      "tags",
-      "usageCount",
-      "timeLastUsed",
-    ] as const;
-
     if (incrementUsage && userId) {
       const now = Date.now();
 
@@ -125,7 +120,7 @@ export async function getStickerById(
           timeLastUsed: now,
         }))
         .where("id", "=", id)
-        .returning(columns)
+        .returning(simplifiedStickerColumns)
         .executeTakeFirst();
       await trx
         .insertInto("usage")
@@ -140,21 +135,21 @@ export async function getStickerById(
     } else if (!sticker) {
       sticker = await trx
         .selectFrom("sticker")
-        .select(columns)
+        .select(simplifiedStickerColumns)
         .where("id", "=", id)
         .executeTakeFirst();
     }
 
     if (!sticker) return; // Don't update cache unless sticker is found
 
-    stickerCache.set(id, sticker);
+    onStickerUpdated(id, sticker);
   });
 
   return sticker;
 }
 
 export async function updateSticker(id: string, sticker: StickerUpdate) {
-  await db
+  const updatedSticker = await db
     .updateTable("sticker")
     .set({
       title: sticker.title ? treatString(sticker.title) : undefined,
@@ -163,9 +158,10 @@ export async function updateSticker(id: string, sticker: StickerUpdate) {
       timeModified: Date.now(),
     })
     .where("id", "=", id)
+    .returning(simplifiedStickerColumns)
     .executeTakeFirstOrThrow();
 
-  onStickerUpdated(id);
+  onStickerUpdated(id, updatedSticker);
 }
 
 export async function deleteSticker(id: string) {

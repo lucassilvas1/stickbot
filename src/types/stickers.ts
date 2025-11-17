@@ -4,6 +4,13 @@ export type SimplifiedSticker = Pick<
   Sticker,
   "id" | "title" | "tags" | "usageCount" | "timeLastUsed"
 >;
+export const simplifiedStickerColumns: Readonly<(keyof SimplifiedSticker)[]> = [
+  "id",
+  "title",
+  "tags",
+  "usageCount",
+  "timeLastUsed",
+];
 
 export type StickerVariant = "original" | "high" | "thumbnail";
 

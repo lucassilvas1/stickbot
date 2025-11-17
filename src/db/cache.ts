@@ -21,10 +21,14 @@ export function clearAllSearchCaches() {
 }
 
 // When a sticker is updated (edit), call:
-export function onStickerUpdated(stickerId: string) {
+export function onStickerUpdated(
+  stickerId: string,
+  sticker?: SimplifiedSticker
+) {
   clearAllSearchCaches();
-  // remove sticker object
-  stickerCache.delete(stickerId);
+  // remove or replace sticker object
+  if (sticker) stickerCache.set(stickerId, sticker);
+  else stickerCache.delete(stickerId);
 }
 
 // When usage for a (userId, stickerId) changed, we must invalidate browse caches for that user
