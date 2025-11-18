@@ -9,6 +9,8 @@ import { deleteSticker } from "../../db/index.js";
 import { isUploader, isUserAllowed } from "../../utils/users.js";
 import { Constants } from "../../utils/index.js";
 
+export const isGlobal = true;
+
 export const data = new SlashCommandBuilder()
   .setContexts([
     InteractionContextType.PrivateChannel,
