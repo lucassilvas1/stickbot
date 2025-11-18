@@ -68,7 +68,7 @@ async function ffmpeg(
   args.push("-vf", filterChain);
 
   args.push("-t", String(Constants.MAX_VIDEO_DURATION_SECONDS)); // Trim to max duration
-  args.push("-c:v", "libwebp"); // Use libwebp codec
+  args.push("-c:v", "libwebp_anim"); // Use libwebp codec
   args.push("-loop", "0"); // Infinite loop for animated webp
 
   if (options.quality) args.push("-quality", String(options.quality));
