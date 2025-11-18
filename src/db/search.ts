@@ -1,7 +1,8 @@
 import { sql } from "kysely";
-import type {
-  SimplifiedSticker,
-  StickerSearchOrder,
+import {
+  simplifiedStickerColumns,
+  type SimplifiedSticker,
+  type StickerSearchOrder,
 } from "../types/stickers.js";
 import { treatString } from "../utils/misc.js";
 import { searchCache, searchCacheKey, stickerCache } from "./cache.js";
@@ -32,13 +33,7 @@ async function hydrateStickers(ids: string[]): Promise<SimplifiedSticker[]> {
   if (missingIds.length > 0) {
     const fetched = await db
       .selectFrom("sticker")
-      .select([
-        "sticker.id",
-        "sticker.title",
-        "sticker.tags",
-        "sticker.timeLastUsed",
-        "sticker.usageCount",
-      ])
+      .select(simplifiedStickerColumns)
       .where("sticker.id", "in", missingIds)
       .execute();
 
@@ -74,15 +69,7 @@ async function runQueryAndCacheIds(
   opts: StickerSearchOptions
 ): Promise<string[]> {
   const { query, userId, order, limit = 25 } = opts;
-  let sb = db
-    .selectFrom("sticker")
-    .select([
-      "sticker.id",
-      "sticker.title",
-      "sticker.tags",
-      "sticker.timeLastUsed",
-      "sticker.usageCount",
-    ]);
+  let sb = db.selectFrom("sticker").select(simplifiedStickerColumns);
 
   if (query) {
     const ftsQuery = toFtsQuery(query);

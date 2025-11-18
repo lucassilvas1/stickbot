@@ -2,14 +2,17 @@ import type { Sticker } from "./db.js";
 
 export type SimplifiedSticker = Pick<
   Sticker,
-  "id" | "title" | "tags" | "usageCount" | "timeLastUsed"
+  "id" | "title" | "tags" | "usageCount" | "timeLastUsed" | "uploaderId"
 >;
-export const simplifiedStickerColumns: Readonly<(keyof SimplifiedSticker)[]> = [
-  "id",
-  "title",
-  "tags",
-  "usageCount",
-  "timeLastUsed",
+export const simplifiedStickerColumns: Readonly<
+  `sticker.${keyof SimplifiedSticker}`[]
+> = [
+  "sticker.id",
+  "sticker.title",
+  "sticker.tags",
+  "sticker.usageCount",
+  "sticker.timeLastUsed",
+  "sticker.uploaderId",
 ];
 
 export type StickerSearchOrder = "usage.timeLastUsed" | "usage.count";
