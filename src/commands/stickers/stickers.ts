@@ -2,6 +2,7 @@ import {
   ActionRowBuilder,
   ApplicationIntegrationType,
   ButtonBuilder,
+  ButtonInteraction,
   ButtonStyle,
   ChatInputCommandInteraction,
   ComponentType,
@@ -17,6 +18,7 @@ import {
 import type { CommandExecutor } from "../../types/commands.js";
 import { type Align, padStringToWidth } from "discord-button-width";
 import {
+  getStickerById,
   getUserPermissionsById,
   incrementStickerUsage,
   search,
@@ -57,6 +59,11 @@ export const data = new SlashCommandBuilder()
         { name: "Most Recent", value: "usage.timeLastUsed" },
         { name: "Most Used", value: "usage.count" },
       ])
+  )
+  .addBooleanOption((opt) =>
+    opt
+      .setName("info")
+      .setDescription("Display title and tags for the chosen sticker")
   );
 
 function buildHeader(
@@ -160,6 +167,45 @@ function buildMenu(
   return container;
 }
 
+async function onSendSticker(
+  commandInteraction: ChatInputCommandInteraction<CacheType>,
+  buttonInteraction: ButtonInteraction<CacheType>,
+  stickerId: string,
+  userId: string
+) {
+  const showInfo = commandInteraction.options.getBoolean("info");
+  if (showInfo) {
+    const sticker = await getStickerById(stickerId);
+    await commandInteraction.editReply({
+      components: [
+        new TextDisplayBuilder({
+          content: `**Title**: __${sticker?.title}__\n**Tags**: __${sticker?.tags}__`,
+        }),
+      ],
+    });
+  } else await commandInteraction.deleteReply();
+  await buttonInteraction.reply(getVariantUrl(stickerId, "high"));
+  await incrementStickerUsage(stickerId, userId);
+}
+
+async function onPaginate(
+  interaction: ButtonInteraction<CacheType>,
+  offset: number,
+  userId: string,
+  query?: string,
+  order?: StickerSearchOrder
+) {
+  const results = await search({ query, userId, offset, limit: 9, order });
+  const menu = buildMenu(
+    query,
+    results.stickers,
+    offset,
+    results.totalResultCount
+  );
+
+  await interaction.update({ components: [menu] });
+}
+
 function handleMenuInteractions(
   interaction: ChatInputCommandInteraction<CacheType>,
   message: Message<boolean>,
@@ -177,20 +223,9 @@ function handleMenuInteractions(
 
     if (type === "sticker") {
       if (!value) throw Error(`Malformed button customId: "${i.customId}"`);
-      await interaction.deleteReply();
-      await i.reply(getVariantUrl(value, "high"));
-      await incrementStickerUsage(value, userId);
+      await onSendSticker(interaction, i, value, userId);
     } else if (type === "offset") {
-      const offset = +value!;
-      const results = await search({ query, userId, offset, limit: 9, order });
-      const menu = buildMenu(
-        query,
-        results.stickers,
-        offset,
-        results.totalResultCount
-      );
-
-      i.update({ components: [menu] });
+      await onPaginate(i, +value!, userId, query, order);
     } else {
       // should never happen
       return i.reply({
