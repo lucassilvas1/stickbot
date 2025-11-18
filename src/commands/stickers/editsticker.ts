@@ -15,7 +15,12 @@ import {
   updateSticker,
 } from "../../db/index.js";
 import type { SimplifiedSticker } from "../../types/stickers.js";
-import { Constants, isFromAppUser, isUserAllowed } from "../../utils/index.js";
+import {
+  Constants,
+  isFromAppUser,
+  isUploader,
+  isUserAllowed,
+} from "../../utils/index.js";
 
 export const isGlobal = true;
 
@@ -64,14 +69,18 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute: CommandExecutor = async (interaction) => {
-  if (!(await isUserAllowed("editSticker", interaction))) {
+  const id = interaction.options.getString("query", true);
+
+  if (
+    !(await isUserAllowed("editSticker", interaction)) &&
+    !(await isUploader(interaction.user.id, id))
+  ) {
     return interaction.reply({
       content: Constants.PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }
 
-  const id = interaction.options.getString("query", true);
   const title = interaction.options.getString("title") ?? undefined;
   const tags = interaction.options.getString("tags") ?? undefined;
   const description = interaction.options.getString("description") ?? undefined;

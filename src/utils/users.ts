@@ -5,8 +5,13 @@ import type {
   SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import type { Permissions } from "../types/db.js";
-import { getUserPermissionsById } from "../db/index.js";
+import { getStickerById, getUserPermissionsById } from "../db/index.js";
 import { Constants } from "./index.js";
+
+export async function isUploader(userId: string, stickerId: string) {
+  const sticker = await getStickerById(stickerId);
+  return Boolean(sticker && sticker.uploaderId === userId);
+}
 
 export function isFromOwner(
   interaction:

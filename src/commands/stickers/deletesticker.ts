@@ -6,7 +6,7 @@ import {
 } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import { deleteSticker } from "../../db/index.js";
-import { isUserAllowed } from "../../utils/users.js";
+import { isUploader, isUserAllowed } from "../../utils/users.js";
 import { Constants } from "../../utils/index.js";
 
 export const data = new SlashCommandBuilder()
@@ -30,14 +30,18 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute: CommandExecutor = async (interaction) => {
-  if (!(await isUserAllowed("deleteSticker", interaction))) {
+  const id = interaction.options.getString("query", true);
+
+  if (
+    !(await isUserAllowed("deleteSticker", interaction)) &&
+    !(await isUploader(interaction.user.id, id))
+  ) {
     return interaction.reply({
       content: Constants.PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }
 
-  const id = interaction.options.getString("query", true);
   try {
     const isDeleted = await deleteSticker(id);
     if (isDeleted) {
