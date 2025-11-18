@@ -23,7 +23,7 @@ export async function up(db: Kysely<any>) {
       .addColumn("description", "text")
       .addColumn("usage_count", "integer", (col) => col.notNull().defaultTo(0))
       .addColumn("source_url", "text")
-      .addColumn("uploader_id", "text")
+      .addColumn("uploader_id", "text", (col) => col.notNull())
       .addColumn("time_added", "integer", (col) => col.notNull())
       .addColumn("time_modified", "integer", (col) => col.notNull())
       .addColumn("time_last_used", "integer")
