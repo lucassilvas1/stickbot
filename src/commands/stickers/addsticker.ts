@@ -22,6 +22,7 @@ import { env } from "../../env.js";
 import { insertSticker } from "../../db/index.js";
 import { rm } from "fs/promises";
 import type { TypedErrorCode } from "../../types/misc.js";
+import { SUPPORTED_CONTAINERS } from "../../utils/constants.js";
 
 export const isGlobal = true;
 
@@ -103,25 +104,25 @@ async function fetchMedia(url: string) {
     throw new TypedError("TOO_LARGE");
   }
 
-  const [kind, ext] = (res.headers["content-type"] as string)
+  const container = (res.headers["content-type"] as string)
     .toLowerCase()!
     .split(";")[0]!
-    .split("/");
+    .split("/")?.[1];
 
-  if (!kind || !ext) {
+  if (!container) {
     throw new TypedError("INVALID_TYPE", {
       message: "Could not infer MIME type from headers",
     });
   }
 
-  if (!["image", "video"].includes(kind!)) {
+  if (!SUPPORTED_CONTAINERS.includes(container!)) {
     await res.body.dump();
     throw new TypedError("INVALID_TYPE", {
       message: res.headers["content-type"]?.toString(),
     });
   }
 
-  return { response: res, extension: ext };
+  return { response: res, extension: container };
 }
 
 async function generateVariants(
