@@ -25,7 +25,7 @@ export type StickerTable = {
   description: string | null;
   usageCount: ColumnType<number, number | undefined, number>;
   sourceUrl: ColumnType<string | null, string | null, never>;
-  uploaderId: ColumnType<string | null, string | null, never>;
+  uploaderId: ColumnType<string, string, never>;
   timeAdded: ColumnType<number, number, never>;
   timeModified: number;
   timeLastUsed: number | null;

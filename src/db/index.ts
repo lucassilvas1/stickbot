@@ -87,10 +87,12 @@ export function insertSticker(
         timeAdded: now,
         timeModified: now,
         timeLastUsed: now,
+        usageCount: 1,
       })
       .returning(simplifiedStickerColumns)
       .executeTakeFirstOrThrow();
 
+    incrementStickerUsage(sticker.id, sticker.uploaderId, undefined, false);
     onStickerUpdated(newSticker.id, true, { sticker });
 
     await trx.insertInto("variant").values(variants).execute();
@@ -100,20 +102,24 @@ export function insertSticker(
 export async function incrementStickerUsage(
   stickerId: string,
   userId: string,
-  transaction?: Transaction<Database>
+  transaction?: Transaction<Database>,
+  incrementGlobal = true
 ) {
   const now = Date.now();
 
   const run = async (trx: Transaction<Database>) => {
-    const sticker = await trx
-      .updateTable("sticker")
-      .set((eb) => ({
-        usageCount: eb("usageCount", "+", 1),
-        timeLastUsed: now,
-      }))
-      .where("id", "=", stickerId)
-      .returning(simplifiedStickerColumns)
-      .executeTakeFirst();
+    let sticker;
+    if (incrementGlobal) {
+      sticker = await trx
+        .updateTable("sticker")
+        .set((eb) => ({
+          usageCount: eb("usageCount", "+", 1),
+          timeLastUsed: now,
+        }))
+        .where("id", "=", stickerId)
+        .returning(simplifiedStickerColumns)
+        .executeTakeFirst();
+    }
     await trx
       .insertInto("usage")
       .values({ userId, stickerId, count: 1, timeLastUsed: now })
