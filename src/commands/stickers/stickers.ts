@@ -126,6 +126,51 @@ function buildStickerButtons(stickers: SimplifiedSticker[]) {
   return rows;
 }
 
+function buildNavigationButtons(
+  offset: number,
+  stickers: SimplifiedSticker[],
+  resultCount: number
+) {
+  const prevOffset = offset - stickers.length;
+  const isFirstPage = prevOffset < 0;
+  const nextOffset = offset + stickers.length;
+  const isLastPage = nextOffset >= resultCount;
+  const buttonWidth = 106;
+
+  return [
+    buildButton(
+      "First Page",
+      // Avoid duplicating customId
+      "first",
+      buttonWidth,
+      ButtonStyle.Primary,
+      isFirstPage
+    ),
+    buildButton(
+      "Previous",
+      "offset:" + prevOffset,
+      buttonWidth,
+      // 244,
+      ButtonStyle.Primary,
+      isFirstPage
+    ),
+    buildButton(
+      "Next",
+      "offset:" + nextOffset,
+      buttonWidth,
+      ButtonStyle.Primary,
+      isLastPage
+    ),
+    buildButton(
+      "Last Page",
+      "last",
+      buttonWidth,
+      ButtonStyle.Primary,
+      isLastPage
+    ),
+  ];
+}
+
 function buildMenu(
   query: string | undefined,
   stickers: SimplifiedSticker[],
@@ -143,24 +188,9 @@ function buildMenu(
     .addMediaGalleryComponents(gallery)
     .addActionRowComponents(stickerButtons);
 
-  const prevOffset = offset - stickers.length;
-  const nextOffset = offset + stickers.length;
   container.addActionRowComponents((rowBuilder) =>
     rowBuilder.setComponents(
-      buildButton(
-        "Previous",
-        "offset:" + prevOffset,
-        244,
-        ButtonStyle.Primary,
-        prevOffset < 0
-      ),
-      buildButton(
-        "Next",
-        "offset:" + nextOffset,
-        244,
-        ButtonStyle.Primary,
-        nextOffset >= resultCount
-      )
+      buildNavigationButtons(offset, stickers, resultCount)
     )
   );
 
@@ -211,6 +241,7 @@ function handleMenuInteractions(
   message: Message<boolean>,
   userId: string,
   order: StickerSearchOrder,
+  resultCount: number,
   query?: string
 ) {
   const collector = message.createMessageComponentCollector({
@@ -221,17 +252,37 @@ function handleMenuInteractions(
   collector?.on("collect", async (i) => {
     const [type, value] = i.customId.split(":");
 
-    if (type === "sticker") {
-      if (!value) throw Error(`Malformed button customId: "${i.customId}"`);
-      await onSendSticker(interaction, i, value, userId);
-    } else if (type === "offset") {
-      await onPaginate(i, +value!, userId, query, order);
-    } else {
-      // should never happen
-      return i.reply({
-        content: "Something went wrong...",
-        flags: MessageFlags.Ephemeral,
-      });
+    switch (type) {
+      case "sticker": {
+        if (!value) throw Error(`Malformed button customId: "${i.customId}"`);
+        await onSendSticker(interaction, i, value, userId);
+        break;
+      }
+      case "offset": {
+        await onPaginate(i, +value!, userId, query, order);
+        break;
+      }
+      case "first": {
+        await onPaginate(i, 0, userId, query, order);
+        break;
+      }
+      case "last": {
+        await onPaginate(
+          i,
+          resultCount - (resultCount % 9 || 9),
+          userId,
+          query,
+          order
+        );
+        break;
+      }
+      default: {
+        // should never happen
+        return i.reply({
+          content: "Something went wrong...",
+          flags: MessageFlags.Ephemeral,
+        });
+      }
     }
   });
 }
@@ -273,5 +324,12 @@ export const execute: CommandExecutor = async (interaction) => {
     });
   }
 
-  handleMenuInteractions(interaction, message, userId, order, query);
+  handleMenuInteractions(
+    interaction,
+    message,
+    userId,
+    order,
+    results.totalResultCount,
+    query
+  );
 };
