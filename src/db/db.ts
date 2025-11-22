@@ -1,11 +1,23 @@
 import SQLite from "better-sqlite3";
-import { mkdir } from "fs/promises";
+import { copyFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { env } from "../env.js";
 import { Constants } from "../utils/index.js";
 import { migrateToLatest } from "./migrate.js";
 import { CamelCasePlugin, Kysely, SqliteDialect } from "kysely";
 import type { Database } from "../types/db.js";
+import { readdirSync } from "fs";
+
+function moveStaticFiles() {
+  const originalPath = join(import.meta.dirname, "../../assets");
+  const names = readdirSync(originalPath);
+  const promises = Promise.all(
+    names.map((name) =>
+      copyFile(join(originalPath, name), join(env.ASSETS_DIR_PATH, name))
+    )
+  );
+  return promises;
+}
 
 function createDbDir() {
   const promises = [];
@@ -41,6 +53,7 @@ function createDb() {
 
 export const db = await (async () => {
   await createDbDir();
+  await moveStaticFiles();
   await migrateToLatest(createDb());
 
   const db = createDb();
