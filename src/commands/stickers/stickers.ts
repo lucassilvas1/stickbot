@@ -131,9 +131,9 @@ function buildNavigationButtons(
   stickers: SimplifiedSticker[],
   resultCount: number
 ) {
-  const prevOffset = offset - stickers.length;
+  const prevOffset = offset - 9;
   const isFirstPage = prevOffset < 0;
-  const nextOffset = offset + stickers.length;
+  const nextOffset = offset + 9;
   const isLastPage = nextOffset >= resultCount;
   const buttonWidth = 106;
 
