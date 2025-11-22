@@ -121,7 +121,6 @@ function buildStickerButtons(stickers: SimplifiedSticker[]) {
       rowBuilder.addComponents(button);
     }
     rows.push(rowBuilder);
-    if (donePlacing) break;
   }
   return rows;
 }
