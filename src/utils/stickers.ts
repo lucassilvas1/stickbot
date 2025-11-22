@@ -26,7 +26,7 @@ export function getVariantUrl(
 ) {
   let hostName = env.ASSETS_SERVER_HOSTNAME;
   if (hostName.at(-1) !== "/") hostName += "/";
-  return `${env.ASSETS_SERVER_HOSTNAME}${Constants.VariantEncodingMap[variant].dirName}/${id}.webp`;
+  return `${hostName}${Constants.VariantEncodingMap[variant].dirName}/${id}.webp`;
 }
 
 export function deleteVariants(
