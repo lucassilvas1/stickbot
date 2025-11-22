@@ -26,6 +26,7 @@ import {
 import {
   Constants,
   generateId,
+  getAssetUrl,
   getVariantUrl,
   isFromOwner,
 } from "../../utils/index.js";
@@ -175,6 +176,12 @@ function buildMenu(
   const galleryItems = stickers.map((s) => ({
     media: { url: getVariantUrl(s.id, "high") },
   }));
+  if (galleryItems.length < 9) {
+    const placeholderUrl = getAssetUrl(Constants.GRID_PLACEHOLDER_IMG_PATH);
+    const placeholderItem = { media: { url: placeholderUrl } };
+    const placeholders = Array(9 - galleryItems.length).fill(placeholderItem);
+    galleryItems.push(...placeholders);
+  }
   const gallery = new MediaGalleryBuilder().addItems(...galleryItems);
   const header = buildHeader(query, offset + stickers.length, resultCount);
   const stickerButtons = buildStickerButtons(stickers);

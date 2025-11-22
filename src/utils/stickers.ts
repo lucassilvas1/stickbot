@@ -20,13 +20,20 @@ export const autocomplete: CommandAutocomplete = async (interaction) => {
   return interaction.respond(toAutocompleteType(stickers));
 };
 
+export function getAssetUrl(relativePath: string) {
+  let hostName = env.ASSETS_SERVER_HOSTNAME;
+  if (hostName.at(-1) !== "/") hostName += "/";
+  if (relativePath[0] === "/") relativePath = relativePath.slice(1);
+  return hostName + relativePath;
+}
+
 export function getVariantUrl(
   id: string,
   variant: Exclude<StickerVariant, "original">
 ) {
-  let hostName = env.ASSETS_SERVER_HOSTNAME;
-  if (hostName.at(-1) !== "/") hostName += "/";
-  return `${hostName}${Constants.VariantEncodingMap[variant].dirName}/${id}.webp`;
+  return getAssetUrl(
+    `${Constants.VariantEncodingMap[variant].dirName}/${id}.webp`
+  );
 }
 
 export function deleteVariants(
