@@ -125,11 +125,7 @@ function buildStickerButtons(stickers: SimplifiedSticker[]) {
   return rows;
 }
 
-function buildNavigationButtons(
-  offset: number,
-  stickers: SimplifiedSticker[],
-  resultCount: number
-) {
+function buildNavigationButtons(offset: number, resultCount: number) {
   const prevOffset = offset - 9;
   const isFirstPage = prevOffset < 0;
   const nextOffset = offset + 9;
@@ -188,9 +184,7 @@ function buildMenu(
     .addActionRowComponents(stickerButtons);
 
   container.addActionRowComponents((rowBuilder) =>
-    rowBuilder.setComponents(
-      buildNavigationButtons(offset, stickers, resultCount)
-    )
+    rowBuilder.setComponents(buildNavigationButtons(offset, resultCount))
   );
 
   return container;
