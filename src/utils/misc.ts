@@ -20,14 +20,16 @@ export function generateId(length: number = 12): string {
 export function treatString(string: string) {
   // Escape apostrophes (single quotes), otherwise FTS5 will throw
   // Colons are used as separators for the search cache
-  return `"${string
-    .replaceAll("'", " ")
-    // .replaceAll("'", '"\'"')
-    .replaceAll('"', "")
-    .replaceAll(":", "")
-    .toLowerCase()
-    .trim()
-    .normalize("NFC")}"`;
+  return (
+    string
+      .replaceAll("'", " ")
+      // .replaceAll("'", '"\'"')
+      .replaceAll('"', "")
+      .replaceAll(":", "")
+      .toLowerCase()
+      .trim()
+      .normalize("NFC")
+  );
 }
 
 export function findString(

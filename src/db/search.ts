@@ -58,10 +58,10 @@ async function hydrateStickers(ids: string[]): Promise<SimplifiedSticker[]> {
 
 function toFtsQuery(query?: string) {
   if (!query) return;
-  return treatString(query)
+  return `"${treatString(query)
     .split(" ")
     .map((t) => (t ? t + "*" : ""))
-    .join(" ");
+    .join(" ")}"`;
 }
 
 // build & execute search query, return ordered sticker ids (not hydrated)
