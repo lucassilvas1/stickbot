@@ -56,12 +56,24 @@ async function hydrateStickers(ids: string[]): Promise<SimplifiedSticker[]> {
   return out as SimplifiedSticker[];
 }
 
+function ftsSafeToken(token: string): string {
+  if (!token) return "";
+
+  const needsLiteral = /["'(){}:<>^~*]+/.test(token); // anything that FTS5 parses specially
+
+  if (needsLiteral) {
+    // escape single quotes inside literal strings
+    const safe = token.replace(/'/g, "''");
+    return `'${safe}'`;
+  }
+
+  // normal token: allow prefix match with *
+  return token + "*";
+}
+
 function toFtsQuery(query?: string) {
   if (!query) return;
-  return `"${treatString(query)
-    .split(" ")
-    .map((t) => (t ? t + "*" : ""))
-    .join(" ")}"`;
+  return treatString(query).split(/\s+/).map(ftsSafeToken).join(" ");
 }
 
 // build & execute search query, return ordered sticker ids (not hydrated)
