@@ -8,3 +8,5 @@ dist/
 
 *.md
 !README.md
+
+*.bat
