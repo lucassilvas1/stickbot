@@ -78,7 +78,7 @@ export function spawn(
     });
 
     process.stdin.on("error", (error) => {
-      reject(new Error("stdin error: ", error));
+      reject(new Error("stdin error: " + error));
     });
   });
 }
