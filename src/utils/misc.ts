@@ -17,15 +17,16 @@ export function generateId(length: number = 12): string {
   return id;
 }
 
-export function treatString(string: string) {
+export function sanitizeString(string: string) {
   // Escape apostrophes (single quotes), otherwise FTS5 will throw
   // Colons are used as separators for the search cache
   return (
     string
-      .replaceAll("'", " ")
-      // .replaceAll("'", '"\'"')
-      .replaceAll('"', "")
-      .replaceAll(":", "")
+      // Remove characters that could interfere with FTS5 parsing
+      .replace(/["(){}:<>^~*\-_]/g, "")
+      // Replace double spaces and apostrophes with single spaces
+      .replace(/'/g, " ")
+      .replace(/\s{2,}/g, " ")
       .toLowerCase()
       .trim()
       .normalize("NFC")

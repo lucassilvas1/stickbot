@@ -6,7 +6,7 @@ import type {
   StickerUpdate,
   UserPermissionsUpdate,
 } from "../types/db.js";
-import { deleteVariants, treatString } from "../utils/index.js";
+import { deleteVariants, sanitizeString } from "../utils/index.js";
 import {
   simplifiedStickerColumns,
   type SimplifiedSticker,
@@ -82,8 +82,8 @@ export function insertSticker(
       .insertInto("sticker")
       .values({
         ...newSticker,
-        title: treatString(newSticker.title),
-        tags: treatString(newSticker.tags),
+        title: sanitizeString(newSticker.title),
+        tags: sanitizeString(newSticker.tags),
         timeAdded: now,
         timeModified: now,
         timeLastUsed: now,
@@ -176,8 +176,8 @@ export async function updateSticker(id: string, sticker: StickerUpdate) {
   const updatedSticker = await db
     .updateTable("sticker")
     .set({
-      title: sticker.title ? treatString(sticker.title) : undefined,
-      tags: sticker.tags ? treatString(sticker.tags) : undefined,
+      title: sticker.title ? sanitizeString(sticker.title) : undefined,
+      tags: sticker.tags ? sanitizeString(sticker.tags) : undefined,
       description: sticker.description,
       timeModified: Date.now(),
     })
