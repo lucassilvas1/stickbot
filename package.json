@@ -11,7 +11,7 @@
     "start:prod": "cross-env NODE_ENV=production node dist/index.js",
     "deploy:dev": "npm run build && cross-env NODE_ENV=development node dist/deploy-commands.js",
     "deploy:prod": "npm run build && cross-env NODE_ENV=production node dist/deploy-commands.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +21,8 @@
     "@types/express": "^5.0.5",
     "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
   },
   "dependencies": {
     "better-sqlite3": "^12.4.1",
