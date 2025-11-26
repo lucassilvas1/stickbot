@@ -1,13 +1,17 @@
 import { statSync } from "fs";
 import { env } from "../env.js";
 import type { StickerVariant } from "../types/stickers.js";
-import { Constants, isFromAppUser } from "./index.js";
 import { extname, join } from "path";
 import type { NewVariant } from "../types/db.js";
 import { spawn, TypedError } from "./misc.js";
 import type { CommandAutocomplete } from "../types/commands.js";
 import { search, toAutocompleteType } from "../db/index.js";
 import { rm } from "fs/promises";
+import { isFromAppUser } from "./users.js";
+import {
+  ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+  VariantEncodingMap,
+} from "./constants.js";
 
 export const autocomplete: CommandAutocomplete = async (interaction) => {
   if (!(await isFromAppUser(interaction))) {
@@ -31,18 +35,15 @@ export function getVariantUrl(
   id: string,
   variant: Exclude<StickerVariant, "original">
 ) {
-  return getAssetUrl(
-    `${Constants.VariantEncodingMap[variant].dirName}/${id}.webp`
-  );
+  return getAssetUrl(`${VariantEncodingMap[variant].dirName}/${id}.webp`);
 }
 
 export function deleteVariants(
   id: string,
   variants: { type: StickerVariant; extension: string }[]
 ) {
-  const promises = Object.values(Constants.VariantEncodingMap).map(
-    ({ dirName }) =>
-      rm(join(env.ASSETS_DIR_PATH, dirName, id + ".webp"), { force: true })
+  const promises = Object.values(VariantEncodingMap).map(({ dirName }) =>
+    rm(join(env.ASSETS_DIR_PATH, dirName, id + ".webp"), { force: true })
   );
   const original = variants.find((variant) => variant.type === "original");
   promises.push(
@@ -118,7 +119,7 @@ export async function getVariantInfo(
 }
 
 export function getVariantPaths(stickerId: string, originalExtension: string) {
-  const paths = Object.values(Constants.VariantEncodingMap).map(({ dirName }) =>
+  const paths = Object.values(VariantEncodingMap).map(({ dirName }) =>
     join(env.ASSETS_DIR_PATH, dirName, stickerId + ".webp")
   );
 
@@ -126,7 +127,7 @@ export function getVariantPaths(stickerId: string, originalExtension: string) {
     paths.push(
       join(
         env.ASSETS_DIR_PATH,
-        Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+        ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
         `${stickerId}.${originalExtension}`
       )
     );

@@ -2,9 +2,9 @@ import { createWriteStream, renameSync, rmSync } from "fs";
 import type { Dispatcher } from "undici";
 import type { StickerVariantEncodingConfig } from "../types/stickers.js";
 import { spawn, TypedError } from "./misc.js";
-import { Constants } from "./index.js";
 import { env } from "../env.js";
 import sharp from "sharp";
+import { MAX_VIDEO_DURATION_SECONDS } from "./constants.js";
 
 export function saveFile(
   path: string,
@@ -67,7 +67,7 @@ async function ffmpeg(
   }
   args.push("-vf", filterChain);
 
-  args.push("-t", String(Constants.MAX_VIDEO_DURATION_SECONDS)); // Trim to max duration
+  args.push("-t", String(MAX_VIDEO_DURATION_SECONDS)); // Trim to max duration
   args.push("-c:v", "libwebp_anim"); // Use libwebp codec
   args.push("-loop", "0"); // Infinite loop for animated webp
 

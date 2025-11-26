@@ -6,7 +6,7 @@ import type {
 } from "discord.js";
 import type { Permissions } from "../types/db.js";
 import { getStickerById, getUserPermissionsById } from "../db/index.js";
-import { Constants } from "./index.js";
+import { USER_PERMISSION_WEIGHT_MAP } from "./constants.js";
 
 export async function isUploader(userId: string, stickerId: string) {
   const sticker = await getStickerById(stickerId);
@@ -84,10 +84,10 @@ export async function isUserAllowed<P extends keyof Permissions>(
 
 export function getUserPermissionWeight(user: Permissions) {
   let highestWeight = 0;
-  for (const key of Object.keys(Constants.USER_PERMISSION_WEIGHT_MAP)) {
-    const permission = key as keyof typeof Constants.USER_PERMISSION_WEIGHT_MAP;
+  for (const key of Object.keys(USER_PERMISSION_WEIGHT_MAP)) {
+    const permission = key as keyof typeof USER_PERMISSION_WEIGHT_MAP;
     if (!user[permission]) continue;
-    const weight = Constants.USER_PERMISSION_WEIGHT_MAP[permission];
+    const weight = USER_PERMISSION_WEIGHT_MAP[permission];
     if (weight > highestWeight) highestWeight = weight;
   }
   return highestWeight;
