@@ -20,7 +20,7 @@ function moveStaticFiles() {
 }
 
 function createDirs() {
-  const promises = [];
+  const promises: Promise<unknown>[] = [];
   const mkdirOptions = {
     recursive: true,
   };
@@ -33,7 +33,7 @@ function createDirs() {
     mkdir(env.DB_DIR_PATH, mkdirOptions)
   );
   promises.push(
-    Object.values(Constants.VariantEncodingMap).map(({ dirName }) =>
+    ...Object.values(Constants.VariantEncodingMap).map(({ dirName }) =>
       mkdir(join(env.ASSETS_DIR_PATH, dirName), mkdirOptions)
     )
   );
