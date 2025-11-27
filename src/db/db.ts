@@ -50,7 +50,7 @@ function createDb() {
   return db;
 }
 
-export const db = await (async () => {
+export async function initDb() {
   await createDirs();
   await moveStaticFiles();
 
@@ -67,4 +67,6 @@ export const db = await (async () => {
         }
       : () => {},
   });
-})();
+}
+
+export const db = await initDb();
