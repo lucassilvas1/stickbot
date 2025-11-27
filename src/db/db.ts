@@ -26,7 +26,6 @@ function createDirs() {
   };
 
   promises.push(
-    mkdir(join(env.ASSETS_DIR_PATH, Constants.TEMP_DIR_NAME), mkdirOptions),
     mkdir(
       join(env.ASSETS_DIR_PATH, Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
       mkdirOptions

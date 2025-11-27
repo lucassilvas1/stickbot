@@ -13,7 +13,6 @@ export const MEDIA_HEADERS_TIMEOUT_MS = 10_000;
 export const MEDIA_DOWNLOAD_TIMEOUT_MS = 60_000;
 
 export const ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME = "original";
-export const TEMP_DIR_NAME = "tmp";
 export const STICKER_ID_LENGTH = 12;
 
 export const STICKER_CACHE_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000;
