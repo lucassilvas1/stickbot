@@ -53,13 +53,9 @@ function createDb() {
 export async function initDb() {
   await createDirs();
   await moveStaticFiles();
-
-  const db = createDb();
-
-  await migrateToLatest(db);
-
-  return new Kysely<Database>({
-    dialect: new SqliteDialect({ database: db }),
+  const sqlite = createDb();
+  const db = new Kysely<Database>({
+    dialect: new SqliteDialect({ database: sqlite }),
     plugins: [new CamelCasePlugin()],
     log: env.VERBOSE_LOGGING
       ? (event) => {
@@ -67,6 +63,10 @@ export async function initDb() {
         }
       : () => {},
   });
+
+  await migrateToLatest(db);
+
+  return db;
 }
 
 export const db = await initDb();

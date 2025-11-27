@@ -1,20 +1,10 @@
 import * as path from "path";
 import { promises as fs } from "fs";
 import { Kysely, Migrator, FileMigrationProvider, SqliteDialect } from "kysely";
-import type { Database } from "better-sqlite3";
 
-export async function migrateToLatest(database: Database) {
-  const db = new Kysely<any>({
-    dialect: new SqliteDialect({ database: database }),
-    log: (e) => {
-      if (e.level === "error") {
-        console.error(e.error, "Something went wrong while migrating schema");
-      }
-    },
-  });
-
+export async function migrateToLatest(database: Kysely<any>) {
   const migrator = new Migrator({
-    db,
+    db: database,
     provider: new FileMigrationProvider({
       fs,
       path,
@@ -42,6 +32,4 @@ export async function migrateToLatest(database: Database) {
     console.error(error, "Failed to migrate schema");
     process.exit(1);
   }
-
-  await db.destroy();
 }
