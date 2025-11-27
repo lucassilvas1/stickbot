@@ -53,9 +53,10 @@ function createDb() {
 export const db = await (async () => {
   await createDirs();
   await moveStaticFiles();
-  await migrateToLatest(createDb());
 
   const db = createDb();
+
+  await migrateToLatest(db);
 
   return new Kysely<Database>({
     dialect: new SqliteDialect({ database: db }),
