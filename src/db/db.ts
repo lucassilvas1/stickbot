@@ -19,7 +19,7 @@ function moveStaticFiles() {
   return promises;
 }
 
-function createDbDir() {
+function createDirs() {
   const promises = [];
   const mkdirOptions = {
     recursive: true,
@@ -52,7 +52,7 @@ function createDb() {
 }
 
 export const db = await (async () => {
-  await createDbDir();
+  await createDirs();
   await moveStaticFiles();
   await migrateToLatest(createDb());
 
