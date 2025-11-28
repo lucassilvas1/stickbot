@@ -6,7 +6,7 @@ import {
   type CacheType,
   type Interaction,
 } from "discord.js";
-import { rateLimit } from "../utils/index.js";
+import { rateLimit } from "../utils/interactions.js";
 
 export const name = Events.InteractionCreate;
 

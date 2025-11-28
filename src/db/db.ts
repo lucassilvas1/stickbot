@@ -2,11 +2,14 @@ import SQLite from "better-sqlite3";
 import { copyFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { env } from "../env.js";
-import { Constants } from "../utils/index.js";
 import { migrateToLatest } from "./migrate.js";
 import { CamelCasePlugin, Kysely, SqliteDialect } from "kysely";
 import type { Database } from "../types/db.js";
 import { readdirSync } from "fs";
+import {
+  ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+  VariantEncodingMap,
+} from "../utils/constants.js";
 
 function moveStaticFiles() {
   const originalPath = join(import.meta.dirname, "../../assets");
@@ -27,13 +30,13 @@ function createDirs() {
 
   promises.push(
     mkdir(
-      join(env.ASSETS_DIR_PATH, Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
+      join(env.ASSETS_DIR_PATH, ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
       mkdirOptions
     ),
     mkdir(env.DB_DIR_PATH, mkdirOptions)
   );
   promises.push(
-    ...Object.values(Constants.VariantEncodingMap).map(({ dirName }) =>
+    ...Object.values(VariantEncodingMap).map(({ dirName }) =>
       mkdir(join(env.ASSETS_DIR_PATH, dirName), mkdirOptions)
     )
   );
@@ -68,5 +71,3 @@ export async function initDb() {
 
   return db;
 }
-
-export const db = await initDb();

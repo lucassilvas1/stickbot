@@ -5,9 +5,9 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
-import { deleteSticker } from "../../db/index.js";
 import { isUploader, isUserAllowed } from "../../utils/users.js";
-import { Constants } from "../../utils/index.js";
+import { deleteSticker } from "../../db/dbActions.js";
+import { PERMISSION_PUNT_MESSAGE } from "../../utils/constants.js";
 
 export const isGlobal = true;
 
@@ -39,7 +39,7 @@ export const execute: CommandExecutor = async (interaction) => {
     !(await isUploader(interaction.user.id, id))
   ) {
     return interaction.reply({
-      content: Constants.PERMISSION_PUNT_MESSAGE,
+      content: PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -62,4 +62,4 @@ export const execute: CommandExecutor = async (interaction) => {
   }
 };
 
-export { autocomplete } from "../../utils/index.js";
+export { autocomplete } from "../../utils/stickers.js";

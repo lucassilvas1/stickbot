@@ -1,4 +1,4 @@
-import { sql } from "kysely";
+import { Kysely, sql } from "kysely";
 import {
   simplifiedStickerColumns,
   type SimplifiedSticker,
@@ -6,7 +6,7 @@ import {
 } from "../types/stickers.js";
 import { sanitizeString } from "../utils/misc.js";
 import { searchCache, searchCacheKey, stickerCache } from "./cache.js";
-import { db } from "./db.js";
+import type { Database } from "../types/db.js";
 
 type StickerSearchOptions = {
   query?: string;
@@ -16,7 +16,10 @@ type StickerSearchOptions = {
   order?: StickerSearchOrder;
 };
 
-async function hydrateStickers(ids: string[]): Promise<SimplifiedSticker[]> {
+async function hydrateStickers(
+  db: Kysely<Database>,
+  ids: string[]
+): Promise<SimplifiedSticker[]> {
   const out: (SimplifiedSticker | undefined)[] = new Array(ids.length);
   const missingIds: string[] = [];
 
@@ -66,6 +69,7 @@ function toFtsQuery(query?: string) {
 
 // build & execute search query, return ordered sticker ids (not hydrated)
 async function runQueryAndCacheIds(
+  db: Kysely<Database>,
   opts: StickerSearchOptions
 ): Promise<string[]> {
   const { query, userId, order, limit = 25 } = opts;
@@ -106,7 +110,10 @@ async function runQueryAndCacheIds(
   return ids;
 }
 
-export async function search(opts: StickerSearchOptions = {}) {
+export async function _search(
+  db: Kysely<Database>,
+  opts: StickerSearchOptions = {}
+) {
   const { query, userId, offset, limit = 25, order } = opts;
 
   const key = searchCacheKey({ query, userId, order });
@@ -120,7 +127,12 @@ export async function search(opts: StickerSearchOptions = {}) {
     // cache miss: run query and cache ids
     // NOTE: for autocomplete, we run the same query but with limit 25
     const runLimit = userId ? 5000 : 25;
-    ids = await runQueryAndCacheIds({ query, userId, order, limit: runLimit });
+    ids = await runQueryAndCacheIds(db, {
+      query,
+      userId,
+      order,
+      limit: runLimit,
+    });
     // store in cache
     searchCache.set(key, ids);
   }
@@ -132,11 +144,7 @@ export async function search(opts: StickerSearchOptions = {}) {
   const isLastPage = end >= ids.length;
 
   // hydrate sticker objects (from stickerCache, fetching missing)
-  const stickers = await hydrateStickers(pageIds);
+  const stickers = await hydrateStickers(db, pageIds);
 
   return { stickers, isLastPage, totalResultCount: ids.length };
-}
-
-export function toAutocompleteType(stickers: SimplifiedSticker[]) {
-  return stickers.map((s) => ({ name: s.title, value: s.id }));
 }

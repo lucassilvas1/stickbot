@@ -5,24 +5,36 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
-import {
-  Constants,
-  generateId,
-  getVariantInfo,
-  getVariantPaths,
-  getVariantUrl,
-  isUserAllowed,
-  processFile,
-  saveFile,
-  TypedError,
-} from "../../utils/index.js";
 import { join } from "path";
 import { Dispatcher, request } from "undici";
 import { env } from "../../env.js";
-import { insertSticker } from "../../db/index.js";
 import { rm } from "fs/promises";
 import type { TypedErrorCode } from "../../types/misc.js";
-import { SUPPORTED_CONTAINERS } from "../../utils/constants.js";
+import { insertSticker } from "../../db/dbActions.js";
+import {
+  MAX_ATTACHMENT_SIZE_BYTES,
+  MAX_ATTACHMENT_SIZE_MB,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TAGS_LENGTH,
+  MAX_TITLE_LENGTH,
+  MAX_VIDEO_DURATION_SECONDS,
+  MEDIA_DOWNLOAD_TIMEOUT_MS,
+  MIN_TAGS_LENGTH,
+  MIN_TITLE_LENGTH,
+  ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+  PERMISSION_PUNT_MESSAGE,
+  STICKER_ID_LENGTH,
+  SUPPORTED_CONTAINERS,
+  VariantEncodingMap,
+} from "../../utils/constants.js";
+import { generateId, TypedError } from "../../utils/misc.js";
+import { processFile, saveFile } from "../../utils/processing.js";
+import {
+  getVariantInfo,
+  getVariantPaths,
+  getVariantUrl,
+} from "../../utils/stickers.js";
+import { isUserAllowed } from "../../utils/users.js";
 
 export const isGlobal = true;
 
@@ -41,7 +53,7 @@ export const data = new SlashCommandBuilder()
   .setName("addsticker")
   .setDescription(
     "Add a new sticker via URL or attachment. Videos will be trimmed to " +
-      Constants.MAX_VIDEO_DURATION_SECONDS +
+      MAX_VIDEO_DURATION_SECONDS +
       "s"
   )
   .addStringOption((opt) =>
@@ -49,8 +61,8 @@ export const data = new SlashCommandBuilder()
       .setName("title")
       .setDescription("Title of the sticker. Should be unique")
       .setRequired(true)
-      .setMinLength(Constants.MIN_TITLE_LENGTH)
-      .setMaxLength(Constants.MAX_TITLE_LENGTH)
+      .setMinLength(MIN_TITLE_LENGTH)
+      .setMaxLength(MAX_TITLE_LENGTH)
   )
   .addStringOption((opt) =>
     opt
@@ -59,8 +71,8 @@ export const data = new SlashCommandBuilder()
         "Tags to help find the sticker. Comma separated, supports spaces"
       )
       .setRequired(true)
-      .setMinLength(Constants.MIN_TAGS_LENGTH)
-      .setMaxLength(Constants.MAX_TAGS_LENGTH)
+      .setMinLength(MIN_TAGS_LENGTH)
+      .setMaxLength(MAX_TAGS_LENGTH)
   )
   .addAttachmentOption((opt) =>
     opt
@@ -83,13 +95,13 @@ export const data = new SlashCommandBuilder()
         "Long form description of the sticker. Not currently used"
       )
       .setRequired(false)
-      .setMaxLength(Constants.MAX_DESCRIPTION_LENGTH)
+      .setMaxLength(MAX_DESCRIPTION_LENGTH)
   );
 
 async function fetchMedia(url: string) {
   const res = await request(url, {
-    bodyTimeout: Constants.MEDIA_DOWNLOAD_TIMEOUT_MS,
-    headersTimeout: Constants.MEDIA_DOWNLOAD_TIMEOUT_MS,
+    bodyTimeout: MEDIA_DOWNLOAD_TIMEOUT_MS,
+    headersTimeout: MEDIA_DOWNLOAD_TIMEOUT_MS,
     method: "GET",
   });
 
@@ -97,9 +109,7 @@ async function fetchMedia(url: string) {
     throw new TypedError("HTTP", { message: res.statusCode.toString() });
   }
 
-  if (
-    Number(res.headers["content-length"]) > Constants.MAX_ATTACHMENT_SIZE_BYTES
-  ) {
+  if (Number(res.headers["content-length"]) > MAX_ATTACHMENT_SIZE_BYTES) {
     await res.body.dump();
     throw new TypedError("TOO_LARGE");
   }
@@ -133,12 +143,12 @@ async function generateVariants(
   const fileName = stickerId + ".webp";
   const highVariantPath = join(
     env.ASSETS_DIR_PATH,
-    Constants.VariantEncodingMap.high.dirName,
+    VariantEncodingMap.high.dirName,
     fileName
   );
   const thumbnailVariantPath = join(
     env.ASSETS_DIR_PATH,
-    Constants.VariantEncodingMap.thumbnail.dirName,
+    VariantEncodingMap.thumbnail.dirName,
     fileName
   );
 
@@ -148,15 +158,11 @@ async function generateVariants(
     console.log("Saved original file");
 
     await Promise.all([
-      processFile(
-        originalPath,
-        highVariantPath,
-        Constants.VariantEncodingMap.high
-      ),
+      processFile(originalPath, highVariantPath, VariantEncodingMap.high),
       processFile(
         originalPath,
         thumbnailVariantPath,
-        Constants.VariantEncodingMap.thumbnail
+        VariantEncodingMap.thumbnail
       ),
     ]);
 
@@ -181,7 +187,7 @@ async function generateVariants(
 export const execute: CommandExecutor = async (interaction) => {
   if (!(await isUserAllowed("addSticker", interaction))) {
     return interaction.reply({
-      content: Constants.PERMISSION_PUNT_MESSAGE,
+      content: PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -199,7 +205,7 @@ export const execute: CommandExecutor = async (interaction) => {
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const stickerId = generateId(Constants.STICKER_ID_LENGTH);
+  const stickerId = generateId(STICKER_ID_LENGTH);
   let originalExt = "";
 
   try {
@@ -211,7 +217,7 @@ export const execute: CommandExecutor = async (interaction) => {
 
     const originalPath = join(
       env.ASSETS_DIR_PATH,
-      Constants.ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+      ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
       `${stickerId}.${originalExt}`
     );
 
@@ -255,7 +261,7 @@ export const execute: CommandExecutor = async (interaction) => {
         "Something went wrong while downloading source file. " + retryMessage,
       INVALID_TYPE:
         "The provided file is not supported. Please try a different one",
-      TOO_LARGE: `The provided file is too big. Please try again with a file ${Constants.MAX_ATTACHMENT_SIZE_MB}MB or smaller.`,
+      TOO_LARGE: `The provided file is too big. Please try again with a file ${MAX_ATTACHMENT_SIZE_MB}MB or smaller.`,
       PROCESSING_ERROR:
         "Something went wrong while processing the file. " + retryMessage,
     };

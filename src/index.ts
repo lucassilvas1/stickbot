@@ -1,7 +1,7 @@
 import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { env } from "./env.js";
-import { getCommands, registerEventHandlers } from "./utils/index.js";
 import express from "express";
+import { getCommands, registerEventHandlers } from "./utils/discord.js";
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 

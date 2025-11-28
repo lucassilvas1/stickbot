@@ -17,23 +17,23 @@ import {
 } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import { type Align, padStringToWidth } from "discord-button-width";
+import type {
+  SimplifiedSticker,
+  StickerSearchOrder,
+} from "../../types/stickers.js";
 import {
   getStickerById,
   getUserPermissionsById,
   incrementStickerUsage,
   search,
-} from "../../db/index.js";
+} from "../../db/dbActions.js";
+import { generateId } from "../../utils/misc.js";
+import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
 import {
-  Constants,
-  generateId,
-  getAssetUrl,
-  getVariantUrl,
-  isFromOwner,
-} from "../../utils/index.js";
-import type {
-  SimplifiedSticker,
-  StickerSearchOrder,
-} from "../../types/stickers.js";
+  GRID_PLACEHOLDER_IMG_PATH,
+  PERMISSION_PUNT_MESSAGE,
+} from "../../utils/constants.js";
+import { isFromOwner } from "../../utils/users.js";
 
 export const isGlobal = true;
 
@@ -177,7 +177,7 @@ function buildMenu(
     media: { url: getVariantUrl(s.id, "high") },
   }));
   if (galleryItems.length < 9) {
-    const placeholderUrl = getAssetUrl(Constants.GRID_PLACEHOLDER_IMG_PATH);
+    const placeholderUrl = getAssetUrl(GRID_PLACEHOLDER_IMG_PATH);
     const placeholderItem = { media: { url: placeholderUrl } };
     const placeholders = Array(9 - galleryItems.length).fill(placeholderItem);
     galleryItems.push(...placeholders);
@@ -293,7 +293,7 @@ export const execute: CommandExecutor = async (interaction) => {
     !(await getUserPermissionsById(interaction.user.id))
   ) {
     return interaction.reply({
-      content: Constants.PERMISSION_PUNT_MESSAGE,
+      content: PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }

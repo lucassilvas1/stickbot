@@ -8,19 +8,18 @@ import type {
   CommandAutocomplete,
   CommandExecutor,
 } from "../../types/commands.js";
-import {
-  getStickerById,
-  search,
-  toAutocompleteType,
-  updateSticker,
-} from "../../db/index.js";
 import type { SimplifiedSticker } from "../../types/stickers.js";
+import { getStickerById, search, updateSticker } from "../../db/dbActions.js";
 import {
-  Constants,
-  isFromAppUser,
-  isUploader,
-  isUserAllowed,
-} from "../../utils/index.js";
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TAGS_LENGTH,
+  MAX_TITLE_LENGTH,
+  MIN_TAGS_LENGTH,
+  MIN_TITLE_LENGTH,
+  PERMISSION_PUNT_MESSAGE,
+} from "../../utils/constants.js";
+import { isFromAppUser, isUploader, isUserAllowed } from "../../utils/users.js";
+import { toAutocompleteType } from "../../utils/stickers.js";
 
 export const isGlobal = true;
 
@@ -47,16 +46,16 @@ export const data = new SlashCommandBuilder()
     opt
       .setName("title")
       .setDescription("Update sticker title or leave it as it is")
-      .setMinLength(Constants.MIN_TITLE_LENGTH)
-      .setMaxLength(Constants.MAX_TITLE_LENGTH)
+      .setMinLength(MIN_TITLE_LENGTH)
+      .setMaxLength(MAX_TITLE_LENGTH)
       .setAutocomplete(true)
   )
   .addStringOption((opt) =>
     opt
       .setName("tags")
       .setDescription("Update sticker tags or leave them as they are")
-      .setMinLength(Constants.MIN_TAGS_LENGTH)
-      .setMaxLength(Constants.MAX_TAGS_LENGTH)
+      .setMinLength(MIN_TAGS_LENGTH)
+      .setMaxLength(MAX_TAGS_LENGTH)
       .setAutocomplete(true)
   )
   .addStringOption((opt) =>
@@ -65,7 +64,7 @@ export const data = new SlashCommandBuilder()
       .setDescription(
         "Update sticker description or leave it as it is (currently unused)"
       )
-      .setMaxLength(Constants.MAX_DESCRIPTION_LENGTH)
+      .setMaxLength(MAX_DESCRIPTION_LENGTH)
   );
 
 export const execute: CommandExecutor = async (interaction) => {
@@ -76,7 +75,7 @@ export const execute: CommandExecutor = async (interaction) => {
     !(await isUploader(interaction.user.id, id))
   ) {
     return interaction.reply({
-      content: Constants.PERMISSION_PUNT_MESSAGE,
+      content: PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }

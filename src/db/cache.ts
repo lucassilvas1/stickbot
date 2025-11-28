@@ -3,11 +3,15 @@ import type {
   SimplifiedSticker,
   StickerSearchOrder,
 } from "../types/stickers.js";
-import { Constants } from "../utils/index.js";
+import {
+  SEARCH_CACHE_EXPIRATION_MS,
+  STICKER_CACHE_EXPIRATION_MS,
+  USER_PERMISSIONS_CACHE_EXPIRATION_MS,
+} from "../utils/constants.js";
 import { Cache } from "../utils/misc.js";
 
 export const stickerCache = new Cache<string, SimplifiedSticker>(
-  Constants.STICKER_CACHE_EXPIRATION_MS
+  STICKER_CACHE_EXPIRATION_MS
 );
 // key format:
 // - autocomplete: `auto:${query}`
@@ -32,10 +36,10 @@ export function searchCacheKey({
 }
 
 export const searchCache = new Cache<SearchCacheKey, string[]>(
-  Constants.SEARCH_CACHE_EXPIRATION_MS
+  SEARCH_CACHE_EXPIRATION_MS
 );
 export const userPermissionsCache = new Cache<string, UserPermissions>(
-  Constants.USER_PERMISSIONS_CACHE_EXPIRATION_MS
+  USER_PERMISSIONS_CACHE_EXPIRATION_MS
 );
 
 function invalidateAllSearchCaches() {

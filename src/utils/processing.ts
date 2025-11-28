@@ -1,10 +1,15 @@
 import { createWriteStream, renameSync, rmSync } from "fs";
 import type { Dispatcher } from "undici";
-import type { StickerVariantEncodingConfig } from "../types/stickers.js";
+import type {
+  StickerVariant,
+  StickerVariantEncodingConfig,
+} from "../types/stickers.js";
 import { spawn, TypedError } from "./misc.js";
 import { env } from "../env.js";
 import sharp from "sharp";
-import { MAX_VIDEO_DURATION_SECONDS } from "./constants.js";
+import { MAX_VIDEO_DURATION_SECONDS, VariantEncodingMap } from "./constants.js";
+import { rm } from "fs/promises";
+import { join } from "path";
 
 export function saveFile(
   path: string,
@@ -48,6 +53,22 @@ export async function processFile(
       } else throw error;
     } else throw error;
   }
+}
+
+export function deleteVariants(
+  id: string,
+  variants: { type: StickerVariant; extension: string }[]
+) {
+  const promises = Object.values(VariantEncodingMap).map(({ dirName }) =>
+    rm(join(env.ASSETS_DIR_PATH, dirName, id + ".webp"), { force: true })
+  );
+  const original = variants.find((variant) => variant.type === "original");
+  promises.push(
+    rm(join(env.ASSETS_DIR_PATH, "original", `${id}.${original?.extension}`), {
+      force: true,
+    })
+  );
+  return Promise.all(promises);
 }
 
 async function ffmpeg(

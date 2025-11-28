@@ -5,8 +5,8 @@ import type {
   SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import type { Permissions } from "../types/db.js";
-import { getStickerById, getUserPermissionsById } from "../db/index.js";
 import { USER_PERMISSION_WEIGHT_MAP } from "./constants.js";
+import { getStickerById, getUserPermissionsById } from "../db/dbActions.js";
 
 export async function isUploader(userId: string, stickerId: string) {
   const sticker = await getStickerById(stickerId);

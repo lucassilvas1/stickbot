@@ -5,8 +5,10 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
-import { getStickerById, getUserPermissionsById } from "../../db/index.js";
-import { Constants, getVariantUrl, isFromOwner } from "../../utils/index.js";
+import { getStickerById, getUserPermissionsById } from "../../db/dbActions.js";
+import { isFromOwner } from "../../utils/users.js";
+import { PERMISSION_PUNT_MESSAGE } from "../../utils/constants.js";
+import { getVariantUrl } from "../../utils/stickers.js";
 
 export const isGlobal = true;
 
@@ -36,7 +38,7 @@ export const execute: CommandExecutor = async (interaction) => {
     !(await getUserPermissionsById(interaction.user.id))
   ) {
     return interaction.reply({
-      content: Constants.PERMISSION_PUNT_MESSAGE,
+      content: PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -53,4 +55,4 @@ export const execute: CommandExecutor = async (interaction) => {
   });
 };
 
-export { autocomplete } from "../../utils/index.js";
+export { autocomplete } from "../../utils/stickers.js";

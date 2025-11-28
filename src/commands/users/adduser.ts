@@ -1,12 +1,12 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
+import { insertUserPermissions } from "../../db/dbActions.js";
 import {
   addPermissionOptions,
-  Constants,
   isUserAllowed,
   parsePermissionOptions,
-} from "../../utils/index.js";
-import { insertUserPermissions } from "../../db/index.js";
+} from "../../utils/users.js";
+import { PERMISSION_PUNT_MESSAGE } from "../../utils/constants.js";
 
 export const isGlobal = false;
 
@@ -37,7 +37,7 @@ export const execute: CommandExecutor = async (interaction) => {
 
   if (!(await isUserAllowed("addUser", interaction))) {
     return interaction.reply({
-      content: Constants.PERMISSION_PUNT_MESSAGE,
+      content: PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }

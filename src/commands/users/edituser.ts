@@ -1,17 +1,20 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandExecutor } from "../../types/commands.js";
 import {
+  getUserPermissionsById,
+  updatedUserPermissions,
+} from "../../db/dbActions.js";
+import {
   addPermissionOptions,
-  Constants,
   getUserPermissionWeight,
   isFromOwner,
   isUserAllowed,
   parsePermissionOptions,
-} from "../../utils/index.js";
+} from "../../utils/users.js";
 import {
-  getUserPermissionsById,
-  updateUserPermissions,
-} from "../../db/index.js";
+  NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE,
+  PERMISSION_PUNT_MESSAGE,
+} from "../../utils/constants.js";
 
 export const isGlobal = false;
 
@@ -40,7 +43,7 @@ export const execute: CommandExecutor = async (interaction) => {
 
   if (!(await isUserAllowed("editUser", interaction))) {
     return interaction.reply({
-      content: Constants.PERMISSION_PUNT_MESSAGE,
+      content: PERMISSION_PUNT_MESSAGE,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -60,7 +63,7 @@ export const execute: CommandExecutor = async (interaction) => {
 
     if (targetPermissionWeight > editorPermissionWeight) {
       return interaction.reply({
-        content: Constants.NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE,
+        content: NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -69,7 +72,7 @@ export const execute: CommandExecutor = async (interaction) => {
   try {
     const username = interaction.options.getString("username") ?? undefined;
 
-    await updateUserPermissions(targetId, {
+    await updatedUserPermissions(targetId, {
       username,
       ...targetPermissions,
     });

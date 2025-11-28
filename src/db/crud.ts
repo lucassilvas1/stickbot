@@ -6,21 +6,18 @@ import type {
   StickerUpdate,
   UserPermissionsUpdate,
 } from "../types/db.js";
-import { deleteVariants, sanitizeString } from "../utils/index.js";
-import {
-  simplifiedStickerColumns,
-  type SimplifiedSticker,
-} from "../types/stickers.js";
-import { db } from "./db.js";
+import { sanitizeString } from "../utils/misc.js";
+import { simplifiedStickerColumns } from "../types/stickers.js";
 import {
   onStickerUpdated,
   stickerCache,
   userPermissionsCache,
 } from "./cache.js";
-import type { Transaction } from "kysely";
-export * from "./search.js";
+import type { Kysely, Transaction } from "kysely";
+import { deleteVariants } from "../utils/processing.js";
 
-export async function insertUserPermissions(
+export async function _insertUserPermissions(
+  db: Kysely<Database>,
   NewUserPermissions: NewUserPermissions
 ) {
   const userPermissions = await db
@@ -34,7 +31,10 @@ export async function insertUserPermissions(
   return true;
 }
 
-export async function getUserPermissionsById(id: string) {
+export async function _getUserPermissionsById(
+  db: Kysely<Database>,
+  id: string
+) {
   const cachedUser = userPermissionsCache.get(id);
   if (cachedUser) return cachedUser;
 
@@ -47,7 +47,8 @@ export async function getUserPermissionsById(id: string) {
   return userPermissions;
 }
 
-export async function updateUserPermissions(
+export async function _updateUserPermissions(
+  db: Kysely<Database>,
   id: string,
   userPermissions: UserPermissionsUpdate
 ) {
@@ -62,7 +63,7 @@ export async function updateUserPermissions(
   return !!updatedUserPermissions;
 }
 
-export async function deleteUserPermissions(id: string) {
+export async function _deleteUserPermissions(db: Kysely<Database>, id: string) {
   const result = await db
     .deleteFrom("userPermissions")
     .where("id", "=", id)
@@ -71,7 +72,8 @@ export async function deleteUserPermissions(id: string) {
   return !!result.numDeletedRows;
 }
 
-export function insertSticker(
+export function _insertSticker(
+  db: Kysely<Database>,
   newSticker: Omit<NewSticker, "timeAdded" | "timeModified">,
   variants: NewVariant[]
 ) {
@@ -92,14 +94,21 @@ export function insertSticker(
       .returning(simplifiedStickerColumns)
       .executeTakeFirstOrThrow();
 
-    incrementStickerUsage(sticker.id, sticker.uploaderId, undefined, false);
+    _incrementStickerUsage(
+      db,
+      sticker.id,
+      sticker.uploaderId,
+      undefined,
+      false
+    );
     onStickerUpdated(newSticker.id, true, { sticker });
 
     await trx.insertInto("variant").values(variants).execute();
   });
 }
 
-export async function incrementStickerUsage(
+export async function _incrementStickerUsage(
+  db: Kysely<Database>,
   stickerId: string,
   userId: string,
   transaction?: Transaction<Database>,
@@ -142,15 +151,8 @@ export async function incrementStickerUsage(
   return db.transaction().execute(run);
 }
 
-export async function getStickerById(
-  id: string
-): Promise<SimplifiedSticker | undefined>;
-export async function getStickerById(
-  id: string,
-  incrementUsage: true,
-  userId: string
-): Promise<SimplifiedSticker | undefined>;
-export async function getStickerById(
+export async function _getStickerById(
+  db: Kysely<Database>,
   id: string,
   incrementUsage?: boolean,
   userId?: string
@@ -159,7 +161,7 @@ export async function getStickerById(
 
   await db.transaction().execute(async (trx) => {
     if (incrementUsage && userId) {
-      sticker = await incrementStickerUsage(id, userId, trx);
+      sticker = await _incrementStickerUsage(db, id, userId, trx);
     } else if (!sticker) {
       sticker = await trx
         .selectFrom("sticker")
@@ -172,7 +174,11 @@ export async function getStickerById(
   return sticker;
 }
 
-export async function updateSticker(id: string, sticker: StickerUpdate) {
+export async function _updateSticker(
+  db: Kysely<Database>,
+  id: string,
+  sticker: StickerUpdate
+) {
   const updatedSticker = await db
     .updateTable("sticker")
     .set({
@@ -188,7 +194,7 @@ export async function updateSticker(id: string, sticker: StickerUpdate) {
   onStickerUpdated(id, true, { sticker: updatedSticker });
 }
 
-export async function deleteSticker(id: string) {
+export async function _deleteSticker(db: Kysely<Database>, id: string) {
   return db.transaction().execute(async (trx) => {
     const variants = await trx
       .selectFrom("variant")
