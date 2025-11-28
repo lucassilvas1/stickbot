@@ -1,6 +1,6 @@
 import * as path from "path";
 import { promises as fs } from "fs";
-import { Kysely, Migrator, FileMigrationProvider, SqliteDialect } from "kysely";
+import { Kysely, Migrator, FileMigrationProvider } from "kysely";
 
 export async function migrateToLatest(database: Kysely<any>) {
   const migrator = new Migrator({
