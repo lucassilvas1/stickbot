@@ -27,7 +27,7 @@ import {
   SUPPORTED_CONTAINERS,
   VariantEncodingMap,
 } from "../../utils/constants.js";
-import { generateId, TypedError } from "../../utils/misc.js";
+import { generateId, getNonLNZCharSet, TypedError } from "../../utils/misc.js";
 import { processFile, saveFile } from "../../utils/processing.js";
 import {
   getVariantInfo,
@@ -35,6 +35,7 @@ import {
   getVariantUrl,
 } from "../../utils/stickers.js";
 import { isUserAllowed } from "../../utils/users.js";
+import { invalidCharGuard } from "../../utils/interactions.js";
 
 export const isGlobal = true;
 
@@ -191,6 +192,9 @@ export const execute: CommandExecutor = async (interaction) => {
       flags: MessageFlags.Ephemeral,
     });
   }
+
+  const isValidInput = await invalidCharGuard(interaction);
+  if (!isValidInput) return;
 
   const url =
     interaction.options.getString("url") ??

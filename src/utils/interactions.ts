@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 import type { CommandData } from "../types/commands.js";
 import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
+import { getNonLNZCharSet } from "./misc.js";
 
 /**
  * Handles rate limiting for a command interaction.
@@ -46,4 +47,27 @@ export function rateLimit(
   setTimeout(() => timestamps.delete(interaction.user.id), cooldown);
 
   return false;
+}
+
+/**
+ * @param interaction The interaction to check
+ * @returns {Promise<boolean>} Resolves to true if invalid characters were found,
+ * false otherwise
+ */
+export async function invalidCharGuard(
+  interaction: ChatInputCommandInteraction
+) {
+  const title = interaction.options.getString("title") ?? "";
+  const tags = interaction.options.getString("tags") ?? "";
+  const invalidChars = getNonLNZCharSet(title + tags);
+
+  if (invalidChars.length > 0) {
+    await interaction.reply({
+      content: `The title and tags can only contain letters, numbers, and spaces. The following characters are not allowed: ${invalidChars.join(
+        " "
+      )}. Use Ctrl+Z to remove them and try again.`,
+    });
+  }
+
+  return invalidChars.length > 0;
 }

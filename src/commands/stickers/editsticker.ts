@@ -20,6 +20,7 @@ import {
 } from "../../utils/constants.js";
 import { isFromAppUser, isUploader, isUserAllowed } from "../../utils/users.js";
 import { toAutocompleteType } from "../../utils/stickers.js";
+import { invalidCharGuard } from "../../utils/interactions.js";
 
 export const isGlobal = true;
 
@@ -79,6 +80,9 @@ export const execute: CommandExecutor = async (interaction) => {
       flags: MessageFlags.Ephemeral,
     });
   }
+
+  const isValidInput = await invalidCharGuard(interaction);
+  if (!isValidInput) return;
 
   const title = interaction.options.getString("title") ?? undefined;
   const tags = interaction.options.getString("tags") ?? undefined;

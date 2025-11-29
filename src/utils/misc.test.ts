@@ -12,6 +12,7 @@ import {
   Cache,
   findString,
   generateId,
+  getNonLNZCharSet,
   sanitizeString,
   TypedError,
 } from "./misc.js";
@@ -42,6 +43,52 @@ describe("ID generator", () => {
 
     // Statistically impossible for 3 random IDs of length 20 to be identical
     expect(new Set([id1, id2, id3]).size).toBe(3);
+  });
+});
+
+describe("Unicode non-LNZ character extractor", () => {
+  it("returns empty array when only L, N, and Z category chars are present", () => {
+    const SPACE = "\u0020"; // Zs
+    const NBSP = "\u00A0"; // Zs
+    const OGHAM = "\u1680"; // Zs (Ogham space mark)
+    const LSEP = "\u2028"; // Zl (line separator)
+    const PSEP = "\u2029"; // Zp (paragraph separator)
+
+    const input = [
+      "a", // Letter (L)
+      "5", // Number (N)
+      SPACE,
+      NBSP,
+      OGHAM,
+      LSEP,
+      PSEP,
+    ].join("");
+
+    // None of these should be returned
+    expect(getNonLNZCharSet(input)).toEqual([]);
+  });
+
+  it("returns control characters such as LF and CR (not Z category)", () => {
+    const LF = "\u000A"; // control, Cc
+    const CR = "\u000D"; // control, Cc
+
+    const input = "a" + LF + "b" + CR + "c";
+
+    // Both LF and CR must be returned
+    expect(getNonLNZCharSet(input)).toEqual([LF, CR]);
+  });
+
+  it("handles combining marks (non-LNZ)", () => {
+    const COMBINING_ACUTE = String.fromCodePoint(0x0301); // Mn (mark, nonspacing)
+    const input = "a" + COMBINING_ACUTE + " e" + COMBINING_ACUTE;
+
+    expect(getNonLNZCharSet(input)).toEqual([COMBINING_ACUTE]);
+  });
+
+  it("extracts other symbols/punctuation correctly (non-LNZ)", () => {
+    const input = "abc✨—•🚀123";
+    // Letters and numbers ignored, symbols returned
+    expect(getNonLNZCharSet(input)).toEqual(["✨", "—", "•", "🚀"]);
   });
 });
 

@@ -17,6 +17,12 @@ export function generateId(length: number = 12): string {
   return id;
 }
 
+export function getNonLNZCharSet(string: string) {
+  // Match any single code point NOT in categories L*, N*, Z*
+  const regex = /[^\p{L}\p{N}\p{Z}]/gu;
+  return Array.from(new Set(string.match(regex) ?? []));
+}
+
 export function sanitizeString(string: string) {
   // Escape apostrophes (single quotes), otherwise FTS5 will throw
   // Colons are used as separators for the search cache
