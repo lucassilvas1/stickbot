@@ -5,7 +5,6 @@ import { extname, join } from "path";
 import type { NewVariant } from "../types/db.js";
 import { spawn, TypedError } from "./misc.js";
 import type { CommandAutocomplete } from "../types/commands.js";
-import { rm } from "fs/promises";
 import { isFromAppUser } from "./users.js";
 import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
