@@ -14,7 +14,7 @@ export const stickerCache = new Cache<string, SimplifiedSticker>(
   STICKER_CACHE_EXPIRATION_MS
 );
 // key format:
-// - autocomplete: `auto:${query}`
+// - autocomplete: `auto::${query}:`
 // - browse: `browse:${userId ?? ""}:${query ?? ""}:${order}`
 export type SearchCacheKind = "browse" | "auto";
 export type SearchCacheKey =
