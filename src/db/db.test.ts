@@ -35,10 +35,9 @@ import {
   _updateSticker,
   _updateUserPermissions,
 } from "./crud.js";
-import { rm } from "fs/promises";
-import { Cache, generateId, sanitizeString } from "../utils/misc.js";
+import { generateId, sanitizeString } from "../utils/misc.js";
 import type { SimplifiedSticker } from "../types/stickers.js";
-import { searchCache, stickerCache, userPermissionsCache } from "./cache.js";
+import { deleteTestFolder, mockCaches } from "./test.js";
 
 let db: Kysely<Database>;
 const permissions: (keyof Permissions)[] = [
@@ -54,19 +53,6 @@ async function clearDb() {
   await db.deleteFrom("userPermissions").execute();
   // delete on cascade should handle variants
   await db.deleteFrom("sticker").execute();
-}
-
-function mockCache(cache: Cache<any, any>) {
-  const mockMap = new Map();
-
-  vi.spyOn(cache, "get").mockReturnValue(undefined);
-  vi.spyOn(cache, "entries").mockReturnValue(mockMap.entries());
-}
-
-function mockCaches() {
-  mockCache(userPermissionsCache);
-  mockCache(stickerCache);
-  mockCache(searchCache);
 }
 
 describe.each([
@@ -494,8 +480,4 @@ function generateRandomUser() {
   };
   permissions.forEach((p) => (user[p] = Math.round(Math.random())));
   return user as NewUserPermissions;
-}
-
-function deleteTestFolder(rootPath: string) {
-  return Promise.all([rm(rootPath, { recursive: true, force: true })]);
 }
