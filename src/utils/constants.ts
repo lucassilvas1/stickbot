@@ -4,6 +4,8 @@ import type {
   StickerVariantEncodingConfig,
 } from "../types/stickers.js";
 
+export const TEST_DIR_PATH = "./test-data/";
+
 export const DEFAULT_COMMAND_COOLDOWN_MS = 2_000;
 export const MAX_VIDEO_DURATION_SECONDS = 10;
 export const MAX_ATTACHMENT_SIZE_MB = 20;

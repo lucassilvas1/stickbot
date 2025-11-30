@@ -8,13 +8,13 @@ import {
   it,
   vi,
 } from "vitest";
-import { env } from "../env.js";
 import { join } from "path";
 import { existsSync, readdirSync } from "fs";
 import { initDb } from "./db.js";
 import { Kysely, sql } from "kysely";
 import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+  TEST_DIR_PATH,
   VariantEncodingMap,
 } from "../utils/constants.js";
 import type {
@@ -73,9 +73,17 @@ describe.each([
   { useCache: true, label: "with cache" },
   { useCache: false, label: "without cache" },
 ])("database - $label", () => {
+  const randomSuffix = generateId(6);
+  const testDirPath = join(TEST_DIR_PATH, randomSuffix);
+  const testDbDirPath = join(testDirPath, "db");
+  const testAssetsDirPath = join(testDirPath, "assets");
+
   beforeAll(async () => {
-    await deleteTestFolder();
-    db = await initDb();
+    await deleteTestFolder(testDbDirPath);
+    db = await initDb({
+      dbDirPath: testDbDirPath,
+      assetsDirPath: testAssetsDirPath,
+    });
   });
 
   beforeEach(() => {
@@ -89,17 +97,17 @@ describe.each([
 
   afterAll(async () => {
     await db.destroy();
-    await deleteTestFolder();
+    await deleteTestFolder(testDirPath);
   });
 
   it("creates sticker variant directories", async () => {
     const originalPath = join(
-      env.ASSETS_DIR_PATH,
+      testAssetsDirPath,
       ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME
     );
     expect(existsSync(originalPath)).toBe(true);
     for (const { dirName } of Object.values(VariantEncodingMap)) {
-      const variantPath = join(env.ASSETS_DIR_PATH, dirName);
+      const variantPath = join(testAssetsDirPath, dirName);
       expect(existsSync(variantPath)).toBe(true);
     }
   });
@@ -108,7 +116,7 @@ describe.each([
     const originalPath = join(import.meta.dirname, "../../assets");
     const names = readdirSync(originalPath);
     for (const name of names) {
-      const destPath = join(env.ASSETS_DIR_PATH, name);
+      const destPath = join(testAssetsDirPath, name);
       expect(existsSync(destPath)).toBe(true);
     }
   });
@@ -488,9 +496,6 @@ function generateRandomUser() {
   return user as NewUserPermissions;
 }
 
-function deleteTestFolder() {
-  return Promise.all([
-    rm(env.ASSETS_DIR_PATH, { recursive: true, force: true }),
-    rm(env.DB_DIR_PATH, { recursive: true, force: true }),
-  ]);
+function deleteTestFolder(rootPath: string) {
+  return Promise.all([rm(rootPath, { recursive: true, force: true })]);
 }

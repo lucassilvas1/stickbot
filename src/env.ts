@@ -5,7 +5,7 @@ import { envSchema } from "./types/env.js";
 dotenv.config({ path: ".env" });
 
 const envFileMap = {
-  test: ".env.test",
+  test: ".env.dev",
   development: ".env.dev",
   production: ".env.prod",
 } as const;
