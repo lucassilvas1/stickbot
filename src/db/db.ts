@@ -11,41 +11,38 @@ import {
   VariantEncodingMap,
 } from "../utils/constants.js";
 
-function moveStaticFiles() {
+function moveStaticFiles(assetsDirPath: string) {
   const originalPath = join(import.meta.dirname, "../../assets");
   const names = readdirSync(originalPath);
   const promises = Promise.all(
     names.map((name) =>
-      copyFile(join(originalPath, name), join(env.ASSETS_DIR_PATH, name))
+      copyFile(join(originalPath, name), join(assetsDirPath, name))
     )
   );
   return promises;
 }
 
-function createDirs() {
+function createDirs(dbDirPath: string, assetsDirPath: string) {
   const promises: Promise<unknown>[] = [];
   const mkdirOptions = {
     recursive: true,
   };
 
   promises.push(
-    mkdir(
-      join(env.ASSETS_DIR_PATH, ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
-      mkdirOptions
-    ),
-    mkdir(env.DB_DIR_PATH, mkdirOptions)
+    mkdir(join(assetsDirPath, ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME), mkdirOptions),
+    mkdir(dbDirPath, mkdirOptions)
   );
   promises.push(
     ...Object.values(VariantEncodingMap).map(({ dirName }) =>
-      mkdir(join(env.ASSETS_DIR_PATH, dirName), mkdirOptions)
+      mkdir(join(assetsDirPath, dirName), mkdirOptions)
     )
   );
 
   return Promise.all(promises);
 }
 
-function createDb() {
-  const db = new SQLite(join(env.DB_DIR_PATH, "stickbot.db"), {
+function createDb(dbPath: string) {
+  const db = new SQLite(dbPath, {
     fileMustExist: false,
     // verbose: (...args: any[]) => console.dir(...args, { depth: null }),
   });
@@ -53,7 +50,15 @@ function createDb() {
   return db;
 }
 
-export async function initDb() {
+type DBInitOptions = {
+  dbDirPath?: string;
+  assetsDirPath?: string;
+};
+
+export async function initDb({
+  dbDirPath = env.DB_DIR_PATH,
+  assetsDirPath = env.ASSETS_DIR_PATH,
+}: DBInitOptions = {}) {
   if (
     process.env.NODE_ENV === "test" &&
     (!env.DB_DIR_PATH.includes("test") || !env.ASSETS_DIR_PATH.includes("test"))
@@ -61,9 +66,9 @@ export async function initDb() {
     throw new Error("Test environment using non-test paths!");
   }
 
-  await createDirs();
-  await moveStaticFiles();
-  const sqlite = createDb();
+  await createDirs(dbDirPath, assetsDirPath);
+  await moveStaticFiles(assetsDirPath);
+  const sqlite = createDb(join(dbDirPath, "stickbot.db"));
   const db = new Kysely<Database>({
     dialect: new SqliteDialect({ database: sqlite }),
     plugins: [new CamelCasePlugin()],
