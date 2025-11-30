@@ -56,7 +56,7 @@ function createDb() {
 export async function initDb() {
   if (
     process.env.NODE_ENV === "test" &&
-    (!env.DB_DIR_PATH.endsWith("test") || !env.ASSETS_DIR_PATH.endsWith("test"))
+    (!env.DB_DIR_PATH.includes("test") || !env.ASSETS_DIR_PATH.includes("test"))
   ) {
     throw new Error("Test environment using non-test paths!");
   }
