@@ -61,7 +61,7 @@ export async function initDb({
 }: DBInitOptions = {}) {
   if (
     process.env.NODE_ENV === "test" &&
-    (!env.DB_DIR_PATH.includes("test") || !env.ASSETS_DIR_PATH.includes("test"))
+    (!dbDirPath.includes("test") || !assetsDirPath.includes("test"))
   ) {
     throw new Error("Test environment using non-test paths!");
   }
