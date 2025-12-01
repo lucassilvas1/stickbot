@@ -126,7 +126,7 @@ export async function _search(
   if (!ids) {
     // cache miss: run query and cache ids
     // NOTE: for autocomplete, we run the same query but with limit 25
-    const runLimit = userId ? 5000 : 25;
+    const runLimit = key.startsWith("browse") ? 5000 : 25;
     ids = await runQueryAndCacheIds(db, {
       query,
       userId,
