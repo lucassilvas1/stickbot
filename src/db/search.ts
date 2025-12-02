@@ -75,14 +75,6 @@ async function runQueryAndCacheIds(
   const { query, userId, order, limit = 25 } = opts;
   let sb = db.selectFrom("sticker").select(simplifiedStickerColumns);
 
-  if (query) {
-    const ftsQuery = toFtsQuery(query);
-    sb = sb
-      .innerJoin("stickerFts", "sticker.rowid", "stickerFts.rowid")
-      .where(() => sql`sticker_fts MATCH ${ftsQuery}`)
-      .orderBy(sql`bm25(sticker_fts)`);
-  }
-
   if (userId) {
     // left join usage and order by chosen user metric (coalesce to treat nulls as 0)
     sb = sb.leftJoin("usage", (jb) =>
@@ -96,6 +88,14 @@ async function runQueryAndCacheIds(
     } else if (order === "usage.timeLastUsed") {
       sb = sb.orderBy(sql`coalesce(usage.time_last_used, 0)`, "desc");
     }
+  }
+
+  if (query) {
+    const ftsQuery = toFtsQuery(query);
+    sb = sb
+      .innerJoin("stickerFts", "sticker.rowid", "stickerFts.rowid")
+      .where(() => sql`sticker_fts MATCH ${ftsQuery}`)
+      .orderBy(sql`bm25(sticker_fts)`);
   }
 
   // limit fetch size we cache; pagination will be done by ids slicing
