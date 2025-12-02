@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { searchCacheKey } from "./cache.js";
 
-describe("search cache key", () => {
+describe("search cache key syntax", () => {
   it('returns "invalid" when no query and no userId are provided', () => {
     expect(searchCacheKey({})).toBe("invalid");
   });
