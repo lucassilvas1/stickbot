@@ -17,13 +17,7 @@ import {
   TEST_DIR_PATH,
   VariantEncodingMap,
 } from "../utils/constants.js";
-import type {
-  Database,
-  NewSticker,
-  NewUserPermissions,
-  NewVariant,
-  Permissions,
-} from "../types/db.js";
+import type { Database, NewUserPermissions, Permissions } from "../types/db.js";
 import {
   _deleteSticker,
   _deleteUserPermissions,
@@ -36,8 +30,15 @@ import {
   _updateUserPermissions,
 } from "./crud.js";
 import { generateId, sanitizeString } from "../utils/misc.js";
-import type { SimplifiedSticker } from "../types/stickers.js";
-import { deleteTestFolder, mockCaches } from "./test.js";
+import {
+  clearDb,
+  compareStickers,
+  deleteTestFolder,
+  generateStickerData,
+  generateStickerVariants,
+  generateTestString,
+  mockCaches,
+} from "./test.js";
 
 let db: Kysely<Database>;
 const permissions: (keyof Permissions)[] = [
@@ -49,16 +50,10 @@ const permissions: (keyof Permissions)[] = [
   "deleteUser",
 ] as const;
 
-async function clearDb() {
-  await db.deleteFrom("userPermissions").execute();
-  // delete on cascade should handle variants
-  await db.deleteFrom("sticker").execute();
-}
-
 describe.each([
   { useCache: true, label: "with cache" },
   { useCache: false, label: "without cache" },
-])("database - $label", () => {
+])("database - $label", ({ useCache }) => {
   const randomSuffix = generateId(6);
   const testDirPath = join(TEST_DIR_PATH, randomSuffix);
   const testDbDirPath = join(testDirPath, "db");
@@ -73,12 +68,12 @@ describe.each([
   });
 
   beforeEach(() => {
-    mockCaches();
+    if (!useCache) mockCaches();
   });
 
   afterEach(async () => {
     vi.restoreAllMocks();
-    await clearDb();
+    await clearDb(db);
   });
 
   afterAll(async () => {
@@ -387,91 +382,6 @@ describe.each([
     expect(u.length).toBe(0);
   });
 });
-
-function compareStickers(
-  generated: Omit<NewSticker, "timeAdded" | "timeModified">,
-  fetched: SimplifiedSticker
-) {
-  const sanitized = {
-    ...generated,
-    title: sanitizeString(generated.title),
-    tags: sanitizeString(generated.tags),
-  };
-  const commonFields = ["id", "title", "tags", "uploaderId"] as const;
-
-  return (
-    commonFields.every((field) => sanitized[field] === fetched[field]) &&
-    typeof fetched.usageCount === "number" &&
-    typeof fetched.timeLastUsed === "number"
-  );
-}
-
-function generateStickerVariants(stickerId: string): NewVariant[] {
-  return Object.values(VariantEncodingMap).map(({ name }) => ({
-    stickerId,
-    type: name as NewVariant["type"],
-    extension: "webp",
-    width: generateInt(64, 512),
-    height: generateInt(64, 512),
-    fileSizeBytes: generateInt(1000, 50000),
-    animated: Math.round(Math.random()),
-  }));
-}
-
-function generateStickerData(): Omit<NewSticker, "timeAdded" | "timeModified"> {
-  return {
-    id: generateId(8),
-    title: generateTestString(16),
-    tags: generateTestString(64),
-    uploaderId: generateId(6),
-    sourceUrl: "https://example.com",
-  };
-}
-
-function generateInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export function generateTestString(
-  length = 20,
-  options = { includeEmoji: false }
-): string {
-  function randomChar(pool: string): string {
-    return pool[Math.floor(Math.random() * pool.length)]!;
-  }
-
-  const ASCII =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
-
-  const ACCENTED = "áàãâäåéèêëíìîïóòõôöúùûüçñ" + "ÁÀÃÂÄÅÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇÑ";
-
-  const SPECIAL = `!@#$%^&*()_+-=[]{};:'",.<>/?\\|~\``;
-
-  const EMOJI = [
-    "😀",
-    "😂",
-    "😅",
-    "😍",
-    "🤔",
-    "👍",
-    "🔥",
-    "✨",
-    "🎉",
-    "❤️",
-    "💀",
-    "🤡",
-    "😎",
-  ];
-
-  let pool = ASCII + ACCENTED + SPECIAL;
-  if (options.includeEmoji) pool += EMOJI.join("");
-
-  let out = "";
-  for (let i = 0; i < length; i++) {
-    out += randomChar(pool);
-  }
-  return out;
-}
 
 function generateRandomUser() {
   const user: Record<string, any> = {
