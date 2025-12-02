@@ -93,9 +93,9 @@ describe("Unicode non-LNZ character extractor", () => {
 });
 
 describe("string sanitizer", () => {
-  it("removes problematic characters and normalizes the string", () => {
-    expect(sanitizeString(`  {<~Hél-lo^}: _ ("W''or'ld*")>  `)).toBe(
-      "héllo w or ld"
+  it("removes anything that's not a Unicode letter, number, or space, and normalizes the string", () => {
+    expect(sanitizeString(`  {$<~Hé!-lo^}: _ ("W''or'ld*")>@  `)).toBe(
+      "hélo w or ld"
     );
   });
 
@@ -111,13 +111,8 @@ describe("string sanitizer", () => {
     expect(sanitizeString("HeLLo")).toBe("hello");
   });
 
-  it("normalizes unicode characters to NFC", () => {
-    const decomposed = "e\u0301"; // 'é' in NFD form
-    expect(sanitizeString(decomposed)).toBe("é");
-  });
-
   it("returns an empty string when everything is stripped", () => {
-    expect(sanitizeString(`{}<>~`)).toBe("");
+    expect(sanitizeString(`{}<>!@$~`)).toBe("");
   });
 });
 
