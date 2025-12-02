@@ -1,6 +1,6 @@
 import type {
   Database,
-  NewSticker,
+  NewStickerWithoutTimestamps,
   NewUserPermissions,
   NewVariant,
   StickerUpdate,
@@ -74,7 +74,7 @@ export async function _deleteUserPermissions(db: Kysely<Database>, id: string) {
 
 export function _insertSticker(
   db: Kysely<Database>,
-  newSticker: Omit<NewSticker, "timeAdded" | "timeModified">,
+  newSticker: NewStickerWithoutTimestamps,
   variants: NewVariant[]
 ) {
   return db.transaction().execute(async (trx) => {

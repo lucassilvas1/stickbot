@@ -70,6 +70,10 @@ export type Permissions = Omit<UserPermissions, "id" | "username">;
 
 export type Sticker = Selectable<StickerTable>;
 export type NewSticker = Insertable<StickerTable>;
+export type NewStickerWithoutTimestamps = Omit<
+  NewSticker,
+  "timeAdded" | "timeModified"
+>;
 export type StickerUpdate = Updateable<StickerTable>;
 
 export type Variant = Selectable<VariantTable>;
