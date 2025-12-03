@@ -6,7 +6,7 @@ import {
   type CacheType,
   type Interaction,
 } from "discord.js";
-import { rateLimit } from "../utils/interactions.js";
+import { rateLimit } from "../utils/middleware.js";
 
 export const name = Events.InteractionCreate;
 
@@ -32,7 +32,7 @@ export async function handle(interaction: Interaction<CacheType>) {
     const command = getCommand(interaction);
     if (!command) return;
 
-    if (rateLimit(command, interaction)) return;
+    if (await rateLimit(command, interaction)) return;
 
     try {
       await command.execute(interaction);

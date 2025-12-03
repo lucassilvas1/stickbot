@@ -35,7 +35,7 @@ import {
   getVariantUrl,
 } from "../../utils/stickers.js";
 import { isUserAllowed } from "../../utils/users.js";
-import { invalidCharGuard } from "../../utils/interactions.js";
+import { invalidCharGuard } from "../../utils/middleware.js";
 
 export const isGlobal = true;
 

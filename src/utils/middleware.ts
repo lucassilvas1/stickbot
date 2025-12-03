@@ -11,10 +11,10 @@ import { getNonLNZCharSet } from "./misc.js";
  * Handles rate limiting for a command interaction.
  * @returns {boolean} True if the interaction is rate limited, false otherwise.
  */
-export function rateLimit(
+export async function rateLimit(
   command: CommandData,
   interaction: ChatInputCommandInteraction
-): boolean {
+): Promise<boolean> {
   const { cooldowns } = interaction.client;
 
   if (!cooldowns.has(command.data.name)) {
@@ -36,7 +36,7 @@ export function rateLimit(
 
   if (timestamp && now < timestamp + cooldown) {
     const retryTimestamp = Math.round(timestamp + cooldown / 1_000);
-    interaction.reply({
+    await interaction.reply({
       content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again at <t:${retryTimestamp}:R>.`,
       flags: MessageFlags.Ephemeral,
     });
