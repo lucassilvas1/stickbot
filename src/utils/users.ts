@@ -79,7 +79,7 @@ export async function isUserAllowed<P extends keyof Permissions>(
 ) {
   if (isFromOwner(interaction)) return true;
   const user = await getUserPermissionsById(interaction.user.id);
-  return !!user && !!user[permission];
+  return Boolean(user && user[permission]);
 }
 
 export function getUserPermissionWeight(user: Permissions) {
