@@ -1,13 +1,9 @@
-import {
-  ChatInputCommandInteraction,
-  Collection,
-  type InteractionReplyOptions,
-} from "discord.js";
+import { type InteractionReplyOptions } from "discord.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { generateId, getNonLNZCharSet } from "./misc.js";
 import { invalidCharGuard, rateLimit } from "./middleware.js";
-import type { CommandData } from "../types/commands.js";
 import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
+import { mockCommand, mockInteraction } from "./test.js";
 
 describe("rate limiter", () => {
   afterEach(() => {
@@ -16,7 +12,7 @@ describe("rate limiter", () => {
 
   it("enforces command specific cooldowns", async () => {
     const command = mockCommand("example", 10_000);
-    const interaction = mockInteraction(generateId(6));
+    const interaction = mockInteraction({ userId: generateId(6) });
     const replySpy = vi.spyOn(interaction, "reply");
 
     vi.useFakeTimers();
@@ -36,7 +32,7 @@ describe("rate limiter", () => {
 
   it("falls back to default cooldown if command doesn't have one set", async () => {
     const command = mockCommand("cmdWithDefaultCooldown");
-    const interaction = mockInteraction(generateId(6));
+    const interaction = mockInteraction({ userId: generateId(6) });
 
     vi.useFakeTimers();
     expect(await rateLimit(command, interaction)).toBe(false);
@@ -51,15 +47,15 @@ describe("rate limiter", () => {
     const cooldown = 5_000;
     const userId = generateId(6);
     const command = mockCommand(commandName, cooldown);
-    const interaction = mockInteraction(userId);
+    const interaction = mockInteraction({ userId });
 
     vi.useFakeTimers();
-    rateLimit(command, interaction);
-    expect(interaction.client.cooldowns.get(commandName)?.has(userId)).toBe(
+    rateLimit(command, interaction!);
+    expect(interaction.client!.cooldowns.get(commandName)?.has(userId)).toBe(
       true
     );
     vi.advanceTimersByTime(cooldown + 100);
-    expect(interaction.client.cooldowns.get(commandName)?.has(userId)).toBe(
+    expect(interaction.client!.cooldowns.get(commandName)?.has(userId)).toBe(
       false
     );
   });
@@ -67,9 +63,12 @@ describe("rate limiter", () => {
 
 describe("invalid character guard", () => {
   it("replies and resolves true if an unsupported character is found in title or tags", async () => {
-    const interaction = mockInteraction("user", {
-      title: "<t!tle>",
-      tags: "[t@gs]",
+    const interaction = mockInteraction({
+      userId: "user",
+      stringOptions: {
+        title: "<t!tle>",
+        tags: "[t@gs]",
+      },
     });
     const replySpy = vi.spyOn(interaction, "reply");
 
@@ -85,9 +84,12 @@ describe("invalid character guard", () => {
   });
 
   it("resolves false if no unsupported character is found in title and tags", async () => {
-    const interaction = mockInteraction("user", {
-      title: "title",
-      tags: "tags",
+    const interaction = mockInteraction({
+      userId: "user",
+      stringOptions: {
+        title: "title",
+        tags: "tags",
+      },
     });
     const replySpy = vi.spyOn(interaction, "reply");
 
@@ -95,24 +97,3 @@ describe("invalid character guard", () => {
     expect(replySpy).toBeCalledTimes(0);
   });
 });
-
-function mockCommand(name: string, cooldown?: number) {
-  return { data: { name }, cooldown } as CommandData;
-}
-
-function mockInteraction(userId: string, options: Record<string, string> = {}) {
-  return {
-    user: { id: userId },
-    client: {
-      cooldowns: new Collection(),
-    },
-    options: {
-      getString(name) {
-        return options[name];
-      },
-    },
-    async reply(options) {
-      return options;
-    },
-  } as ChatInputCommandInteraction;
-}
