@@ -62,7 +62,7 @@ describe("isFromOwner", () => {
   it("returns true for user-owned application when user id matches", () => {
     const userId = "owner123";
     const owner = { id: userId } as any;
-    const interaction = mockInteraction({ userId, owner });
+    const interaction = mockInteraction({ userId, owner }) as any;
 
     const result = isFromOwner(interaction);
 
@@ -71,7 +71,7 @@ describe("isFromOwner", () => {
 
   it("returns false for user-owned application when user id does not match", () => {
     const owner = { id: "owner123" } as any;
-    const interaction = mockInteraction({ userId: "user456", owner });
+    const interaction = mockInteraction({ userId: "user456", owner }) as any;
 
     const result = isFromOwner(interaction);
 
@@ -81,7 +81,7 @@ describe("isFromOwner", () => {
   it("returns true for team-owned application when user id matches ownerId", () => {
     const userId = "owner123";
     const owner = { ownerId: userId } as any;
-    const interaction = mockInteraction({ userId, owner });
+    const interaction = mockInteraction({ userId, owner }) as any;
 
     const result = isFromOwner(interaction);
 
@@ -90,7 +90,7 @@ describe("isFromOwner", () => {
 
   it("returns false for team-owned application when user id does not match ownerId", () => {
     const owner = { ownerId: "owner123" } as any;
-    const interaction = mockInteraction({ userId: "user456", owner });
+    const interaction = mockInteraction({ userId: "user456", owner }) as any;
 
     const result = isFromOwner(interaction);
 
@@ -98,17 +98,20 @@ describe("isFromOwner", () => {
   });
 
   it("returns false when owner is null", () => {
-    const interaction = mockInteraction({ userId: "user123", owner: null });
+    const interaction = mockInteraction({
+      userId: "user123",
+      owner: null,
+    });
 
-    const result = isFromOwner(interaction);
+    const result = isFromOwner(interaction as any);
 
     expect(result).toBe(false);
   });
 
   it("returns false when user id is missing", () => {
     const owner = { id: "owner123" } as any;
-    const interaction = mockInteraction({ userId: "", owner });
-    (interaction.user as any).id = undefined;
+    const interaction = mockInteraction({ userId: "", owner }) as any;
+    interaction.user.id = undefined;
 
     const result = isFromOwner(interaction);
 
@@ -285,7 +288,7 @@ describe("isFromAppUser", () => {
     const owner = { id: userId } as any;
     const interaction = mockInteraction({ userId, owner });
 
-    const result = await isFromAppUser(interaction);
+    const result = await isFromAppUser(interaction as any);
 
     expect(result).toBe(true);
     expect(dbActions.getUserPermissionsById).not.toHaveBeenCalled();
@@ -296,7 +299,7 @@ describe("isFromAppUser", () => {
     const owner = { ownerId: userId } as any;
     const interaction = mockInteraction({ userId, owner });
 
-    const result = await isFromAppUser(interaction);
+    const result = await isFromAppUser(interaction as any);
 
     expect(result).toBe(true);
     expect(dbActions.getUserPermissionsById).not.toHaveBeenCalled();
@@ -318,7 +321,7 @@ describe("isFromAppUser", () => {
       mockPermissions as any
     );
 
-    const result = await isFromAppUser(interaction);
+    const result = await isFromAppUser(interaction as any);
 
     expect(result).toBe(true);
     expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);
@@ -330,7 +333,7 @@ describe("isFromAppUser", () => {
 
     vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(undefined);
 
-    const result = await isFromAppUser(interaction);
+    const result = await isFromAppUser(interaction as any);
 
     expect(result).toBe(false);
     expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);
@@ -347,7 +350,7 @@ describe("isUserAllowed", () => {
     const owner = { id: userId } as any;
     const interaction = mockInteraction({ userId, owner });
 
-    const result = await isUserAllowed("addUser", interaction);
+    const result = await isUserAllowed("addUser", interaction as any);
 
     expect(result).toBe(true);
     expect(dbActions.getUserPermissionsById).not.toHaveBeenCalled();
@@ -369,7 +372,7 @@ describe("isUserAllowed", () => {
       mockPermissions as any
     );
 
-    const result = await isUserAllowed("addSticker", interaction);
+    const result = await isUserAllowed("addSticker", interaction as any);
 
     expect(result).toBe(true);
     expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);
@@ -391,7 +394,7 @@ describe("isUserAllowed", () => {
       mockPermissions as any
     );
 
-    const result = await isUserAllowed("editSticker", interaction);
+    const result = await isUserAllowed("editSticker", interaction as any);
 
     expect(result).toBe(false);
   });
@@ -402,7 +405,7 @@ describe("isUserAllowed", () => {
 
     vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(undefined);
 
-    const result = await isUserAllowed("addSticker", interaction);
+    const result = await isUserAllowed("addSticker", interaction as any);
 
     expect(result).toBe(false);
     expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);

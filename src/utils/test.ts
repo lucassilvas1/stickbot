@@ -6,6 +6,7 @@ import {
   type CacheType,
 } from "discord.js";
 import type { CommandData } from "../types/commands.js";
+import { vi } from "vitest";
 
 type MockInteractionOptions = {
   userId?: string;
@@ -13,33 +14,24 @@ type MockInteractionOptions = {
   owner?: User | Team | null;
 };
 
-/**
- * Creates a mock ChatInputCommandInteraction for testing.
- * @param options Configuration for the mock interaction
- * @returns A partial mock of ChatInputCommandInteraction
- */
-export function mockInteraction(
-  options: MockInteractionOptions = {}
-): ChatInputCommandInteraction<CacheType> {
+export function mockInteraction(options: MockInteractionOptions = {}) {
   const { userId = "test-user-id", stringOptions = {}, owner = null } = options;
-
   return {
-    user: { id: userId } as any,
+    user: { id: userId },
     client: {
       cooldowns: new Collection(),
       application: {
         owner,
       },
-    } as any,
-    options: {
-      getString(name: string) {
-        return stringOptions[name];
-      },
-    } as any,
-    async reply(options: any) {
-      return options;
     },
-  } as ChatInputCommandInteraction<CacheType>;
+    options: {
+      getString: vi.fn().mockImplementation((name: string) => {
+        return stringOptions[name];
+      }),
+    },
+    reply: vi.fn(),
+    respond: vi.fn(),
+  };
 }
 
 export function mockCommand(name: string, cooldown?: number): CommandData {
