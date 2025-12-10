@@ -110,15 +110,13 @@ export function getVariantPaths(stickerId: string, originalExtension: string) {
     join(env.ASSETS_DIR_PATH, dirName, stickerId + ".webp")
   );
 
-  if (originalExtension) {
-    paths.push(
-      join(
-        env.ASSETS_DIR_PATH,
-        ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
-        `${stickerId}.${originalExtension}`
-      )
-    );
-  }
+  paths.push(
+    join(
+      env.ASSETS_DIR_PATH,
+      ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
+      `${stickerId}.${originalExtension}`
+    )
+  );
 
   return paths;
 }
