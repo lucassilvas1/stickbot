@@ -1,4 +1,4 @@
-import { createWriteStream, renameSync, rmSync } from "fs";
+import { createWriteStream, renameSync, rmSync, statSync } from "fs";
 import type { Dispatcher } from "undici";
 import type {
   StickerVariant,
@@ -9,7 +9,8 @@ import { env } from "../env.js";
 import sharp from "sharp";
 import { MAX_VIDEO_DURATION_SECONDS, VariantEncodingMap } from "./constants.js";
 import { rm } from "fs/promises";
-import { join } from "path";
+import { extname, join } from "path";
+import type { NewVariant } from "../types/db.js";
 
 export function saveFile(
   path: string,
@@ -52,6 +53,70 @@ export async function processFile(
         await processWebp(inputPath, outputPath, options);
       } else throw error;
     } else throw error;
+  }
+}
+
+export async function getVariantInfo(
+  stickerId: string,
+  type: StickerVariant,
+  filePath: string
+): Promise<NewVariant> {
+  // Get file size using fs.statSync
+  let fileSizeBytes: number;
+  try {
+    fileSizeBytes = statSync(filePath).size;
+  } catch (error) {
+    throw new TypedError("FFPROBE_ERROR", { cause: error });
+  }
+
+  // Get extension
+  const extension = extname(filePath).substring(1); // Remove leading dot
+
+  // Use ffprobe to get video/image dimensions and frame count
+  try {
+    const output = await spawn(env.FFPROBE_PATH, [
+      "-v",
+      "error",
+      "-select_streams",
+      "v:0",
+      "-show_entries",
+      "stream=width,height,nb_read_frames",
+      "-count_frames",
+      "-of",
+      "csv=p=0",
+      filePath,
+    ]);
+
+    const parts = output.trim().split(",").map(Number);
+    const width = parts[0];
+    const height = parts[1];
+    const frameCount = parts[2];
+    if (
+      parts.length < 2 ||
+      width === undefined ||
+      height === undefined ||
+      isNaN(width) ||
+      isNaN(height)
+    ) {
+      throw new TypedError("FFPROBE_ERROR", {
+        message: "Could not extract width and height from media file",
+      });
+    } else {
+      return {
+        stickerId,
+        type,
+        width,
+        height,
+        fileSizeBytes,
+        extension,
+        animated: ~~(frameCount !== undefined && frameCount > 1),
+      };
+    }
+  } catch (error) {
+    if (error instanceof TypedError) throw error;
+    throw new TypedError("FFPROBE_ERROR", {
+      cause: error,
+    });
   }
 }
 
