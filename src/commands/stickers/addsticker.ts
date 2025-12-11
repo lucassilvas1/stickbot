@@ -28,12 +28,12 @@ import {
   VariantEncodingMap,
 } from "../../utils/constants.js";
 import { generateId, getNonLNZCharSet, TypedError } from "../../utils/misc.js";
-import { processFile, saveFile } from "../../utils/processing.js";
 import {
+  processFile,
+  saveFile,
   getVariantInfo,
-  getVariantPaths,
-  getVariantUrl,
-} from "../../utils/stickers.js";
+} from "../../utils/processing.js";
+import { getVariantPaths, getVariantUrl } from "../../utils/stickers.js";
 import { isUserAllowed } from "../../utils/users.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
 

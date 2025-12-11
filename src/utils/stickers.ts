@@ -1,9 +1,6 @@
-import { statSync } from "fs";
 import { env } from "../env.js";
 import type { SimplifiedSticker, StickerVariant } from "../types/stickers.js";
-import { extname, join } from "path";
-import type { NewVariant } from "../types/db.js";
-import { spawn, TypedError } from "./misc.js";
+import { join } from "path";
 import type { CommandAutocomplete } from "../types/commands.js";
 import { isFromAppUser } from "./users.js";
 import {
@@ -39,70 +36,6 @@ export function getVariantUrl(
   variant: Exclude<StickerVariant, "original">
 ) {
   return getAssetUrl(`${VariantEncodingMap[variant].dirName}/${id}.webp`);
-}
-
-export async function getVariantInfo(
-  stickerId: string,
-  type: StickerVariant,
-  filePath: string
-): Promise<NewVariant> {
-  // Get file size using fs.statSync
-  let fileSizeBytes: number;
-  try {
-    fileSizeBytes = statSync(filePath).size;
-  } catch (error) {
-    throw new TypedError("FFPROBE_ERROR", { cause: error });
-  }
-
-  // Get extension
-  const extension = extname(filePath).substring(1); // Remove leading dot
-
-  // Use ffprobe to get video/image dimensions and frame count
-  try {
-    const output = await spawn(env.FFPROBE_PATH, [
-      "-v",
-      "error",
-      "-select_streams",
-      "v:0",
-      "-show_entries",
-      "stream=width,height,nb_read_frames",
-      "-count_frames",
-      "-of",
-      "csv=p=0",
-      filePath,
-    ]);
-
-    const parts = output.trim().split(",").map(Number);
-    const width = parts[0];
-    const height = parts[1];
-    const frameCount = parts[2];
-    if (
-      parts.length < 2 ||
-      width === undefined ||
-      height === undefined ||
-      isNaN(width) ||
-      isNaN(height)
-    ) {
-      throw new TypedError("FFPROBE_ERROR", {
-        message: "Could not extract width and height from media file",
-      });
-    } else {
-      return {
-        stickerId,
-        type,
-        width,
-        height,
-        fileSizeBytes,
-        extension,
-        animated: ~~(frameCount !== undefined && frameCount > 1),
-      };
-    }
-  } catch (error) {
-    if (error instanceof TypedError) throw error;
-    throw new TypedError("FFPROBE_ERROR", {
-      cause: error,
-    });
-  }
 }
 
 export function getVariantPaths(stickerId: string, originalExtension: string) {
