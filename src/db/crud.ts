@@ -14,7 +14,7 @@ import {
   userPermissionsCache,
 } from "./cache.js";
 import type { Kysely, Transaction } from "kysely";
-import { deleteVariants } from "../utils/processing.js";
+import { deleteAllVariants } from "../utils/processing.js";
 
 export async function _insertUserPermissions(
   db: Kysely<Database>,
@@ -202,7 +202,7 @@ export async function _deleteSticker(db: Kysely<Database>, id: string) {
       .where("stickerId", "=", id)
       .execute();
 
-    await deleteVariants(id, variants);
+    await deleteAllVariants(id, variants);
 
     const result = await trx
       .deleteFrom("sticker")

@@ -120,7 +120,7 @@ export async function getVariantInfo(
   }
 }
 
-export function deleteVariants(
+export async function deleteAllVariants(
   id: string,
   variants: { type: StickerVariant; extension: string }[]
 ) {
@@ -133,7 +133,7 @@ export function deleteVariants(
       force: true,
     })
   );
-  return Promise.all(promises);
+  await Promise.all(promises);
 }
 
 async function ffmpeg(
