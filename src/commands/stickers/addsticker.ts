@@ -27,7 +27,7 @@ import {
   SUPPORTED_CONTAINERS,
   VariantEncodingMap,
 } from "../../utils/constants.js";
-import { generateId, getNonLNZCharSet, TypedError } from "../../utils/misc.js";
+import { generateId, TypedError } from "../../utils/misc.js";
 import {
   processFile,
   saveFile,
