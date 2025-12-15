@@ -352,7 +352,7 @@ describe.each([
     await _insertSticker(db, sticker, variants);
 
     const processingModule = await import("../utils/processing.js");
-    const spy = vi.spyOn(processingModule, "deleteVariants");
+    const spy = vi.spyOn(processingModule, "deleteAllVariants");
 
     await _deleteSticker(db, sticker.id);
 
