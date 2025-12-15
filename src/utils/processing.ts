@@ -136,13 +136,11 @@ export async function deleteAllVariants(
   await Promise.all(promises);
 }
 
-async function ffmpeg(
+export function buildFfmpegArgs(
   inputPath: string,
   outputPath: string,
   options: StickerVariantEncodingConfig
-): Promise<void> {
-  const tempPath = outputPath + ".part";
-
+) {
   // Build ffmpeg arguments
   const args = ["-i", inputPath];
 
@@ -166,7 +164,18 @@ async function ffmpeg(
 
   args.push("-pix_fmt", "bgra"); // Force BGRA for transparency support
   args.push("-f", "webp"); // Specify output format
-  args.push("-y", tempPath);
+  args.push("-y", outputPath);
+
+  return args;
+}
+
+export async function ffmpeg(
+  inputPath: string,
+  outputPath: string,
+  options: StickerVariantEncodingConfig
+): Promise<void> {
+  const tempPath = outputPath + ".part";
+  const args = buildFfmpegArgs(inputPath, tempPath, options);
 
   try {
     await spawn(env.FFMPEG_PATH, args);
@@ -177,7 +186,7 @@ async function ffmpeg(
   }
 }
 
-async function processWebp(
+export async function processWebp(
   inputPath: string,
   outputPath: string,
   options: StickerVariantEncodingConfig
