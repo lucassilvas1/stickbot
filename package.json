@@ -2,13 +2,13 @@
   "name": "stickbot",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "start:dev": "cross-env NODE_ENV=development node dist/index.js",
-    "start:prod": "cross-env NODE_ENV=production node dist/index.js",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/src/index.js",
+    "start:dev": "cross-env NODE_ENV=development node dist/src/index.js",
+    "start:prod": "cross-env NODE_ENV=production node dist/src/index.js",
     "deploy:dev": "npm run build && cross-env NODE_ENV=development node dist/deploy-commands.js",
     "deploy:prod": "npm run build && cross-env NODE_ENV=production node dist/deploy-commands.js",
     "test": "vitest"

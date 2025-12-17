@@ -4,7 +4,7 @@ import type { CommandData } from "../types/commands.js";
 import type { Client } from "discord.js";
 
 export async function getCommands() {
-  const foldersPath = path.join(import.meta.dirname, "../../dist/commands");
+  const foldersPath = path.join(import.meta.dirname, "../commands");
   const commandFolders = fs.readdirSync(foldersPath);
   const commands: CommandData[] = [];
 
@@ -16,7 +16,7 @@ export async function getCommands() {
 
     for (const file of commandFiles) {
       const filePath = path.join(commandsPath, file);
-      const command = await import("file://" + filePath);
+      const { default: command } = await import("file://" + filePath);
       // Set a new item in the Collection with the key as the command name and the value as the exported module
       if ("data" in command && "execute" in command) {
         commands.push(command);
@@ -32,7 +32,7 @@ export async function getCommands() {
 }
 
 export async function registerEventHandlers(client: Client) {
-  const eventsPath = path.join(import.meta.dirname, "../../dist/events");
+  const eventsPath = path.join(import.meta.dirname, "../events");
   const eventFiles = fs
     .readdirSync(eventsPath)
     .filter((file) => file.endsWith(".js"));

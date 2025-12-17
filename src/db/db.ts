@@ -12,7 +12,7 @@ import {
 } from "../utils/constants.js";
 
 function moveStaticFiles(assetsDirPath: string) {
-  const originalPath = join(import.meta.dirname, "../../assets");
+  const originalPath = join(import.meta.dirname, "../../../assets");
   const names = readdirSync(originalPath);
   const promises = Promise.all(
     names.map((name) =>
