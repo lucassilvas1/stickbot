@@ -1,23 +1,36 @@
 import type {
-  AutocompleteInteraction,
   CacheType,
   ChatInputCommandInteraction,
+  Interaction,
   SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import type { Permissions } from "../types/db.js";
 import { USER_PERMISSION_WEIGHT_MAP } from "./constants.js";
 import { getStickerById, getUserPermissionsById } from "../db/dbActions.js";
 
+export async function authorizeStickerUploader(
+  interaction: Interaction<CacheType>
+) {
+  if (interaction.isAutocomplete()) {
+    // Anyone in the db can get autocomplete suggestions
+    const permissions = await getUserPermissionsById(interaction.user.id);
+    return !!permissions;
+  }
+  // autocomplete and command are the only interactions supported
+  if (!interaction.isChatInputCommand()) return false;
+  const stickerId = interaction.options.getString("query");
+  // Shouldn't be necessary, but just to make sure
+  if (!stickerId) return false;
+  // Uploaders can always manage their own stickers
+  return isUploader(interaction.user.id, stickerId);
+}
+
 export async function isUploader(userId: string, stickerId: string) {
   const sticker = await getStickerById(stickerId);
   return Boolean(sticker && sticker.uploaderId === userId);
 }
 
-export function isFromOwner(
-  interaction:
-    | ChatInputCommandInteraction<CacheType>
-    | AutocompleteInteraction<CacheType>
-) {
+export function isFromOwner(interaction: Interaction<CacheType>) {
   if (!interaction.user.id) return false; // Just to be safe
   const owner = interaction.client.application.owner;
   if (!owner) return false;
@@ -60,17 +73,6 @@ export function parsePermissionOptions(
     }, {} as Permissions);
   }
   return permissions;
-}
-
-export async function isFromAppUser(
-  interaction:
-    | ChatInputCommandInteraction<CacheType>
-    | AutocompleteInteraction<CacheType>
-) {
-  return (
-    isFromOwner(interaction) ||
-    !!(await getUserPermissionsById(interaction.user.id))
-  );
 }
 
 export async function isUserAllowed<P extends keyof Permissions>(

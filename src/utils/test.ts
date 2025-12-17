@@ -1,9 +1,9 @@
 import {
-  ChatInputCommandInteraction,
   Collection,
   type User,
   type Team,
   type CacheType,
+  type Interaction,
 } from "discord.js";
 import type { CommandData } from "../types/commands.js";
 import { vi } from "vitest";
@@ -31,9 +31,30 @@ export function mockInteraction(options: MockInteractionOptions = {}) {
     },
     reply: vi.fn(),
     respond: vi.fn(),
+    isAutocomplete: vi.fn(),
+    isChatInputCommand: vi.fn(),
   };
 }
 
-export function mockCommand(name: string, cooldown?: number): CommandData {
-  return { data: { name }, cooldown } as CommandData;
+type MockCommandOptions = {
+  name?: string;
+  cooldown?: number;
+  overridePermissions?: (
+    interaction: Interaction<CacheType>
+  ) => Promise<boolean> | Boolean;
+  permissions?: string[];
+};
+
+export function mockCommand({
+  name,
+  cooldown,
+  overridePermissions,
+  permissions,
+}: MockCommandOptions = {}): CommandData {
+  return {
+    data: { name: name ?? "commandName" },
+    cooldown,
+    overridePermissions,
+    permissions: permissions ?? [],
+  } as CommandData;
 }

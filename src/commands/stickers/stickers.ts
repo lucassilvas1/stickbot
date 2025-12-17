@@ -15,7 +15,7 @@ import {
   TextDisplayBuilder,
   type CacheType,
 } from "discord.js";
-import type { CommandExecutor } from "../../types/commands.js";
+import type { CommandData } from "../../types/commands.js";
 import { type Align, padStringToWidth } from "discord-button-width";
 import type {
   SimplifiedSticker,
@@ -23,49 +23,87 @@ import type {
 } from "../../types/stickers.js";
 import {
   getStickerById,
-  getUserPermissionsById,
   incrementStickerUsage,
   search,
 } from "../../db/dbActions.js";
 import { generateId } from "../../utils/misc.js";
 import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
-import {
-  GRID_PLACEHOLDER_IMG_PATH,
-  PERMISSION_PUNT_MESSAGE,
-} from "../../utils/constants.js";
-import { isFromOwner } from "../../utils/users.js";
+import { GRID_PLACEHOLDER_IMG_PATH } from "../../utils/constants.js";
 
-export const isGlobal = true;
+const commandData: CommandData = {
+  isGlobal: true,
+  permissions: [],
+  data: new SlashCommandBuilder()
+    .setContexts([
+      InteractionContextType.PrivateChannel,
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+    ])
+    .setIntegrationTypes([
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ])
+    .setName("liststickers")
+    .setDescription("Browse through stickers")
+    .addStringOption((opt) =>
+      opt.setName("query").setDescription("Narrow down results")
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("order")
+        .setDescription("What order to return the results in")
+        .addChoices([
+          { name: "Most Recent", value: "usage.timeLastUsed" },
+          { name: "Most Used", value: "usage.count" },
+        ])
+    )
+    .addBooleanOption((opt) =>
+      opt
+        .setName("info")
+        .setDescription("Display title and tags for the chosen sticker")
+    ),
+  async execute(interaction) {
+    const query = interaction.options.getString("query") ?? undefined;
+    const order = (interaction.options.getString("order") ??
+      "usage.timeLastUsed") as StickerSearchOrder;
+    const userId = interaction.user.id;
+    const results = await search({
+      query,
+      userId,
+      limit: 9,
+      order,
+    });
+    const menu = buildMenu(
+      query,
+      results.stickers,
+      0,
+      results.totalResultCount
+    );
 
-export const data = new SlashCommandBuilder()
-  .setContexts([
-    InteractionContextType.PrivateChannel,
-    InteractionContextType.Guild,
-    InteractionContextType.BotDM,
-  ])
-  .setIntegrationTypes([
-    ApplicationIntegrationType.GuildInstall,
-    ApplicationIntegrationType.UserInstall,
-  ])
-  .setName("liststickers")
-  .setDescription("Browse through stickers")
-  .addStringOption((opt) =>
-    opt.setName("query").setDescription("Narrow down results")
-  )
-  .addStringOption((opt) =>
-    opt
-      .setName("order")
-      .setDescription("What order to return the results in")
-      .addChoices([
-        { name: "Most Recent", value: "usage.timeLastUsed" },
-        { name: "Most Used", value: "usage.count" },
-      ])
-  )
-  .addBooleanOption((opt) =>
-    opt
-      .setName("info")
-      .setDescription("Display title and tags for the chosen sticker")
-  );
+    const response = await interaction.reply({
+      components: [menu],
+      withResponse: true,
+      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+    });
+    const message = response.resource?.message;
+
+    if (!message) {
+      return interaction.reply({
+        content: "Something went wrong...",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    handleMenuInteractions(
+      interaction,
+      message,
+      userId,
+      order,
+      results.totalResultCount,
+      query
+    );
+  },
+};
 
 function buildHeader(
   query: string | undefined,
@@ -287,49 +325,4 @@ function handleMenuInteractions(
   });
 }
 
-export const execute: CommandExecutor = async (interaction) => {
-  if (
-    !isFromOwner(interaction) &&
-    !(await getUserPermissionsById(interaction.user.id))
-  ) {
-    return interaction.reply({
-      content: PERMISSION_PUNT_MESSAGE,
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  const query = interaction.options.getString("query") ?? undefined;
-  const order = (interaction.options.getString("order") ??
-    "usage.timeLastUsed") as StickerSearchOrder;
-  const userId = interaction.user.id;
-  const results = await search({
-    query,
-    userId,
-    limit: 9,
-    order,
-  });
-  const menu = buildMenu(query, results.stickers, 0, results.totalResultCount);
-
-  const response = await interaction.reply({
-    components: [menu],
-    withResponse: true,
-    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-  });
-  const message = response.resource?.message;
-
-  if (!message) {
-    return interaction.reply({
-      content: "Something went wrong...",
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  handleMenuInteractions(
-    interaction,
-    message,
-    userId,
-    order,
-    results.totalResultCount,
-    query
-  );
-};
+export default commandData;

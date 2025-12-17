@@ -2,7 +2,6 @@ import { env } from "../env.js";
 import type { SimplifiedSticker, StickerVariant } from "../types/stickers.js";
 import { join } from "path";
 import type { CommandAutocomplete } from "../types/commands.js";
-import { isFromAppUser } from "./users.js";
 import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
   VariantEncodingMap,
@@ -14,10 +13,6 @@ export function toAutocompleteType(stickers: SimplifiedSticker[]) {
 }
 
 export const autocomplete: CommandAutocomplete = async (interaction) => {
-  if (!(await isFromAppUser(interaction))) {
-    return interaction.respond([]);
-  }
-
   const query = interaction.options.getString("query", true);
   if (query.length < 3) return interaction.respond([]);
   const { stickers } = await search({ query });

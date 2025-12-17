@@ -1,11 +1,38 @@
 import {
   Collection,
   MessageFlags,
+  type CacheType,
   type ChatInputCommandInteraction,
+  type Interaction,
 } from "discord.js";
 import type { CommandData } from "../types/commands.js";
 import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
 import { getNonLNZCharSet } from "./misc.js";
+import { isFromOwner } from "./users.js";
+import { getUserPermissionsById } from "../db/dbActions.js";
+
+export async function authorization(
+  command: CommandData,
+  interaction: Interaction<CacheType>
+) {
+  // Owner is always allowed
+  if (isFromOwner(interaction)) return true;
+  if (command.overridePermissions) {
+    // `overridePermissions` is only taken into account if it returns true
+    // User may still be allowed if they have all permissions in
+    // `command.permissions`
+    const overridden = await command.overridePermissions(interaction);
+    if (overridden) return true;
+  }
+
+  const permissions = await getUserPermissionsById(interaction.user.id);
+  if (!permissions) return false;
+  // If permissions array is empty, then the user just needs to be in the db
+  // to be allowed
+  if (command.permissions.length === 0) return true;
+  // User needs to have every permission necessary otherwise
+  return command.permissions.every((p) => permissions[p]);
+}
 
 /**
  * Handles rate limiting for a command interaction.

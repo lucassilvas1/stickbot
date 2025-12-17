@@ -3,15 +3,104 @@ import {
   isUploader,
   isFromOwner,
   parsePermissionOptions,
-  isFromAppUser,
   isUserAllowed,
   getUserPermissionWeight,
+  authorizeStickerUploader,
 } from "./users.js";
 import * as dbActions from "../db/dbActions.js";
 import { mockInteraction } from "./test.js";
 
 vi.mock("../db/db.js");
 vi.mock("../db/dbActions.js");
+
+describe("authorizeStickerUploader", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns false if interaction is not autocomplete or command", async () => {
+    const interaction = mockInteraction();
+    interaction.isAutocomplete.mockReturnValue(false);
+    interaction.isChatInputCommand.mockReturnValue(false);
+    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
+      false
+    );
+    expect(interaction.options?.getString).not.toHaveBeenCalled();
+  });
+
+  it("allows anyone in the db to get autocomplete suggestions", async () => {
+    const interaction = mockInteraction();
+    interaction.isAutocomplete.mockReturnValue(true);
+    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue({} as any);
+    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
+      true
+    );
+  });
+
+  it("keeps users not in db from getting autocomplete suggestions", async () => {
+    const interaction = mockInteraction();
+    interaction.isAutocomplete.mockReturnValue(true);
+    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(undefined);
+    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
+      false
+    );
+  });
+
+  it("returns false if command interaction doesn't have query option", async () => {
+    const interaction = mockInteraction();
+    interaction.isAutocomplete.mockReturnValue(false);
+    interaction.isChatInputCommand.mockReturnValue(true);
+    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
+      false
+    );
+  });
+
+  it("returns false if user did not upload the sticker", async () => {
+    const interaction = mockInteraction({
+      userId: "randomuser",
+      stringOptions: { query: "hi" },
+    });
+    interaction.isAutocomplete.mockReturnValue(false);
+    interaction.isChatInputCommand.mockReturnValue(true);
+    vi.mocked(dbActions.getStickerById).mockResolvedValue({
+      uploaderId: "uploader",
+    } as any);
+    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
+      false
+    );
+  });
+
+  it("returns true if user uploaded the sticker", async () => {
+    const interaction = mockInteraction({
+      userId: "uploader",
+      stringOptions: { query: "hello world" },
+    });
+    interaction.isAutocomplete.mockReturnValue(false);
+    interaction.isChatInputCommand.mockReturnValue(true);
+    vi.mocked(dbActions.getStickerById).mockResolvedValue({
+      uploaderId: "uploader",
+    } as any);
+    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
+      true
+    );
+  });
+
+  it("does not treat autocomplete interactions as commands", async () => {
+    const interaction = mockInteraction({
+      stringOptions: { query: "should-not-be-used" },
+    });
+
+    interaction.isAutocomplete.mockReturnValue(true);
+    interaction.isChatInputCommand.mockReturnValue(true);
+
+    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue({} as any);
+
+    const result = await authorizeStickerUploader(interaction as any);
+
+    expect(result).toBe(true);
+    expect(interaction.options.getString).not.toHaveBeenCalled();
+  });
+});
 
 describe("isUploader", () => {
   beforeEach(() => {
@@ -275,68 +364,6 @@ describe("parsePermissionOptions", () => {
       editUser: 0,
       deleteUser: 0,
     });
-  });
-});
-
-describe("isFromAppUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns true when user is the app owner", async () => {
-    const userId = "owner123";
-    const owner = { id: userId } as any;
-    const interaction = mockInteraction({ userId, owner });
-
-    const result = await isFromAppUser(interaction as any);
-
-    expect(result).toBe(true);
-    expect(dbActions.getUserPermissionsById).not.toHaveBeenCalled();
-  });
-
-  it("returns true when user is the team owner", async () => {
-    const userId = "owner123";
-    const owner = { ownerId: userId } as any;
-    const interaction = mockInteraction({ userId, owner });
-
-    const result = await isFromAppUser(interaction as any);
-
-    expect(result).toBe(true);
-    expect(dbActions.getUserPermissionsById).not.toHaveBeenCalled();
-  });
-
-  it("returns true when user has permissions in the database", async () => {
-    const userId = "user123";
-    const interaction = mockInteraction({ userId, owner: null });
-    const mockPermissions = {
-      addSticker: 1,
-      editSticker: 0,
-      deleteSticker: 1,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 0,
-    };
-
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(
-      mockPermissions as any
-    );
-
-    const result = await isFromAppUser(interaction as any);
-
-    expect(result).toBe(true);
-    expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);
-  });
-
-  it("returns false when user is not owner and has no permissions in database", async () => {
-    const userId = "user123";
-    const interaction = mockInteraction({ userId, owner: null });
-
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(undefined);
-
-    const result = await isFromAppUser(interaction as any);
-
-    expect(result).toBe(false);
-    expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);
   });
 });
 

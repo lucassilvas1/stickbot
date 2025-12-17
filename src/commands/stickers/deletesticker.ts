@@ -1,65 +1,57 @@
 import {
   ApplicationIntegrationType,
   InteractionContextType,
-  MessageFlags,
   SlashCommandBuilder,
 } from "discord.js";
-import type { CommandExecutor } from "../../types/commands.js";
-import { isUploader, isUserAllowed } from "../../utils/users.js";
+import type { CommandData } from "../../types/commands.js";
+import { authorizeStickerUploader } from "../../utils/users.js";
 import { deleteSticker } from "../../db/dbActions.js";
-import { PERMISSION_PUNT_MESSAGE } from "../../utils/constants.js";
+import { autocomplete } from "../../utils/stickers.js";
 
-export const isGlobal = true;
+const commandData: CommandData = {
+  isGlobal: true,
+  overridePermissions: authorizeStickerUploader,
+  permissions: ["deleteSticker"],
+  data: new SlashCommandBuilder()
+    .setContexts([
+      InteractionContextType.PrivateChannel,
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+    ])
+    .setIntegrationTypes([
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ])
+    .setName("deletesticker")
+    .setDescription("Delete a sticker by title")
+    .addStringOption((opt) =>
+      opt
+        .setName("query")
+        .setDescription("Describe the sticker to get suggestions")
+        .setRequired(true)
+        .setAutocomplete(true)
+    ),
+  async execute(interaction) {
+    const id = interaction.options.getString("query", true);
 
-export const data = new SlashCommandBuilder()
-  .setContexts([
-    InteractionContextType.PrivateChannel,
-    InteractionContextType.Guild,
-    InteractionContextType.BotDM,
-  ])
-  .setIntegrationTypes([
-    ApplicationIntegrationType.GuildInstall,
-    ApplicationIntegrationType.UserInstall,
-  ])
-  .setName("deletesticker")
-  .setDescription("Delete a sticker by title")
-  .addStringOption((opt) =>
-    opt
-      .setName("query")
-      .setDescription("Describe the sticker to get suggestions")
-      .setRequired(true)
-      .setAutocomplete(true)
-  );
-
-export const execute: CommandExecutor = async (interaction) => {
-  const id = interaction.options.getString("query", true);
-
-  if (
-    !(await isUserAllowed("deleteSticker", interaction)) &&
-    !(await isUploader(interaction.user.id, id))
-  ) {
-    return interaction.reply({
-      content: PERMISSION_PUNT_MESSAGE,
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  try {
-    const isDeleted = await deleteSticker(id);
-    if (isDeleted) {
-      return interaction.reply({ content: "Sticker successfully deleted" });
-    } else {
-      console.error("Something went wrong deleting sticker. ID: ", id);
+    try {
+      const isDeleted = await deleteSticker(id);
+      if (isDeleted) {
+        return interaction.reply({ content: "Sticker successfully deleted" });
+      } else {
+        console.error("Something went wrong deleting sticker. ID: ", id);
+        return interaction.reply({
+          content: "Something went wrong while deleting sticker...",
+        });
+      }
+    } catch (error) {
+      console.error(error);
       return interaction.reply({
         content: "Something went wrong while deleting sticker...",
       });
     }
-  } catch (error) {
-    console.error(error);
-    return interaction.reply({
-      content: "Something went wrong while deleting sticker...",
-    });
-  }
+  },
+  autocomplete,
 };
 
-export { autocomplete } from "../../utils/stickers.js";
+export default commandData;

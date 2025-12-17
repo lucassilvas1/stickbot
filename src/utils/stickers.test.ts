@@ -8,14 +8,12 @@ import {
 } from "./stickers.js";
 import type { SimplifiedSticker } from "../types/stickers.js";
 import * as dbActions from "../db/dbActions.js";
-import * as usersModule from "./users.js";
 import { mockInteraction } from "./test.js";
 import { env } from "../env.js";
 import { join } from "path";
 
 vi.mock("../db/db.js");
 vi.mock("../db/dbActions.js");
-vi.mock("./users.js");
 
 describe("toAutocompleteType", () => {
   it("transforms stickers to autocomplete format", () => {
@@ -72,23 +70,10 @@ describe("autocomplete", () => {
     vi.clearAllMocks();
   });
 
-  it("returns empty array when user is not an app user", async () => {
-    const interaction = mockInteraction();
-
-    vi.mocked(usersModule.isFromAppUser).mockResolvedValue(false);
-
-    await autocomplete(interaction as any);
-
-    expect(interaction.respond).toHaveBeenCalledWith([]);
-    expect(dbActions.search).not.toHaveBeenCalled();
-  });
-
   it("returns empty array when query is less than 3 characters", async () => {
     const interaction = mockInteraction();
     interaction.respond = vi.fn();
     interaction.options.getString = vi.fn().mockReturnValue("ab");
-
-    vi.mocked(usersModule.isFromAppUser).mockResolvedValue(true);
 
     await autocomplete(interaction as any);
 
@@ -105,7 +90,6 @@ describe("autocomplete", () => {
       { id: "sticker2", title: "Fat Cat" },
     ] as SimplifiedSticker[];
 
-    vi.mocked(usersModule.isFromAppUser).mockResolvedValue(true);
     vi.mocked(dbActions.search).mockResolvedValue({ stickers } as any);
 
     await autocomplete(interaction as any);
@@ -121,7 +105,6 @@ describe("autocomplete", () => {
     const interaction = mockInteraction();
     interaction.options.getString = vi.fn().mockReturnValue("nonexistent");
 
-    vi.mocked(usersModule.isFromAppUser).mockResolvedValue(true);
     vi.mocked(dbActions.search).mockResolvedValue({ stickers: [] } as any);
 
     await autocomplete(interaction as any);
@@ -138,7 +121,6 @@ describe("autocomplete", () => {
       { id: "s1", title: "Result 1" } as any,
     ] as SimplifiedSticker[];
 
-    vi.mocked(usersModule.isFromAppUser).mockResolvedValue(true);
     vi.mocked(dbActions.search).mockResolvedValue({ stickers } as any);
 
     await autocomplete(interaction as any);

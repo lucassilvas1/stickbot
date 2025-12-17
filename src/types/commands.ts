@@ -1,9 +1,12 @@
 import type {
   AutocompleteInteraction,
+  CacheType,
   ChatInputCommandInteraction,
   Collection,
-  SlashCommandBuilder,
+  Interaction,
+  SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
+import type { Permissions } from "./db.js";
 
 export type CommandExecutor = (
   interaction: ChatInputCommandInteraction
@@ -16,7 +19,11 @@ export type CommandAutocomplete = (
 export type CommandData = {
   isGlobal?: boolean;
   cooldown?: number;
-  data: SlashCommandBuilder;
+  overridePermissions?: (
+    interaction: Interaction<CacheType>
+  ) => Promise<boolean> | boolean;
+  permissions: (keyof Permissions)[];
+  data: SlashCommandOptionsOnlyBuilder;
   execute: CommandExecutor;
   autocomplete?: CommandAutocomplete;
 };
