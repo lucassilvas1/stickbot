@@ -1,16 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getCommands, registerEventHandlers } from "./discord.js";
 import type { Client } from "discord.js";
+import { join } from "path";
 
 describe("getCommands", () => {
   it("returns an array of all command handlers in the project", async () => {
-    const commands = await getCommands();
+    const commands = await getCommands(
+      join(import.meta.dirname, "../../dist/commands")
+    );
     expect(commands.every((c) => "data" in c && "execute" in c)).toBe(true);
   });
 });
 
 describe("registerEventHandlers", () => {
   let mockClient: Partial<Client>;
+  const path = join(import.meta.dirname, "../../dist/events");
 
   beforeEach(() => {
     mockClient = {
@@ -20,18 +24,18 @@ describe("registerEventHandlers", () => {
   });
 
   it("registers once handlers with client.once()", async () => {
-    await registerEventHandlers(mockClient as Client);
+    await registerEventHandlers(mockClient as Client, path);
     // Should call either once or on depending on handler configuration
     expect((mockClient.once as any)?.mock?.calls?.length > 0).toBe(true);
   });
 
   it("registers on handlers with client.on()", async () => {
-    await registerEventHandlers(mockClient as Client);
+    await registerEventHandlers(mockClient as Client, path);
     expect((mockClient.on as any)?.mock?.calls?.length > 0).toBe(true);
   });
 
   it("passes handler name and wrapped handler function to client", async () => {
-    await registerEventHandlers(mockClient as Client);
+    await registerEventHandlers(mockClient as Client, path);
     // Verify that at least one handler was registered
     const totalCalls =
       ((mockClient.once as any)?.mock?.calls?.length || 0) +
