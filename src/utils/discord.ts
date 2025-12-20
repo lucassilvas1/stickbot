@@ -2,14 +2,17 @@ import path from "node:path";
 import fs from "node:fs";
 import type { CommandData } from "../types/commands.js";
 import type { Client } from "discord.js";
+import { logger } from "../logger.js";
 
-export async function getCommands() {
-  const foldersPath = path.join(import.meta.dirname, "../commands");
-  const commandFolders = fs.readdirSync(foldersPath);
+export async function getCommands(
+  commandsDirPath = path.join(import.meta.dirname, "../commands")
+) {
+  const commandFolders = fs.readdirSync(commandsDirPath);
   const commands: CommandData[] = [];
+  const requiredFields = ["data", "execute", "permissions"];
 
   for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder);
+    const commandsPath = path.join(commandsDirPath, folder);
     const commandFiles = fs
       .readdirSync(commandsPath)
       .filter((file) => file.endsWith(".js"));
@@ -18,11 +21,12 @@ export async function getCommands() {
       const filePath = path.join(commandsPath, file);
       const { default: command } = await import("file://" + filePath);
       // Set a new item in the Collection with the key as the command name and the value as the exported module
-      if ("data" in command && "execute" in command) {
+      if (requiredFields.every((f) => f in command)) {
         commands.push(command);
       } else {
-        console.log(
-          `[WARNING] The command at "${filePath}" is missing a required "data" or "execute" property.`
+        logger.warn(
+          { filePath, command },
+          "command missing one or more required fields"
         );
       }
     }
@@ -31,14 +35,16 @@ export async function getCommands() {
   return commands;
 }
 
-export async function registerEventHandlers(client: Client) {
-  const eventsPath = path.join(import.meta.dirname, "../events");
+export async function registerEventHandlers(
+  client: Client,
+  eventsDirPath = path.join(import.meta.dirname, "../events")
+) {
   const eventFiles = fs
-    .readdirSync(eventsPath)
+    .readdirSync(eventsDirPath)
     .filter((file) => file.endsWith(".js"));
 
   for (const file of eventFiles) {
-    const filePath = path.join(eventsPath, file);
+    const filePath = path.join(eventsDirPath, file);
     const handler = await import("file://" + filePath);
 
     if (handler.once) {
