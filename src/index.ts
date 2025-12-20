@@ -2,6 +2,7 @@ import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { env } from "./env.js";
 import express from "express";
 import { getCommands, registerEventHandlers } from "./utils/discord.js";
+import { logger } from "./logger.js";
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -18,12 +19,10 @@ client.login(env.BOT_TOKEN);
 
 const assetsServer = express();
 
-if (env.VERBOSE_LOGGING) {
-  assetsServer.use((req, _, next) => {
-    console.dir(req);
-    next();
-  });
-}
+assetsServer.use((req, _, next) => {
+  logger.debug({ req });
+  next();
+});
 
 assetsServer.use(
   express.static(env.ASSETS_DIR_PATH, {
@@ -36,7 +35,20 @@ assetsServer.use(
 );
 
 assetsServer.listen(env.ASSETS_SERVER_PORT, () => {
-  console.log(
-    `Assets static server listening on port ${env.ASSETS_SERVER_PORT}`
-  );
+  logger.info({ port: env.ASSETS_SERVER_PORT }, `static server listening`);
+});
+
+process.on("uncaughtException", (err) => {
+  logger.fatal({ err }, "uncaught exception detected");
+  // If a graceful shutdown is not achieved after 1 second,
+  // shut down the process completely
+  setTimeout(() => {
+    process.abort();
+  }, 1000).unref();
+
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error({ reason, promise }, "unhandled rejection");
 });

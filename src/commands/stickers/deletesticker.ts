@@ -7,6 +7,7 @@ import type { CommandData } from "../../types/commands.js";
 import { authorizeStickerUploader } from "../../utils/users.js";
 import { deleteSticker } from "../../db/dbActions.js";
 import { autocomplete } from "../../utils/stickers.js";
+import { logger } from "../../logger.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -37,15 +38,25 @@ const commandData: CommandData = {
     try {
       const isDeleted = await deleteSticker(id);
       if (isDeleted) {
+        logger.info(
+          { sticker: id, user: interaction.user.id },
+          "deleted sticker"
+        );
         return interaction.reply({ content: "Sticker successfully deleted" });
       } else {
-        console.error("Something went wrong deleting sticker. ID: ", id);
+        logger.error(
+          { sticker: id, user: interaction.user.id },
+          "could not delete sticker"
+        );
         return interaction.reply({
           content: "Something went wrong while deleting sticker...",
         });
       }
     } catch (error) {
-      console.error(error);
+      logger.error(
+        { error, sticker: id, user: interaction.user.id },
+        "could not delete sticker"
+      );
       return interaction.reply({
         content: "Something went wrong while deleting sticker...",
       });

@@ -17,6 +17,7 @@ import {
 import { authorizeStickerUploader } from "../../utils/users.js";
 import { toAutocompleteType } from "../../utils/stickers.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
+import { logger } from "../../logger.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -77,12 +78,16 @@ const commandData: CommandData = {
 
     try {
       await updateSticker(id, { title, tags, description });
+      logger.info({ id, title, tags, description }, "updated sticker");
       return interaction.reply({
         content: "Changes were successfully saved",
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
-      console.error("Could not update sticker: ", error);
+      logger.error(
+        { error, id, title, tags, description },
+        "could not update sticker"
+      );
       return interaction.reply({
         content: "Something went wrong while saving changes...",
         flags: MessageFlags.Ephemeral,
@@ -98,6 +103,7 @@ const commandData: CommandData = {
     const id = interaction.options.getString("query", true);
     const sticker = await getStickerById(id);
     if (!sticker) {
+      logger.debug({ id }, "could not find sticker");
       return interaction.respond([
         {
           name: "STICKER NOT FOUND! PICK A VALID STICKER FROM THE query SUGGESTION FIRST",

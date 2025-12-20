@@ -1,3 +1,5 @@
+import z from "zod";
+
 export type TypedErrorCode =
   | "HTTP"
   | "TOO_LARGE"
@@ -6,3 +8,9 @@ export type TypedErrorCode =
   | "FFPROBE_ERROR"
   | "FFMPEG_ERROR"
   | "SHARP_ERROR";
+
+export const logLevelParser = z
+  .enum(["fatal", "error", "warn", "info", "debug", "trace"])
+  .default("info");
+
+export type LogLevel = z.infer<typeof logLevelParser>;

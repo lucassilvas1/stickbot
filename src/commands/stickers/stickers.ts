@@ -29,6 +29,7 @@ import {
 import { generateId } from "../../utils/misc.js";
 import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
 import { GRID_PLACEHOLDER_IMG_PATH } from "../../utils/constants.js";
+import { logger } from "../../logger.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -88,6 +89,7 @@ const commandData: CommandData = {
     const message = response.resource?.message;
 
     if (!message) {
+      logger.error({ response }, "message object missing");
       return interaction.reply({
         content: "Something went wrong...",
         flags: MessageFlags.Ephemeral,
@@ -290,37 +292,41 @@ function handleMenuInteractions(
   collector?.on("collect", async (i) => {
     const [type, value] = i.customId.split(":");
 
-    switch (type) {
-      case "sticker": {
-        if (!value) throw Error(`Malformed button customId: "${i.customId}"`);
-        await onSendSticker(interaction, i, value, userId);
-        break;
+    try {
+      switch (type) {
+        case "sticker": {
+          if (!value) throw Error(`Malformed button customId: "${i.customId}"`);
+          await onSendSticker(interaction, i, value, userId);
+          break;
+        }
+        case "offset": {
+          await onPaginate(i, +value!, userId, query, order);
+          break;
+        }
+        case "first": {
+          await onPaginate(i, 0, userId, query, order);
+          break;
+        }
+        case "last": {
+          await onPaginate(
+            i,
+            resultCount - (resultCount % 9 || 9),
+            userId,
+            query,
+            order
+          );
+          break;
+        }
+        default: {
+          // should never happen
+          await i.reply({
+            content: "Something went wrong...",
+            flags: MessageFlags.Ephemeral,
+          });
+        }
       }
-      case "offset": {
-        await onPaginate(i, +value!, userId, query, order);
-        break;
-      }
-      case "first": {
-        await onPaginate(i, 0, userId, query, order);
-        break;
-      }
-      case "last": {
-        await onPaginate(
-          i,
-          resultCount - (resultCount % 9 || 9),
-          userId,
-          query,
-          order
-        );
-        break;
-      }
-      default: {
-        // should never happen
-        return i.reply({
-          content: "Something went wrong...",
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+    } catch (error) {
+      logger.error({ error, buttonInteraction: i, interaction });
     }
   });
 }

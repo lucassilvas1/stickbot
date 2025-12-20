@@ -1,8 +1,5 @@
 import z = require("zod");
-
-const booleanParser = z
-  .enum(["true", "false"])
-  .transform((value) => value === "true");
+import { logLevelParser } from "./misc.js";
 
 export const envSchema = z.object({
   BOT_TOKEN: z.string(),
@@ -14,7 +11,8 @@ export const envSchema = z.object({
   FFPROBE_PATH: z.string(),
   ASSETS_SERVER_HOSTNAME: z.string(),
   ASSETS_SERVER_PORT: z.string(),
-  VERBOSE_LOGGING: booleanParser.default(false),
+  LOG_LEVEL: logLevelParser,
+  LOG_DIR_PATH: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

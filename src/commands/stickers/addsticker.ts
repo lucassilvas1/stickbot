@@ -10,7 +10,6 @@ import { Dispatcher, request } from "undici";
 import { env } from "../../env.js";
 import { rm } from "fs/promises";
 import type { TypedErrorCode } from "../../types/misc.js";
-import { insertSticker } from "../../db/dbActions.js";
 import {
   MAX_ATTACHMENT_SIZE_BYTES,
   MAX_ATTACHMENT_SIZE_MB,
@@ -34,6 +33,8 @@ import {
 } from "../../utils/processing.js";
 import { getVariantPaths, getVariantUrl } from "../../utils/stickers.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
+import { logger } from "../../logger.js";
+import { insertSticker } from "../../db/dbActions.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -135,21 +136,24 @@ const commandData: CommandData = {
         response.body
       );
 
-      console.log("Processed files");
-
-      await insertSticker(
-        {
-          id: stickerId,
-          title: interaction.options.getString("title", true),
-          description: interaction.options.getString("description"),
-          sourceUrl: url,
-          uploaderId: interaction.user.id,
-          tags: interaction.options.getString("tags", true),
-        },
-        variants
+      logger.debug(
+        { interaction: interaction.id, stickerId },
+        "processed files"
       );
 
+      const stickerData = {
+        id: stickerId,
+        title: interaction.options.getString("title", true),
+        description: interaction.options.getString("description"),
+        sourceUrl: url,
+        uploaderId: interaction.user.id,
+        tags: interaction.options.getString("tags", true),
+      };
+      await insertSticker(stickerData, variants);
+
       await interaction.deleteReply();
+
+      logger.info(stickerData, "added sticker");
 
       return interaction.followUp(getVariantUrl(stickerId, "high"));
     } catch (error) {
@@ -173,6 +177,8 @@ const commandData: CommandData = {
         PROCESSING_ERROR:
           "Something went wrong while processing the file. " + retryMessage,
       };
+
+      logger.error(error, "could not add sticker");
 
       return interaction.editReply({
         content:
@@ -241,7 +247,7 @@ async function generateVariants(
   try {
     await saveFile(originalPath, body);
 
-    console.log("Saved original file");
+    logger.debug({ path: originalPath }, "saved original file");
 
     await Promise.all([
       processFile(originalPath, highVariantPath, VariantEncodingMap.high),
@@ -258,8 +264,6 @@ async function generateVariants(
       getVariantInfo(stickerId, "thumbnail", thumbnailVariantPath),
     ]);
   } catch (error) {
-    console.error(error);
-
     await Promise.all([
       rm(originalPath, { force: true }),
       rm(highVariantPath, { force: true }),
