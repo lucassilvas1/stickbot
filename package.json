@@ -2,16 +2,15 @@
   "name": "stickbot",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/src/index.js",
-    "start:dev": "cross-env NODE_ENV=development node dist/src/index.js",
-    "start:prod": "cross-env NODE_ENV=production node dist/src/index.js",
+    "start:dev": "cross-env NODE_ENV=development node dist/index.js",
+    "start:prod": "cross-env NODE_ENV=production node dist/index.js",
     "deploy:dev": "npm run build && cross-env NODE_ENV=development node dist/deploy-commands.js",
     "deploy:prod": "npm run build && cross-env NODE_ENV=production node dist/deploy-commands.js",
-    "test": "vitest"
+    "test": "vitest -c src/vitest.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +30,7 @@
     "discord.js": "^14.24.2",
     "express": "^5.1.0",
     "kysely": "^0.28.8",
+    "pino": "^10.1.0",
     "sharp": "^0.34.5",
     "undici": "^7.16.0",
     "zod": "^4.1.12"
