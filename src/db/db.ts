@@ -10,9 +10,10 @@ import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
   VariantEncodingMap,
 } from "../utils/constants.js";
+import { logger } from "../logger.js";
 
 function moveStaticFiles(assetsDirPath: string) {
-  const originalPath = join(import.meta.dirname, "../../../assets");
+  const originalPath = join(import.meta.dirname, "../../assets");
   const names = readdirSync(originalPath);
   const promises = Promise.all(
     names.map((name) =>
@@ -72,11 +73,7 @@ export async function initDb({
   const db = new Kysely<Database>({
     dialect: new SqliteDialect({ database: sqlite }),
     plugins: [new CamelCasePlugin()],
-    log: env.VERBOSE_LOGGING
-      ? (event) => {
-          console.dir(event.query, { depth: null });
-        }
-      : () => {},
+    log: (event) => void logger.debug({ event }),
   });
 
   await migrateToLatest(db);
