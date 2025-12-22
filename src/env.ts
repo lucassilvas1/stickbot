@@ -25,3 +25,7 @@ if (envResult.error) {
 }
 
 export const env = envSchema.parse(process.env);
+
+if (env.LOG_TO_CONSOLE === undefined) {
+  env.LOG_TO_CONSOLE = process.env.NODE_ENV === "development";
+}
