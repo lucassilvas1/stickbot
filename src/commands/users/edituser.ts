@@ -11,6 +11,7 @@ import {
   parsePermissionOptions,
 } from "../../utils/users.js";
 import { NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE } from "../../utils/constants.js";
+import { logger } from "../../logger.js";
 
 const commandData: CommandData = {
   isGlobal: false,
@@ -36,12 +37,13 @@ const commandData: CommandData = {
   async execute(interaction) {
     const targetId = interaction.options.getString("id", true);
     const targetPermissions = parsePermissionOptions(interaction, "integer");
+    const info = { editorId: interaction.user.id, targetId, targetPermissions };
 
     if (!isFromOwner(interaction)) {
       const editor = await getUserPermissionsById(interaction.user.id);
 
       if (!editor) {
-        console.log("User not in database after passing check");
+        logger.error(info, "user not found after authorization");
         return interaction.reply({
           content: "Something went wrong while handling command",
           flags: MessageFlags.Ephemeral,
@@ -52,6 +54,10 @@ const commandData: CommandData = {
       const targetPermissionWeight = getUserPermissionWeight(targetPermissions);
 
       if (targetPermissionWeight > editorPermissionWeight) {
+        logger.info(
+          { targetPermissionWeight, editorPermissionWeight, ...info },
+          "not enough clearance to grant these permissions"
+        );
         return interaction.reply({
           content: NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE,
           flags: MessageFlags.Ephemeral,
@@ -66,12 +72,13 @@ const commandData: CommandData = {
         username,
         ...targetPermissions,
       });
+      logger.info({ ...info }, "updated user permissions");
       return interaction.reply({
         content: `Edits to ${username} (${targetId}) have been successfully saved`,
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
-      console.error(error);
+      logger.error({ error, ...info }, "could not update user permissions");
       return interaction.reply({
         content: "Something went wrong while updating user in database",
         flags: MessageFlags.Ephemeral,

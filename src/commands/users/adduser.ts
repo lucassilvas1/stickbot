@@ -5,6 +5,7 @@ import {
   addPermissionOptions,
   parsePermissionOptions,
 } from "../../utils/users.js";
+import { logger } from "../../logger.js";
 
 const commandData: CommandData = {
   isGlobal: false,
@@ -33,6 +34,7 @@ const commandData: CommandData = {
   async execute(interaction) {
     const targetId = interaction.options.getString("id", true);
     const username = interaction.options.getString("username", true);
+    const info = { targetId, userId: interaction.user.id };
 
     try {
       const inserted = await insertUserPermissions({
@@ -40,20 +42,21 @@ const commandData: CommandData = {
         username,
         ...parsePermissionOptions(interaction, "integer"),
       });
-
       if (inserted) {
+        logger.info(info, "added user");
         return interaction.reply({
           content: `User ${username} (${targetId}) has been successfully added to the database`,
           flags: MessageFlags.Ephemeral,
         });
       }
+      logger.info(info, "user already in db");
       return interaction.reply({
         content:
           "User is already present in the database. No changes were made",
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
-      console.error(error);
+      logger.error({ error, ...info }, "could not add user");
       return interaction.reply({
         content: "Something went wrong while inserting user in database",
         flags: MessageFlags.Ephemeral,

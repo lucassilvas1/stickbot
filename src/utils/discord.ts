@@ -24,7 +24,7 @@ export async function getCommands(
       if (requiredFields.every((f) => f in command)) {
         commands.push(command);
       } else {
-        logger.warn(
+        logger.error(
           { filePath, command },
           "command missing one or more required fields"
         );

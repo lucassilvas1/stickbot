@@ -1,6 +1,7 @@
 import * as path from "path";
 import { promises as fs } from "fs";
 import { Kysely, Migrator, FileMigrationProvider } from "kysely";
+import { logger } from "../logger.js";
 
 export async function migrateToLatest(database: Kysely<any>) {
   const migrator = new Migrator({
@@ -21,15 +22,15 @@ export async function migrateToLatest(database: Kysely<any>) {
       //   `migration "${result.migrationName}" was executed successfully`
       // );
     } else if (result.status === "Error") {
-      console.error(
+      logger.error(
         { migration: result.migrationName },
-        "Failed to execute migration"
+        "failed to execute migration"
       );
     }
   });
 
   if (error) {
-    console.error(error, "Failed to migrate schema");
+    logger.error(error, "failed to migrate schema");
     process.exit(1);
   }
 }

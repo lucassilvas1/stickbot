@@ -15,6 +15,7 @@ import {
 } from "./cache.js";
 import type { Kysely, Transaction } from "kysely";
 import { deleteAllVariants } from "../utils/processing.js";
+import { logger } from "../logger.js";
 
 export async function _insertUserPermissions(
   db: Kysely<Database>,
@@ -159,18 +160,29 @@ export async function _getStickerById(
 ) {
   let sticker = stickerCache.get(id);
 
-  await db.transaction().execute(async (trx) => {
-    if (incrementUsage && userId) {
-      sticker = await _incrementStickerUsage(db, id, userId, trx);
-    } else if (!sticker) {
-      sticker = await trx
-        .selectFrom("sticker")
-        .select(simplifiedStickerColumns)
-        .where("id", "=", id)
-        .executeTakeFirst();
-      onStickerUpdated(id, false, { sticker });
+  try {
+    await db.transaction().execute(async (trx) => {
+      if (incrementUsage && userId) {
+        sticker = await _incrementStickerUsage(db, id, userId, trx);
+      } else if (!sticker) {
+        sticker = await trx
+          .selectFrom("sticker")
+          .select(simplifiedStickerColumns)
+          .where("id", "=", id)
+          .executeTakeFirst();
+        onStickerUpdated(id, false, { sticker });
+      }
+    });
+  } catch (err) {
+    const error = err as any;
+    // _incrementStickerUsage will throw this if a sticker with `id` is not
+    // in the db when it tries to update the "usage" table
+    if (error?.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
+      return;
     }
-  });
+    logger.error({ error, id, userId }, "could not get sticker by ID");
+    throw err;
+  }
   return sticker;
 }
 

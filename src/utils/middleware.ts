@@ -10,6 +10,7 @@ import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
 import { getNonLNZCharSet } from "./misc.js";
 import { isFromOwner } from "./users.js";
 import { getUserPermissionsById } from "../db/dbActions.js";
+import { logger } from "../logger.js";
 
 export async function authorization(
   command: CommandData,
@@ -53,7 +54,8 @@ export async function rateLimit(
   const cooldown = command.cooldown ?? DEFAULT_COMMAND_COOLDOWN_MS;
 
   if (!timestamps) {
-    console.error(
+    logger.error(
+      { command: interaction.commandName, options: interaction.options.data },
       "Timestamps collection not found for command. This code should not be reachable."
     );
     return false;
@@ -63,6 +65,10 @@ export async function rateLimit(
 
   if (timestamp && now < timestamp + cooldown) {
     const retryTimestamp = Math.round(timestamp + cooldown / 1_000);
+    logger.debug(
+      { user: interaction.user.id, command: interaction.commandName },
+      "user in cooldown"
+    );
     await interaction.reply({
       content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again at <t:${retryTimestamp}:R>.`,
       flags: MessageFlags.Ephemeral,
@@ -89,6 +95,7 @@ export async function invalidCharGuard(
   const invalidChars = getNonLNZCharSet(title + tags);
 
   if (invalidChars.length > 0) {
+    logger.debug({ invalidChars }, "found invalid chars");
     await interaction.reply({
       content: `The title and tags can only contain letters, numbers, and spaces. The following characters are not allowed: ${invalidChars.join(
         " "

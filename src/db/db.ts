@@ -45,7 +45,7 @@ function createDirs(dbDirPath: string, assetsDirPath: string) {
 function createDb(dbPath: string) {
   const db = new SQLite(dbPath, {
     fileMustExist: false,
-    // verbose: (...args: any[]) => console.dir(...args, { depth: null }),
+    verbose: (...args: any[]) => logger.debug([...args], "creating db"),
   });
   db.pragma("journal_mode = WAL");
   return db;

@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import { authorization, rateLimit } from "../utils/middleware.js";
 import { PERMISSION_PUNT_MESSAGE } from "../utils/constants.js";
+import { logger } from "../logger.js";
 
 export const name = Events.InteractionCreate;
 
@@ -17,9 +18,7 @@ function getCommand(
   const command = interaction.client.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(
-      `No command matching "${interaction.commandName}" was found.`
-    );
+    logger.error({ command: interaction.commandName }, "command not found");
     return;
   }
 
@@ -46,8 +45,14 @@ export async function handle(interaction: Interaction<CacheType>) {
   // Unregistered command
   if (!command) return;
 
+  const info = {
+    user: interaction.user.id,
+    command: interaction.commandName,
+    options: interaction.options.data,
+  };
   const authorized = await authorization(command, interaction);
   if (!authorized) {
+    logger.debug(info, "booted unauthorized user");
     await respondUnauthorized(interaction);
     return;
   }
@@ -58,7 +63,7 @@ export async function handle(interaction: Interaction<CacheType>) {
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error(error);
+      logger.error({ error, ...info }, "command handler threw");
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
           content: "Something went wrong while executing this command!",
@@ -75,7 +80,7 @@ export async function handle(interaction: Interaction<CacheType>) {
     try {
       await command.autocomplete!(interaction);
     } catch (error) {
-      console.error({ error, command });
+      logger.error({ error, ...info }, "autocomplete handler threw");
     }
   }
 }
