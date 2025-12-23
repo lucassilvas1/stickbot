@@ -9,8 +9,15 @@ export type TypedErrorCode =
   | "FFMPEG_ERROR"
   | "SHARP_ERROR";
 
-export const logLevelParser = z
-  .enum(["fatal", "error", "warn", "info", "debug", "trace"])
-  .default("info");
+export const logLevels = [
+  "fatal",
+  "error",
+  "warn",
+  "info",
+  "debug",
+  "trace",
+] as const;
+
+export const logLevelParser = z.enum(logLevels).default("info");
 
 export type LogLevel = z.infer<typeof logLevelParser>;

@@ -62,6 +62,14 @@ export async function handle(interaction: Interaction<CacheType>) {
 
     try {
       await command.execute(interaction);
+      logger.debug(
+        {
+          command: interaction.commandName,
+          options: interaction.options.data,
+          user: interaction.user.id,
+        },
+        "command handled"
+      );
     } catch (error) {
       logger.error({ error, ...info }, "command handler threw");
       if (interaction.replied || interaction.deferred) {
