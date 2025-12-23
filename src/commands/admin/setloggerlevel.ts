@@ -38,6 +38,7 @@ const commandData: CommandData = {
     logger.info({ ...info, oldLevel }, "changed logger level");
     return interaction.reply({
       content: `Logger level has been changed from "${oldLevel}" to "${level}"`,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };
