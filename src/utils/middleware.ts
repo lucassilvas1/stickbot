@@ -25,6 +25,8 @@ export async function authorization(
     const overridden = await command.overridePermissions(interaction);
     if (overridden) return true;
   }
+  // only owner and `overridePermissions` can authorize special commands
+  if (command.permissions === "special") return false;
 
   const permissions = await getUserPermissionsById(interaction.user.id);
   if (!permissions) return false;

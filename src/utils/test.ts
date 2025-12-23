@@ -42,7 +42,7 @@ type MockCommandOptions = {
   overridePermissions?: (
     interaction: Interaction<CacheType>
   ) => Promise<boolean> | Boolean;
-  permissions?: string[];
+  permissions?: string[] | "special";
 };
 
 export function mockCommand({

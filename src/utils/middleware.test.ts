@@ -1,5 +1,5 @@
 import { type InteractionReplyOptions } from "discord.js";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateId, getNonLNZCharSet } from "./misc.js";
 import { authorization, invalidCharGuard, rateLimit } from "./middleware.js";
 import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
@@ -12,6 +12,10 @@ vi.mock("./users.js", () => ({ isFromOwner: vi.fn() }));
 vi.mock("../db/dbActions.js", () => ({ getUserPermissionsById: vi.fn() }));
 
 describe("authorization", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("allows the owner unconditionally", async () => {
     vi.mocked(isFromOwner).mockReturnValue(true);
     const interaction = mockInteraction({
@@ -45,17 +49,56 @@ describe("authorization", () => {
       editSticker: 1,
     } as any);
 
-    const overridePermissions = vi.fn().mockResolvedValue(false);
-
     const result = await authorization(
       mockCommand({
-        overridePermissions,
+        overridePermissions: vi.fn().mockResolvedValue(false),
         permissions: ["editSticker"],
       }),
       mockInteraction() as any
     );
 
     expect(result).toBe(true);
+  });
+
+  it("lets owner through for special commands", async () => {
+    vi.mocked(isFromOwner).mockReturnValue(true);
+
+    const command = mockCommand({
+      permissions: "special",
+      overridePermissions: vi.fn(),
+    });
+    const result = await authorization(command, mockInteraction() as any);
+
+    expect(result).toBe(true);
+    expect(command.overridePermissions).not.toHaveBeenCalled();
+    expect(getUserPermissionsById).not.toHaveBeenCalled();
+  });
+
+  it("lets user through if overridePermissions returns true", async () => {
+    vi.mocked(isFromOwner).mockReturnValue(false);
+
+    const command = mockCommand({
+      permissions: "special",
+      overridePermissions: vi.fn().mockReturnValue(true),
+    });
+    const result = await authorization(command, mockInteraction() as any);
+
+    expect(result).toBe(true);
+    expect(getUserPermissionsById).not.toHaveBeenCalled();
+  });
+
+  it("denies user if not owner and overridePermissions returns false", async () => {
+    vi.mocked(isFromOwner).mockReturnValue(false);
+
+    const command = mockCommand({
+      permissions: "special",
+      overridePermissions: vi.fn().mockReturnValue(false),
+    });
+
+    const result = await authorization(command, mockInteraction() as any);
+
+    expect(result).toBe(false);
+    expect(getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("lets user through if they're in db and command permission array is empty", async () => {

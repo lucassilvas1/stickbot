@@ -22,7 +22,7 @@ export type CommandData = {
   overridePermissions?: (
     interaction: Interaction<CacheType>
   ) => Promise<boolean> | boolean;
-  permissions: (keyof Permissions)[];
+  permissions: (keyof Permissions)[] | "special";
   data: SlashCommandOptionsOnlyBuilder;
   execute: CommandExecutor;
   autocomplete?: CommandAutocomplete;
