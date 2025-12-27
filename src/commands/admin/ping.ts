@@ -1,10 +1,24 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+  MessageFlags,
+  SlashCommandBuilder,
+} from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 
 const commandData: CommandData = {
   isGlobal: true,
   permissions: [],
   data: new SlashCommandBuilder()
+    .setContexts([
+      InteractionContextType.PrivateChannel,
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+    ])
+    .setIntegrationTypes([
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall,
+    ])
     .setName("ping")
     .setDescription("Estimates the latency between you and the BOT"),
   async execute(interaction) {
