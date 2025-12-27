@@ -29,8 +29,8 @@ function createLogger(level: LogLevel) {
     {
       level: level,
       formatters: {
-        bindings: (bindings) => {
-          return { pid: bindings.pid, host: bindings.hostname };
+        bindings: () => {
+          return {};
         },
       },
       timestamp: pino.stdTimeFunctions.isoTime,
