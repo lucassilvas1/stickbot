@@ -66,15 +66,14 @@ export async function generateVariants(
   originalPath: string,
   stickerId: string,
   body: Dispatcher.ResponseData<null>["body"],
-  deps?: ProcessingDependencies
+  dependencies?: Partial<ProcessingDependencies>
 ) {
-  if (!deps) {
-    deps = {
-      saveFile,
-      processFile,
-      getVariantInfo,
-    };
-  }
+  const deps = {
+    saveFile,
+    processFile,
+    getVariantInfo,
+    ...dependencies,
+  };
 
   const fileName = stickerId + ".webp";
   const highVariantPath = join(
