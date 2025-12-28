@@ -6,31 +6,22 @@ import {
 } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import { join } from "path";
-import { Dispatcher, request } from "undici";
 import { env } from "../../env.js";
 import { rm } from "fs/promises";
 import type { TypedErrorCode } from "../../types/misc.js";
 import {
-  MAX_ATTACHMENT_SIZE_BYTES,
   MAX_ATTACHMENT_SIZE_MB,
   MAX_DESCRIPTION_LENGTH,
   MAX_TAGS_LENGTH,
   MAX_TITLE_LENGTH,
   MAX_VIDEO_DURATION_SECONDS,
-  MEDIA_DOWNLOAD_TIMEOUT_MS,
   MIN_TAGS_LENGTH,
   MIN_TITLE_LENGTH,
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
   STICKER_ID_LENGTH,
-  SUPPORTED_CONTAINERS,
-  VariantEncodingMap,
 } from "../../utils/constants.js";
 import { generateId, TypedError } from "../../utils/misc.js";
-import {
-  processFile,
-  saveFile,
-  getVariantInfo,
-} from "../../utils/processing.js";
+import { generateVariants, fetchMedia } from "../../utils/processing.js";
 import { getVariantPaths, getVariantUrl } from "../../utils/stickers.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
 import { logger } from "../../logger.js";
@@ -189,89 +180,5 @@ const commandData: CommandData = {
     }
   },
 };
-
-async function fetchMedia(url: string) {
-  const res = await request(url, {
-    bodyTimeout: MEDIA_DOWNLOAD_TIMEOUT_MS,
-    headersTimeout: MEDIA_DOWNLOAD_TIMEOUT_MS,
-    method: "GET",
-  });
-
-  if (res.statusCode >= 400) {
-    throw new TypedError("HTTP", { message: res.statusCode.toString() });
-  }
-
-  if (Number(res.headers["content-length"]) > MAX_ATTACHMENT_SIZE_BYTES) {
-    await res.body.dump();
-    throw new TypedError("TOO_LARGE");
-  }
-
-  const container = (res.headers["content-type"] as string)
-    .toLowerCase()!
-    .split(";")[0]!
-    .split("/")?.[1];
-
-  if (!container) {
-    throw new TypedError("INVALID_TYPE", {
-      message: "Could not infer MIME type from headers",
-    });
-  }
-
-  if (!SUPPORTED_CONTAINERS.includes(container!)) {
-    await res.body.dump();
-    throw new TypedError("INVALID_TYPE", {
-      message: res.headers["content-type"]?.toString(),
-    });
-  }
-
-  return { response: res, extension: container };
-}
-
-async function generateVariants(
-  originalPath: string,
-  stickerId: string,
-  body: Dispatcher.ResponseData<null>["body"]
-) {
-  const fileName = stickerId + ".webp";
-  const highVariantPath = join(
-    env.ASSETS_DIR_PATH,
-    VariantEncodingMap.high.dirName,
-    fileName
-  );
-  const thumbnailVariantPath = join(
-    env.ASSETS_DIR_PATH,
-    VariantEncodingMap.thumbnail.dirName,
-    fileName
-  );
-
-  try {
-    await saveFile(originalPath, body);
-
-    logger.debug({ path: originalPath }, "saved original file");
-
-    await Promise.all([
-      processFile(originalPath, highVariantPath, VariantEncodingMap.high),
-      processFile(
-        originalPath,
-        thumbnailVariantPath,
-        VariantEncodingMap.thumbnail
-      ),
-    ]);
-
-    return Promise.all([
-      getVariantInfo(stickerId, "original", originalPath),
-      getVariantInfo(stickerId, "high", highVariantPath),
-      getVariantInfo(stickerId, "thumbnail", thumbnailVariantPath),
-    ]);
-  } catch (error) {
-    await Promise.all([
-      rm(originalPath, { force: true }),
-      rm(highVariantPath, { force: true }),
-      rm(thumbnailVariantPath, { force: true }),
-    ]);
-
-    throw new TypedError("PROCESSING_ERROR", { cause: error });
-  }
-}
 
 export default commandData;

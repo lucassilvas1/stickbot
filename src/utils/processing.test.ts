@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
+  fetchMedia,
+  generateVariants,
   getVariantInfo,
   saveFile,
   deleteAllVariants,
@@ -11,6 +13,7 @@ import { spawn } from "./misc.js";
 import * as miscModule from "./misc.js";
 import * as fsModule from "fs";
 import * as fspromisesModule from "fs/promises";
+import { request } from "undici";
 import { EventEmitter } from "events";
 import { env } from "../env.js";
 import { join } from "path";
@@ -19,6 +22,7 @@ import type { StickerVariantEncodingConfig } from "../types/stickers.js";
 
 vi.mock("fs");
 vi.mock("fs/promises");
+vi.mock("undici");
 
 vi.mock("./misc.js", async () => {
   const actual = await vi.importActual<typeof import("./misc.js")>("./misc.js");
@@ -42,6 +46,591 @@ vi.mock("sharp", () => {
       toFile: toFileMock,
     })),
   };
+});
+
+describe("fetchMedia", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("successfully fetches media with valid response", async () => {
+    const mockBody = new EventEmitter();
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "video/mp4",
+        "content-length": "1000000",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    const result = await fetchMedia("https://example.com/video.mp4");
+
+    expect(result).toEqual({
+      response: mockResponse,
+      extension: "mp4",
+    });
+  });
+
+  it("extracts file extension from content-type header", async () => {
+    const mockBody = new EventEmitter();
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "image/png",
+        "content-length": "500000",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    const result = await fetchMedia("https://example.com/image.png");
+
+    expect(result.extension).toBe("png");
+  });
+
+  it("handles content-type with charset parameter", async () => {
+    const mockBody = new EventEmitter();
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "image/webp; charset=utf-8",
+        "content-length": "750000",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    const result = await fetchMedia("https://example.com/image.webp");
+
+    expect(result.extension).toBe("webp");
+  });
+
+  it("converts content-type to lowercase", async () => {
+    const mockBody = new EventEmitter();
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "VIDEO/GIF",
+        "content-length": "2000000",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    const result = await fetchMedia("https://example.com/animation.gif");
+
+    expect(result.extension).toBe("gif");
+  });
+
+  it("throws HTTP error when status code >= 400", async () => {
+    const mockBody = new EventEmitter();
+    const mockResponse = {
+      statusCode: 404,
+      headers: {
+        "content-type": "text/html",
+        "content-length": "100",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    await expect(
+      fetchMedia("https://example.com/notfound.mp4")
+    ).rejects.toSatisfy(
+      (error: any) => error.code === "HTTP" && error.message.includes("404")
+    );
+  });
+
+  it("throws TOO_LARGE error when content-length exceeds limit", async () => {
+    const mockBody = new EventEmitter() as any;
+    mockBody.dump = vi.fn().mockResolvedValue(undefined);
+
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "video/mp4",
+        "content-length": "999999999999",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    await expect(
+      fetchMedia("https://example.com/huge-file.mp4")
+    ).rejects.toSatisfy((error: any) => error.code === "TOO_LARGE");
+  });
+
+  it("dumps response body when file is too large", async () => {
+    const mockBody = new EventEmitter() as any;
+    const dumpSpy = vi.fn().mockResolvedValue(undefined);
+    mockBody.dump = dumpSpy;
+
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "video/mp4",
+        "content-length": "999999999999",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    try {
+      await fetchMedia("https://example.com/huge-file.mp4");
+    } catch {
+      // Expected to fail
+    }
+
+    expect(dumpSpy).toHaveBeenCalled();
+  });
+
+  it("throws INVALID_TYPE error when content-type is missing container", async () => {
+    const mockBody = new EventEmitter();
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "invalid",
+        "content-length": "500000",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    await expect(
+      fetchMedia("https://example.com/file.unknown")
+    ).rejects.toSatisfy((error: any) => error.code === "INVALID_TYPE");
+  });
+
+  it("throws INVALID_TYPE error when container is not supported", async () => {
+    const mockBody = new EventEmitter() as any;
+    mockBody.dump = vi.fn().mockResolvedValue(undefined);
+
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "application/exe",
+        "content-length": "500000",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    await expect(fetchMedia("https://example.com/file.exe")).rejects.toSatisfy(
+      (error: any) => error.code === "INVALID_TYPE"
+    );
+  });
+
+  it("dumps response body when container is not supported", async () => {
+    const mockBody = new EventEmitter() as any;
+    const dumpSpy = vi.fn().mockResolvedValue(undefined);
+    mockBody.dump = dumpSpy;
+
+    const mockResponse = {
+      statusCode: 200,
+      headers: {
+        "content-type": "application/exe",
+        "content-length": "500000",
+      },
+      body: mockBody,
+    };
+
+    vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+    try {
+      await fetchMedia("https://example.com/file.exe");
+    } catch {
+      // Expected to fail
+    }
+
+    expect(dumpSpy).toHaveBeenCalled();
+  });
+
+  it("handles various supported media types", async () => {
+    const mediaTypes = [
+      { type: "video/mp4", ext: "mp4" },
+      { type: "image/png", ext: "png" },
+      { type: "image/jpeg", ext: "jpeg" },
+      { type: "image/webp", ext: "webp" },
+      { type: "image/gif", ext: "gif" },
+    ];
+
+    for (const { type, ext } of mediaTypes) {
+      vi.clearAllMocks();
+
+      const mockBody = new EventEmitter();
+      const mockResponse = {
+        statusCode: 200,
+        headers: {
+          "content-type": type,
+          "content-length": "500000",
+        },
+        body: mockBody,
+      };
+
+      vi.mocked(request).mockResolvedValue(mockResponse as any);
+
+      const result = await fetchMedia(`https://example.com/file.${ext}`);
+
+      expect(result.extension).toBe(ext);
+    }
+  });
+});
+
+describe("generateVariants", () => {
+  const mockBody = new EventEmitter();
+
+  const createMockDeps = () => ({
+    saveFile: vi.fn().mockResolvedValue(undefined),
+    processFile: vi.fn().mockResolvedValue(undefined),
+    getVariantInfo: vi.fn().mockResolvedValue({
+      stickerId: "sticker1",
+      type: "original" as const,
+      width: 1920,
+      height: 1080,
+      fileSizeBytes: 1000000,
+      extension: "mp4",
+      animated: 1,
+    }),
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("successfully generates all variants and returns 3 variant infos", async () => {
+    const deps = createMockDeps();
+
+    const result = await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    expect(result).toHaveLength(3);
+  });
+
+  it("calls saveFile once with original path and response body", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    expect(deps.saveFile).toHaveBeenCalledOnce();
+    expect(deps.saveFile).toHaveBeenCalledWith("/original/path.mp4", mockBody);
+  });
+
+  it("processes file twice for high and thumbnail variants", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    expect(deps.processFile).toHaveBeenCalledTimes(2);
+  });
+
+  it("gets variant info three times for original, high, and thumbnail", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    expect(deps.getVariantInfo).toHaveBeenCalledTimes(3);
+  });
+
+  it("throws PROCESSING_ERROR on saveFile failure", async () => {
+    const deps = createMockDeps();
+    deps.saveFile.mockRejectedValue(new Error("Save failed"));
+    vi.mocked(fspromisesModule.rm).mockResolvedValue(undefined);
+
+    await expect(
+      generateVariants("/original/path.mp4", "sticker1", mockBody as any, deps)
+    ).rejects.toSatisfy((error: any) => error.code === "PROCESSING_ERROR");
+  });
+
+  it("throws PROCESSING_ERROR on processFile failure", async () => {
+    const deps = createMockDeps();
+    deps.processFile.mockRejectedValue(new Error("Process failed"));
+    vi.mocked(fspromisesModule.rm).mockResolvedValue(undefined);
+
+    await expect(
+      generateVariants("/original/path.mp4", "sticker1", mockBody as any, deps)
+    ).rejects.toSatisfy((error: any) => error.code === "PROCESSING_ERROR");
+  });
+
+  it("throws PROCESSING_ERROR on getVariantInfo failure", async () => {
+    const deps = createMockDeps();
+    deps.getVariantInfo.mockRejectedValue(new Error("Variant info failed"));
+    vi.mocked(fspromisesModule.rm).mockResolvedValue(undefined);
+
+    await expect(
+      generateVariants("/original/path.mp4", "sticker1", mockBody as any, deps)
+    ).rejects.toThrow("Variant info failed");
+  });
+
+  it("cleans up all three variant files on error", async () => {
+    const deps = createMockDeps();
+    deps.saveFile.mockRejectedValue(new Error("Save failed"));
+    vi.mocked(fspromisesModule.rm).mockResolvedValue(undefined);
+
+    try {
+      await generateVariants(
+        "/original/path.mp4",
+        "sticker1",
+        mockBody as any,
+        deps
+      );
+    } catch {
+      // Expected
+    }
+
+    expect(vi.mocked(fspromisesModule.rm)).toHaveBeenCalledTimes(3);
+  });
+
+  it("processes variants in parallel after saving", async () => {
+    const deps = createMockDeps();
+    let processCallCount = 0;
+
+    deps.processFile.mockImplementation(async () => {
+      processCallCount++;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    });
+
+    const startTime = Date.now();
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+    const duration = Date.now() - startTime;
+
+    // 5ms per process + overhead ~15ms if parallel
+    // 10ms each if sequential would be ~20ms+
+    expect(duration).toBeLessThan(25);
+    expect(processCallCount).toBe(2);
+  });
+
+  it("gets variant info in parallel after processing", async () => {
+    const deps = createMockDeps();
+
+    deps.getVariantInfo.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return {
+        stickerId: "sticker1",
+        type: "original" as const,
+        width: 1920,
+        height: 1080,
+        fileSizeBytes: 1000000,
+        extension: "mp4",
+        animated: 1,
+      };
+    });
+
+    const startTime = Date.now();
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+    const duration = Date.now() - startTime;
+
+    // 5ms each parallel ~10ms + overhead
+    // 5ms each sequential would be ~15ms+
+    expect(duration).toBeLessThan(25);
+  });
+
+  it("calls processFile with correct parameters for high variant", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    const processFileCalls = deps.processFile.mock.calls;
+    const highCall = processFileCalls[0]!;
+
+    expect(highCall[0]).toBe("/original/path.mp4");
+    expect(highCall[1]).toContain("sticker1.webp");
+    expect(highCall[1]).toContain("high");
+  });
+
+  it("calls processFile with correct parameters for thumbnail variant", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    const processFileCalls = deps.processFile.mock.calls;
+    const thumbnailCall = processFileCalls[1]!;
+
+    expect(thumbnailCall[0]).toBe("/original/path.mp4");
+    expect(thumbnailCall[1]).toContain("sticker1.webp");
+    expect(thumbnailCall[1]).toContain("thumb");
+  });
+
+  it("calls getVariantInfo for original variant", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    const getVariantCalls = deps.getVariantInfo.mock.calls;
+    expect(getVariantCalls[0]).toEqual([
+      "sticker1",
+      "original",
+      "/original/path.mp4",
+    ]);
+  });
+
+  it("calls getVariantInfo for high variant", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    const getVariantCalls = deps.getVariantInfo.mock.calls;
+    const highCall = getVariantCalls[1]!;
+
+    expect(highCall[0]).toBe("sticker1");
+    expect(highCall[1]).toBe("high");
+    expect(highCall[2]).toContain("sticker1.webp");
+    expect(highCall[2]).toContain("high");
+  });
+
+  it("calls getVariantInfo for thumbnail variant", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    const getVariantCalls = deps.getVariantInfo.mock.calls;
+    const thumbCall = getVariantCalls[2]!;
+
+    expect(thumbCall[0]).toBe("sticker1");
+    expect(thumbCall[1]).toBe("thumbnail");
+    expect(thumbCall[2]).toContain("sticker1.webp");
+    expect(thumbCall[2]).toContain("thumb");
+  });
+
+  it("cleans up all variant files on saveFile error", async () => {
+    const deps = createMockDeps();
+    deps.saveFile.mockRejectedValue(new Error("Save failed"));
+    vi.mocked(fspromisesModule.rm).mockResolvedValue(undefined);
+
+    await expect(
+      generateVariants("/original/path.mp4", "sticker1", mockBody as any, deps)
+    ).rejects.toSatisfy((error: any) => error.code === "PROCESSING_ERROR");
+
+    expect(fspromisesModule.rm).toHaveBeenCalledTimes(3);
+  });
+
+  it("cleans up all variant files on processFile error", async () => {
+    const deps = createMockDeps();
+    deps.processFile.mockRejectedValue(new Error("Process failed"));
+    vi.mocked(fspromisesModule.rm).mockResolvedValue(undefined);
+
+    await expect(
+      generateVariants("/original/path.mp4", "sticker1", mockBody as any, deps)
+    ).rejects.toSatisfy((error: any) => error.code === "PROCESSING_ERROR");
+
+    expect(fspromisesModule.rm).toHaveBeenCalledTimes(3);
+  });
+
+  it("cleans up all variant files on getVariantInfo error", async () => {
+    const deps = createMockDeps();
+    deps.getVariantInfo.mockRejectedValue(new Error("Variant info failed"));
+
+    await expect(
+      generateVariants("/original/path.mp4", "sticker1", mockBody as any, deps)
+    ).rejects.toThrow("Variant info failed");
+  });
+
+  it("uses ASSETS_DIR_PATH to construct variant paths", async () => {
+    const deps = createMockDeps();
+
+    await generateVariants(
+      "/original/path.mp4",
+      "sticker1",
+      mockBody as any,
+      deps
+    );
+
+    const assetsDirPath = join(env.ASSETS_DIR_PATH);
+
+    const processFileCalls = deps.processFile.mock.calls;
+    expect(processFileCalls[0]![1].includes(assetsDirPath)).toBe(true);
+    expect(processFileCalls[1]![1].includes(assetsDirPath)).toBe(true);
+
+    const getVariantCalls = deps.getVariantInfo.mock.calls;
+    expect(getVariantCalls[1]![2].includes(assetsDirPath)).toBe(true);
+    expect(getVariantCalls[2]![2].includes(assetsDirPath)).toBe(true);
+  });
+
+  it("cleans up with force: true option", async () => {
+    const deps = createMockDeps();
+    deps.saveFile.mockRejectedValue(new Error("Save failed"));
+    vi.mocked(fspromisesModule.rm).mockResolvedValue(undefined);
+
+    try {
+      await generateVariants(
+        "/original/path.mp4",
+        "sticker1",
+        mockBody as any,
+        deps
+      );
+    } catch {
+      // Expected to fail
+    }
+
+    const rmCalls = vi.mocked(fspromisesModule.rm).mock.calls;
+    rmCalls.forEach((call) => {
+      expect(call[1]).toEqual({ force: true });
+    });
+  });
 });
 
 describe("getVariantInfo", () => {

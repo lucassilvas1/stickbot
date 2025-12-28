@@ -1,5 +1,5 @@
 import { createWriteStream, renameSync, rmSync, statSync } from "fs";
-import type { Dispatcher } from "undici";
+import { request, type Dispatcher } from "undici";
 import type {
   StickerVariant,
   StickerVariantEncodingConfig,
@@ -7,10 +7,116 @@ import type {
 import { spawn, TypedError } from "./misc.js";
 import { env } from "../env.js";
 import sharp from "sharp";
-import { MAX_VIDEO_DURATION_SECONDS, VariantEncodingMap } from "./constants.js";
+import {
+  MAX_ATTACHMENT_SIZE_BYTES,
+  MAX_VIDEO_DURATION_SECONDS,
+  MEDIA_DOWNLOAD_TIMEOUT_MS,
+  SUPPORTED_CONTAINERS,
+  VariantEncodingMap,
+} from "./constants.js";
 import { rm } from "fs/promises";
 import { extname, join } from "path";
 import type { NewVariant } from "../types/db.js";
+import { logger } from "../logger.js";
+
+export type ProcessingDependencies = {
+  saveFile: typeof saveFile;
+  processFile: typeof processFile;
+  getVariantInfo: typeof getVariantInfo;
+};
+
+export async function fetchMedia(url: string) {
+  const res = await request(url, {
+    bodyTimeout: MEDIA_DOWNLOAD_TIMEOUT_MS,
+    headersTimeout: MEDIA_DOWNLOAD_TIMEOUT_MS,
+    method: "GET",
+  });
+
+  if (res.statusCode >= 400) {
+    throw new TypedError("HTTP", { message: res.statusCode.toString() });
+  }
+
+  if (Number(res.headers["content-length"]) > MAX_ATTACHMENT_SIZE_BYTES) {
+    await res.body.dump();
+    throw new TypedError("TOO_LARGE");
+  }
+
+  const container = (res.headers["content-type"] as string)
+    ?.toLowerCase()
+    ?.split(";")[0]
+    ?.split("/")?.[1];
+
+  if (!container) {
+    throw new TypedError("INVALID_TYPE", {
+      message: "Could not infer MIME type from headers",
+    });
+  }
+
+  if (!SUPPORTED_CONTAINERS.includes(container!)) {
+    await res.body.dump();
+    throw new TypedError("INVALID_TYPE", {
+      message: res.headers["content-type"]?.toString(),
+    });
+  }
+
+  return { response: res, extension: container };
+}
+
+export async function generateVariants(
+  originalPath: string,
+  stickerId: string,
+  body: Dispatcher.ResponseData<null>["body"],
+  deps?: ProcessingDependencies
+) {
+  if (!deps) {
+    deps = {
+      saveFile,
+      processFile,
+      getVariantInfo,
+    };
+  }
+
+  const fileName = stickerId + ".webp";
+  const highVariantPath = join(
+    env.ASSETS_DIR_PATH,
+    VariantEncodingMap.high.dirName,
+    fileName
+  );
+  const thumbnailVariantPath = join(
+    env.ASSETS_DIR_PATH,
+    VariantEncodingMap.thumbnail.dirName,
+    fileName
+  );
+
+  try {
+    await deps.saveFile(originalPath, body);
+
+    logger.debug({ path: originalPath }, "saved original file");
+
+    await Promise.all([
+      deps.processFile(originalPath, highVariantPath, VariantEncodingMap.high),
+      deps.processFile(
+        originalPath,
+        thumbnailVariantPath,
+        VariantEncodingMap.thumbnail
+      ),
+    ]);
+
+    return Promise.all([
+      deps.getVariantInfo(stickerId, "original", originalPath),
+      deps.getVariantInfo(stickerId, "high", highVariantPath),
+      deps.getVariantInfo(stickerId, "thumbnail", thumbnailVariantPath),
+    ]);
+  } catch (error) {
+    await Promise.all([
+      rm(originalPath, { force: true }),
+      rm(highVariantPath, { force: true }),
+      rm(thumbnailVariantPath, { force: true }),
+    ]);
+
+    throw new TypedError("PROCESSING_ERROR", { cause: error });
+  }
+}
 
 export function saveFile(
   path: string,
