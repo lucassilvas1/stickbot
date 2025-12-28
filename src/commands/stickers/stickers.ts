@@ -7,6 +7,7 @@ import {
   ChatInputCommandInteraction,
   ComponentType,
   ContainerBuilder,
+  Emoji,
   InteractionContextType,
   MediaGalleryBuilder,
   Message,
@@ -119,24 +120,43 @@ function buildHeader(
 }
 
 function buildButton(
-  label: string | number,
-  customId: string,
-  width: number,
+  id: string,
   style: ButtonStyle,
-  disabled: boolean
+  options: {
+    label?: string | number;
+    emoji?: string;
+    width?: number;
+    disabled?: boolean;
+  } = {}
 ) {
-  const paddedLabel = padStringToWidth(
-    String(label),
-    // 162
-    width,
-    "center" as Align
-  );
+  const defaults = { width: 0, disabled: false };
+  const opts = { ...defaults, ...options };
 
-  return new ButtonBuilder()
-    .setLabel("\u200b" + paddedLabel + "\u200b")
-    .setCustomId(customId)
+  const button = new ButtonBuilder()
+    // .setLabel(label.toString())
+    .setCustomId(id)
     .setStyle(style)
-    .setDisabled(disabled);
+    .setDisabled(opts.disabled);
+
+  if (opts.label) {
+    const label = opts.width
+      ? "\u200b" +
+        padStringToWidth(
+          String(opts.label),
+          // 162
+          opts.width,
+          "center" as Align
+        ) +
+        "\u200b"
+      : String(opts.label);
+
+    button.setLabel(label);
+  }
+  if (opts.emoji) {
+    button.setEmoji(opts.emoji);
+  }
+
+  return button;
 }
 
 function buildStickerButtons(stickers: SimplifiedSticker[]) {
@@ -152,13 +172,11 @@ function buildStickerButtons(stickers: SimplifiedSticker[]) {
       }
       const customId =
         "sticker:" + (stickers[stickerIndex]?.id ?? generateId(4));
-      const button = buildButton(
-        stickerIndex + 1,
-        customId,
-        152,
-        ButtonStyle.Secondary,
-        donePlacing
-      );
+      const button = buildButton(customId, ButtonStyle.Secondary, {
+        label: stickerIndex + 1,
+        disabled: donePlacing,
+        // width: 60,
+      });
       rowBuilder.addComponents(button);
     }
     rows.push(rowBuilder);
@@ -171,39 +189,29 @@ function buildNavigationButtons(offset: number, resultCount: number) {
   const isFirstPage = prevOffset < 0;
   const nextOffset = offset + 9;
   const isLastPage = nextOffset >= resultCount;
-  const buttonWidth = 106;
 
   return [
     buildButton(
-      "First Page",
-      // Avoid duplicating customId
       "first",
-      buttonWidth,
       ButtonStyle.Primary,
-      isFirstPage
+      {
+        emoji: "⏪",
+        disabled: isFirstPage,
+      }
+      // Avoid duplicating customId
     ),
-    buildButton(
-      "Previous",
-      "offset:" + prevOffset,
-      buttonWidth,
-      // 244,
-      ButtonStyle.Primary,
-      isFirstPage
-    ),
-    buildButton(
-      "Next",
-      "offset:" + nextOffset,
-      buttonWidth,
-      ButtonStyle.Primary,
-      isLastPage
-    ),
-    buildButton(
-      "Last Page",
-      "last",
-      buttonWidth,
-      ButtonStyle.Primary,
-      isLastPage
-    ),
+    buildButton("offset:" + prevOffset, ButtonStyle.Primary, {
+      emoji: "⬅️",
+      disabled: isFirstPage,
+    }),
+    buildButton("offset:" + nextOffset, ButtonStyle.Primary, {
+      emoji: "➡️",
+      disabled: isLastPage,
+    }),
+    buildButton("last", ButtonStyle.Primary, {
+      emoji: "⏩",
+      disabled: isLastPage,
+    }),
   ];
 }
 
