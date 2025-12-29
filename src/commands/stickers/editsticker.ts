@@ -67,8 +67,8 @@ const commandData: CommandData = {
         .setMaxLength(MAX_DESCRIPTION_LENGTH)
     ),
   async execute(interaction) {
-    const isValidInput = await invalidCharGuard(interaction);
-    if (!isValidInput) return;
+    const isInvalidInput = await invalidCharGuard(interaction);
+    if (isInvalidInput) return;
 
     const id = interaction.options.getString("query", true);
     const title = interaction.options.getString("title") ?? undefined;
