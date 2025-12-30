@@ -14,12 +14,8 @@ export const stickerCache = new Cache<string, SimplifiedSticker>(
   STICKER_CACHE_EXPIRATION_MS
 );
 // key format:
-// - autocomplete: `auto::${query}:`
-// - browse: `browse:${userId ?? ""}:${query ?? ""}:${order}`
-export type SearchCacheKind = "browse" | "auto";
-export type SearchCacheKey =
-  | `${SearchCacheKind}:${string}:${string}:${StickerSearchOrder | ""}`
-  | "invalid";
+// - `<userId>:<query ?? "">:<order>`
+export type SearchCacheKey = `${string}:${string}:${StickerSearchOrder | ""}`;
 
 export function searchCacheKey({
   query,
@@ -27,12 +23,10 @@ export function searchCacheKey({
   order,
 }: {
   query?: string;
-  userId?: string;
+  userId: string;
   order?: StickerSearchOrder;
 }): SearchCacheKey {
-  if (!query && !userId) return "invalid"; // should not happen; caller returns early
-  if (!userId && query) return `auto::${query}:`;
-  return `browse:${userId ?? ""}:${query ?? ""}:${order ?? ""}`;
+  return `${userId}:${query ?? ""}:${order ?? ""}`;
 }
 
 export const searchCache = new Cache<SearchCacheKey, string[]>(
@@ -65,10 +59,10 @@ export function onStickerUpdated(
   else stickerCache.delete(stickerId);
 }
 
-// When usage for a (userId, stickerId) changed, we must invalidate browse caches for that user
+// When usage for a (userId, stickerId) changed, we must invalidate caches for that user
 function onUsageChangedForUser(userId: string) {
-  // conservative: clear all browse caches for that user
+  // conservative: clear all caches for that user
   for (const [key] of Array.from(searchCache.entries())) {
-    if (key.startsWith(`browse:${userId}`)) searchCache.delete(key);
+    if (key.startsWith(`${userId}:`)) searchCache.delete(key);
   }
 }

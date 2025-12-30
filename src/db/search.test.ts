@@ -61,15 +61,6 @@ describe.each([
     await deleteTestFolder(testDirPath);
   });
 
-  it("returns 0 results if no query or userId is provided", async () => {
-    const results = await _search(db, {});
-    expect(results).toStrictEqual({
-      stickers: [],
-      isLastPage: true,
-      totalResultCount: 0,
-    });
-  });
-
   it("doesn't filter out stickers when no query is provided", async () => {
     const stickers = Array(5).fill(null).map(generateStickerData);
     const variants = stickers.map((s) => generateStickerVariants(s.id));
@@ -243,15 +234,6 @@ describe.each([
 
     const timestamps = realRecentResults.map((u) => u!.timeLastUsed);
     expect(timestamps).toStrictEqual(timestamps.toSorted((a, b) => b - a));
-  });
-
-  it("limits autocomplete results to 25 (Discord limit)", async () => {
-    await seedStickers(50, (s) => ({ ...s, tags: "cooltag" }));
-    await seedStickers(50);
-    const suggestions = await _search(db, { query: "cooltag", limit: 200 });
-
-    expect(suggestions.stickers.length).toBe(25);
-    expect(new Set(suggestions.stickers.map((s) => s.tags)).size).toBe(1);
   });
 
   it("correctly handles offsets higher than total result count", async () => {

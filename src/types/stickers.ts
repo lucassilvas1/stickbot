@@ -1,3 +1,4 @@
+import z from "zod";
 import type { Sticker } from "./db.js";
 
 export type SimplifiedSticker = Pick<
@@ -15,7 +16,12 @@ export const simplifiedStickerColumns: Readonly<
   "sticker.uploaderId",
 ];
 
-export type StickerSearchOrder = "usage.timeLastUsed" | "usage.count";
+export const stickerSearchOrderParser = z.enum([
+  "usage.timeLastUsed",
+  "usage.count",
+]);
+
+export type StickerSearchOrder = z.infer<typeof stickerSearchOrderParser>;
 
 export type StickerVariant = "original" | "high" | "thumbnail";
 

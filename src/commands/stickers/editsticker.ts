@@ -18,6 +18,7 @@ import { authorizeStickerUploader } from "../../utils/users.js";
 import { toAutocompleteType } from "../../utils/stickers.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
 import { logger } from "../../logger.js";
+import { env } from "../../env.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -97,7 +98,12 @@ const commandData: CommandData = {
   async autocomplete(interaction) {
     const prop = interaction.options.getFocused(true);
     if (prop.name === "query") {
-      const { stickers } = await search({ query: prop.value });
+      const { stickers } = await search({
+        isAutocomplete: true,
+        userId: interaction.user.id,
+        query: prop.value,
+        order: env.AUTOCOMPLETE_ORDER_BY,
+      });
       return interaction.respond(toAutocompleteType(stickers));
     }
     const id = interaction.options.getString("query", true);

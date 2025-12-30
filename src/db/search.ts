@@ -9,8 +9,9 @@ import { searchCache, searchCacheKey, stickerCache } from "./cache.js";
 import type { Database } from "../types/db.js";
 
 type StickerSearchOptions = {
+  isAutocomplete?: boolean;
   query?: string;
-  userId?: string;
+  userId: string;
   offset?: number;
   limit?: number;
   order?: StickerSearchOrder;
@@ -112,26 +113,21 @@ async function runQueryAndCacheIds(
 
 export async function _search(
   db: Kysely<Database>,
-  opts: StickerSearchOptions = {}
+  opts: StickerSearchOptions
 ) {
-  const { query, userId, offset, limit = 25, order } = opts;
+  const { isAutocomplete, query, userId, offset, limit = 25, order } = opts;
 
   const key = searchCacheKey({ query, userId, order });
   // check cache (if cache hit, we have an ordered array of ids)
   let ids = searchCache.get(key);
-  // guard: blank autocomplete
-  if (key === "invalid")
-    return { stickers: [], isLastPage: true, totalResultCount: 0 };
 
   if (!ids) {
     // cache miss: run query and cache ids
-    // NOTE: for autocomplete, we run the same query but with limit 25
-    const runLimit = key.startsWith("browse") ? 5000 : 25;
     ids = await runQueryAndCacheIds(db, {
       query,
       userId,
       order,
-      limit: runLimit,
+      limit: isAutocomplete ? 25 : 5000, // cache up to 5000 ids for non-autocomplete
     });
     // store in cache
     searchCache.set(key, ids);

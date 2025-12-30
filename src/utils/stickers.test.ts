@@ -82,7 +82,8 @@ describe("autocomplete", () => {
   });
 
   it("searches and returns matching stickers for valid query", async () => {
-    const interaction = mockInteraction();
+    const userId = "user";
+    const interaction = mockInteraction({ userId });
     interaction.options.getString = vi.fn().mockReturnValue("cat");
 
     const stickers = [
@@ -94,7 +95,12 @@ describe("autocomplete", () => {
 
     await autocomplete(interaction as any);
 
-    expect(dbActions.search).toHaveBeenCalledWith({ query: "cat" });
+    expect(dbActions.search).toHaveBeenCalledWith({
+      isAutocomplete: true,
+      query: "cat",
+      userId,
+      order: env.AUTOCOMPLETE_ORDER_BY,
+    });
     expect(interaction.respond).toHaveBeenCalledWith([
       { name: "Dancing Cat", value: "sticker1" },
       { name: "Fat Cat", value: "sticker2" },
@@ -113,7 +119,8 @@ describe("autocomplete", () => {
   });
 
   it("handles queries longer than 3 characters", async () => {
-    const interaction = mockInteraction();
+    const userId = "user";
+    const interaction = mockInteraction({ userId });
     const longQuery = "this is a very long search query";
     interaction.options.getString = vi.fn().mockReturnValue(longQuery);
 
@@ -125,7 +132,12 @@ describe("autocomplete", () => {
 
     await autocomplete(interaction as any);
 
-    expect(dbActions.search).toHaveBeenCalledWith({ query: longQuery });
+    expect(dbActions.search).toHaveBeenCalledWith({
+      isAutocomplete: true,
+      query: longQuery,
+      userId,
+      order: env.AUTOCOMPLETE_ORDER_BY,
+    });
     expect(interaction.respond).toHaveBeenCalled();
   });
 });

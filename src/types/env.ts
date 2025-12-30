@@ -1,5 +1,6 @@
 import z = require("zod");
 import { logLevelParser } from "./misc.js";
+import { stickerSearchOrderParser } from "./stickers.js";
 
 const booleanParser = z
   .enum(["true", "false"])
@@ -18,6 +19,7 @@ export const envSchema = z.object({
   LOG_LEVEL: logLevelParser,
   LOG_DIR_PATH: z.string().optional(),
   LOG_TO_CONSOLE: booleanParser.optional(),
+  AUTOCOMPLETE_ORDER_BY: stickerSearchOrderParser.default("usage.count"),
 });
 
 export type Env = z.infer<typeof envSchema>;
