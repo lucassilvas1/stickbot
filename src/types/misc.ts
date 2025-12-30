@@ -18,6 +18,6 @@ export const logLevels = [
   "trace",
 ] as const;
 
-export const logLevelParser = z.enum(logLevels).default("info");
+export const logLevelParser = z.enum(logLevels);
 
 export type LogLevel = z.infer<typeof logLevelParser>;

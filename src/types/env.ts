@@ -16,7 +16,7 @@ export const envSchema = z.object({
   FFPROBE_PATH: z.string(),
   ASSETS_SERVER_HOSTNAME: z.string(),
   ASSETS_SERVER_PORT: z.string(),
-  LOG_LEVEL: logLevelParser,
+  LOG_LEVEL: logLevelParser.default("info"),
   LOG_DIR_PATH: z.string().optional(),
   LOG_TO_CONSOLE: booleanParser.optional(),
   AUTOCOMPLETE_ORDER_BY: stickerSearchOrderParser.default("usage.count"),
