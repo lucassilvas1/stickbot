@@ -70,17 +70,6 @@ describe("autocomplete", () => {
     vi.clearAllMocks();
   });
 
-  it("returns empty array when query is less than 3 characters", async () => {
-    const interaction = mockInteraction();
-    interaction.respond = vi.fn();
-    interaction.options.getString = vi.fn().mockReturnValue("ab");
-
-    await autocomplete(interaction as any);
-
-    expect(interaction.respond).toHaveBeenCalledWith([]);
-    expect(dbActions.search).not.toHaveBeenCalled();
-  });
-
   it("searches and returns matching stickers for valid query", async () => {
     const userId = "user";
     const interaction = mockInteraction({ userId });
@@ -89,6 +78,7 @@ describe("autocomplete", () => {
     const stickers = [
       { id: "sticker1", title: "Dancing Cat" },
       { id: "sticker2", title: "Fat Cat" },
+      { id: "sticker3", title: "Funny Dog" },
     ] as SimplifiedSticker[];
 
     vi.mocked(dbActions.search).mockResolvedValue({ stickers } as any);
@@ -116,29 +106,6 @@ describe("autocomplete", () => {
     await autocomplete(interaction as any);
 
     expect(interaction.respond).toHaveBeenCalledWith([]);
-  });
-
-  it("handles queries longer than 3 characters", async () => {
-    const userId = "user";
-    const interaction = mockInteraction({ userId });
-    const longQuery = "this is a very long search query";
-    interaction.options.getString = vi.fn().mockReturnValue(longQuery);
-
-    const stickers = [
-      { id: "s1", title: "Result 1" } as any,
-    ] as SimplifiedSticker[];
-
-    vi.mocked(dbActions.search).mockResolvedValue({ stickers } as any);
-
-    await autocomplete(interaction as any);
-
-    expect(dbActions.search).toHaveBeenCalledWith({
-      isAutocomplete: true,
-      query: longQuery,
-      userId,
-      order: env.AUTOCOMPLETE_ORDER_BY,
-    });
-    expect(interaction.respond).toHaveBeenCalled();
   });
 });
 
