@@ -49,7 +49,7 @@ const commandData: CommandData = {
           "could not delete sticker"
         );
         return interaction.reply({
-          content: "Something went wrong while deleting sticker...",
+          content: "Could not find sticker to delete",
         });
       }
     } catch (error) {
