@@ -4,7 +4,7 @@
 
 ### Adding Stickers
 
-![/addsticker command in action](/docs/assets/commands/addsticker_file.webp)
+![Adding new stickers](/docs/assets/commands/addsticker_file.webp)
 
 You can add new stickers with the `/addsticker` command. You'll need to give it a unique title and a list of space-separated tags, as well as the file itself.
 
@@ -15,12 +15,14 @@ Most image/video formats are supported. E.g., jpeg, png, gif, webp, .mp4, .mkv, 
 /addsticker title:apu spills his tendies tags:pepe sad crying floor tripped url:https://i.kym-cdn.com/entries/icons/original/000/037/319/cover1.jpg
 ```
 
+**Availability**: Any Server, Any DM.
+
 > [!NOTE]
 > You're required to provide either a **direct link** to the file with the `url` option, or provide the file itself with the `file` option.
 
 ### Listing Stickers
 
-![/liststickers command in action](/docs/assets/commands/liststickers.webp)
+![Listing stickers](/docs/assets/commands/liststickers.webp)
 
 You can use the `/liststickers` command to view a list of all your stickers. The command allows you to narrow down the list with the `query` option. You can also change the order of the stickers with the `order` option. By default they are sorted from most to least recently used.
 
@@ -35,22 +37,26 @@ You can use the `/liststickers` command to view a list of all your stickers. The
 /liststickers query:cat order:Most Used
 ```
 
+**Availability**: Any Server, Any DM.
+
 > [!TIP]
-> You can check view sticker titles and tags by setting the `info` option to `True`. Now when you pick one of the stickers in the list, the BOT will also return its title and tags.
+> You can view sticker titles and tags by setting the `info` option to `True`. Now when you pick one of the stickers from the list, the BOT will also return its title and tags.
 
-### Sending Sticker
+### Sending Stickers
 
-![/sticker command in action](/docs/assets/commands/sticker.webp)
+![Sending a sticker directly](/docs/assets/commands/sticker.webp)
 
 You don't have to use `/liststickers` unless you want to preview the sticker before you send it. If you already know the title of the sticker you want to send, the `/sticker` command is quicker to use.
 
-The `/sticker` command only has one option, `query`, and it is required. The `query` option is what you'll use to narrow down the list of suggestions. Once the sticker you're looking for shows up in the list, click on it or navigate to it with your keyboard and press enter.
+The `/sticker` command only has one option, `query`, and it is required. The `query` option is what you'll use to narrow down the list of suggestions. Once the sticker you're looking for shows up on the list, click on it or navigate to it with your keyboard and press enter.
 
 **Example**:
 ```
 /sticker query:funny dog
 ```
 The query in the example would narrow down the suggestions to stickers whose titles or tags contain both the words "funny" and "dog"
+
+**Availability**: Any Server, Any DM.
 
 > [!IMPORTANT]
 > Even if you know the exact title of the sticker you're looking for, **you still need to pick it from the suggestion list**! That is because the BOT doesn't use the title to find the stickers, it uses unique IDs. When you choose one of the suggestions, what you're sending to the BOT is that sticker's ID, not its title.
@@ -60,6 +66,22 @@ The query in the example would narrow down the suggestions to stickers whose tit
 
 > [!TIP]
 > The `query` option also works with prefixes, e.g., searching for "fun" will match both "fun" and "funny"!
+
+### Editing Stickers
+
+![Editing a sticker's tags](/docs/assets/commands/edit_tags.webp)
+
+While you can't edit the stickers themselves, you can edit their title, tags, and description.
+
+To edit a sticker you use the `/editsticker` command. The command only has one required option, `query`. [Read the Important alert in the previous section](#sending-stickers) if you don't know how the option works.
+
+After selecting a sticker from the `query` dropdown, you can edit titles and/or tags with their respective options.
+
+> [!TIP]
+> After selecting a sticker to edit with the `query` option, the `title` and `tags` options will suggest you their original values, so you don't have to type everything again.
+
+> [!NOTE]
+> If you need to replace a sticker's file, you can grab its title and tags with the help of `/liststickers info:True`, then delete the sticker and add a new one with the old title and tags.
 
 ## Requirements
 
