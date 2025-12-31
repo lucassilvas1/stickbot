@@ -58,9 +58,7 @@ const commandData: CommandData = {
     .addStringOption((opt) =>
       opt
         .setName("tags")
-        .setDescription(
-          "Tags to help find the sticker. Comma separated, supports spaces"
-        )
+        .setDescription("Space-separated tags to help find the sticker.")
         .setRequired(true)
         .setMinLength(MIN_TAGS_LENGTH)
         .setMaxLength(MAX_TAGS_LENGTH)
