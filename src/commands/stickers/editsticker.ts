@@ -118,13 +118,11 @@ const commandData: CommandData = {
         },
       ]);
     }
-    if (!prop.value.length) {
-      // value can only be string because the only columns you can edit are text
-      // (title, tags, description)
-      const value = sticker[prop.name as keyof SimplifiedSticker] as string;
-      return interaction.respond([{ name: value, value }]);
-    }
-    return interaction.respond([]);
+
+    // value can only be string because the only columns you can edit are text
+    // (title, tags, description)
+    const value = sticker[prop.name as keyof SimplifiedSticker] as string;
+    return interaction.respond([{ name: value, value }]);
   },
 };
 
