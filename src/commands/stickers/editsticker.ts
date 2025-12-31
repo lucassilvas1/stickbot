@@ -46,7 +46,7 @@ const commandData: CommandData = {
     .addStringOption((opt) =>
       opt
         .setName("title")
-        .setDescription("Update sticker title or leave it as it is")
+        .setDescription("Update sticker's title or leave it as it is")
         .setMinLength(MIN_TITLE_LENGTH)
         .setMaxLength(MAX_TITLE_LENGTH)
         .setAutocomplete(true)
@@ -54,7 +54,7 @@ const commandData: CommandData = {
     .addStringOption((opt) =>
       opt
         .setName("tags")
-        .setDescription("Update sticker tags or leave them as they are")
+        .setDescription("Update sticker's tags or leave them as they are")
         .setMinLength(MIN_TAGS_LENGTH)
         .setMaxLength(MAX_TAGS_LENGTH)
         .setAutocomplete(true)
@@ -63,7 +63,7 @@ const commandData: CommandData = {
       opt
         .setName("description")
         .setDescription(
-          "Update sticker description or leave it as it is (currently unused)"
+          "Update sticker's description or leave it as it is (currently unused)"
         )
         .setMaxLength(MAX_DESCRIPTION_LENGTH)
     ),
