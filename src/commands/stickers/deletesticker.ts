@@ -1,6 +1,7 @@
 import {
   ApplicationIntegrationType,
   InteractionContextType,
+  MessageFlags,
   SlashCommandBuilder,
 } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
@@ -42,7 +43,10 @@ const commandData: CommandData = {
           { sticker: id, user: interaction.user.id },
           "deleted sticker"
         );
-        return interaction.reply({ content: "Sticker successfully deleted" });
+        return interaction.reply({
+          content: "Sticker successfully deleted",
+          flags: MessageFlags.Ephemeral,
+        });
       } else {
         logger.error(
           { sticker: id, user: interaction.user.id },
@@ -50,6 +54,7 @@ const commandData: CommandData = {
         );
         return interaction.reply({
           content: "Could not find sticker to delete",
+          flags: MessageFlags.Ephemeral,
         });
       }
     } catch (error) {
@@ -59,6 +64,7 @@ const commandData: CommandData = {
       );
       return interaction.reply({
         content: "Something went wrong while deleting sticker...",
+        flags: MessageFlags.Ephemeral,
       });
     }
   },
