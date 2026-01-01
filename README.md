@@ -99,11 +99,15 @@ You can delete stickers with the `/deletesticker` command. Its only option is `q
 
 Out of the box, only you, the owner, are allowed to use any command. If you wish to allow someone else to use the BOT, you need to use the `/adduser` command. The command only has two required options: `id` and `username`. You can find a user's ID by right-clicking their name on Discord[^discord_dev_mode]. The `username` option doesn't have to match their actual username.
 
-There are also six other options that correspond to the user's permissions: `add-sticker`, `edit-sticker`, `delete-sticker`, `add-user`, `edit-user`, `delete-user`. The values for each of these options defaults to False, so you only need to set them to True if you wish to grant the user that permission.
+If you're granting the user most/all permissions, it might be faster to set the `grant-all` option to True. You can still override individual permissions when using the `grant-all` option.
 
-**Example**:
+There are also six other options that correspond to the user's permissions: `add-sticker`, `edit-sticker`, `delete-sticker`, `add-user`, `edit-user`, `delete-user`. The values for each of these options defaults to False (unless you set `grant-all` to True), so you only need to set them to True if you wish to grant the user that permission.
+
+**Examples**:
 ```
 /adduser id:315430983126210624 username:chris add-sticker:True edit-sticker:True
+
+/adduser id:315430983126210625 username:greg grant-all:True edit-user:False delete-user:False
 ```
 
 **Availability**: Your Server Only
@@ -130,6 +134,12 @@ You can edit an existing user's permission with the `/edituser` command. Its onl
 
 **Availability**: Your Server Only
 
+> [!TIP]
+> `/edituser` also supports the `grant-all` option.
+
+> [!WARNING]
+> `grant-all` can only **grant** permissions! Setting it to False when editing **will not** revoke permissions! If you wish to revoke a user's existing permissions, you need to explicitly set them to False here.
+
 ### Deleting Users
 
 ![Deleting a user](/docs/assets/commands/deleteuser.webp)
@@ -139,7 +149,7 @@ You can delete users from the app with the `/deleteuser` command. Like the `/edi
 **Availability**: Your Server Only
 
 > [!IMPORTANT]
-> Deleting a user from the app is the only way to keep them from being able to list/send stickers, setting all their permissions to False will still allow them to send stickers!
+> Deleting a user from the app is the **only** way to keep them from being able to list/send stickers, setting all their permissions to False will still allow them to send stickers!
 
 > [!NOTE]
 > While anyone might be able to add the BOT to their account, they won't be able to use any of the commands unless you explicitly let them with [/adduser](#adding-users).
@@ -148,7 +158,7 @@ You can delete users from the app with the `/deleteuser` command. Like the `/edi
 
 - [NodeJS v16+](https://nodejs.org/en/download/).
 - Recent version of [FFMPEG](https://github.com/BtbN/FFmpeg-Builds/releases). Download and extract the full GPL version (not `shared`) compatible with your setup. E.g., if you're running Windows on an Intel or AMD CPU, download the win64 GPL zip file.
-- You'll need to be reachable. If you're not behind [CGNAT](https://en.wikipedia.org/wiki/Carrier-grade_NAT#:~:text=prevents%20the%20ISP%27s%20customers%20from%20using%20port%20forwarding) all you'll need to do is forward port `ASSETS_SERVER_PORT` in your router (read step 5.vi. of the installation section for more). If you can't do that, however, you'll need to use a service like [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/). You can check if port forwarding worked [here](https://portchecker.co/), just enter the value of `ASSETS_SERVER_PORT` in "Port Number" and click check. If you can't find a way of being reachable, users won't be able to see the stickers.
+- You'll need to be reachable. If you're not behind [CGNAT](https://en.wikipedia.org/wiki/Carrier-grade_NAT#:~:text=prevents%20the%20ISP%27s%20customers%20from%20using%20port%20forwarding) all you'll need to do is forward port `ASSETS_SERVER_PORT` on your router (read step 5.vi. of the installation section for more). If you are, however, you'll need to use a service like [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/) to work around that limitation. You can check if port forwarding worked [here](https://portchecker.co/), just enter the value of `ASSETS_SERVER_PORT` in "Port Number" and click check. If you can't find a way of being reachable, users won't be able to see your stickers.
 
 
 > [!NOTE]
