@@ -93,6 +93,30 @@ You can delete stickers with the `/deletesticker` command. Its only option is `q
 
 **Availability**: Any Server, Any DM.
 
+### Adding users
+
+![Adding a user](/docs/assets/commands/adduser.webp)
+
+Out of the box, only you, the owner, are allowed to add, edit, delete, or send stickers. If you wish to allow someone else to use the BOT, you need to use the `/adduser` command. The command only has two required options: `id` and `username`. You can find a user's ID by right-clicking their name on Discord[^discord_dev_mode]. The `username` option doesn't have to match their actual username.
+
+There are also six other options that correspond to the user's permissions: `add-sticker`, `edit-sticker`, `delete-sticker`, `add-user`, `edit-user`, `delete-user`. The values for each of these options defaults to False, so you only need to set them to True if you wish to grant the user that permission.
+
+**Example**:
+```
+/adduser id:315430983126210624 username:chris add-sticker:True edit-sticker:True
+```
+
+**Availability**: Your Server Only
+
+> [!NOTE]
+> If only wish to give the user permission to list/send stickers, you don't need to grant any permission. Adding them with all permissions set to False (default) will suffice.
+
+> [!IMPORTANT]
+> Users will still need to add the app to their account to be able to use any of the commands. They can do that from the BOT's profile on Discord.
+
+> [!IMPORTANT]
+> Users will only be able to use user commands like this one if you invite them to your server[^bot_guild].
+
 ## Requirements
 
 - [NodeJS v16+](https://nodejs.org/en/download/).
@@ -163,7 +187,7 @@ You'll need to run some commands to setup and start the app. If you're unfamilar
 
 [^discord_dev_mode]: You'll to enable Developer Mode in Discord to do this.
 
-[^bot_guild]: Keep in mind that the permission management commands (e.g. `/adduser`) will only be available in this guild.
+[^bot_guild]: Permission management commands (e.g. `/adduser`) will only be available in this guild.
 
 [^storage_paths]: If your paths contain spaces you'll need to wrap them in double quotes like `"path/to/something"`!  
 You don't need to create the folders, they'll be created for you, and they don't need to share parent folders, I just did that to keep things tidy.
