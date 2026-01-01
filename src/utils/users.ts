@@ -57,18 +57,35 @@ export function parsePermissionOptions(
 export function parsePermissionOptions(
   interaction: ChatInputCommandInteraction<CacheType>,
   type: "boolean" | "integer"
-): IntToBoolProps<Permissions> | Permissions {
-  const permissions = {
-    addSticker: !!interaction.options.getBoolean("add-sticker"),
-    editSticker: !!interaction.options.getBoolean("edit-sticker"),
-    deleteSticker: !!interaction.options.getBoolean("delete-sticker"),
-    addUser: !!interaction.options.getBoolean("add-user"),
-    editUser: !!interaction.options.getBoolean("edit-user"),
-    deleteUser: !!interaction.options.getBoolean("delete-user"),
+): Partial<IntToBoolProps<Permissions> | Permissions> {
+  const grantAll = interaction.options.getBoolean("grant-all") || undefined;
+
+  const permissions: Partial<IntToBoolProps<Permissions>> = {
+    addSticker: grantAll,
+    editSticker: grantAll,
+    deleteSticker: grantAll,
+    addUser: grantAll,
+    editUser: grantAll,
+    deleteUser: grantAll,
   };
+
+  const overridePermissions = {
+    addSticker: interaction.options.getBoolean("add-sticker"),
+    editSticker: interaction.options.getBoolean("edit-sticker"),
+    deleteSticker: interaction.options.getBoolean("delete-sticker"),
+    addUser: interaction.options.getBoolean("add-user"),
+    editUser: interaction.options.getBoolean("edit-user"),
+    deleteUser: interaction.options.getBoolean("delete-user"),
+  };
+
+  for (const [key, value] of Object.entries(overridePermissions)) {
+    if (value === null) continue;
+    permissions[key as keyof Permissions] = value;
+  }
+
   if (type === "integer") {
     return Object.entries(permissions).reduce((result, [key, value]) => {
-      result[key as keyof Permissions] = ~~value!;
+      if (value !== undefined) result[key as keyof Permissions] = ~~value!;
       return result;
     }, {} as Permissions);
   }
@@ -97,6 +114,13 @@ export function getUserPermissionWeight(user: Permissions) {
 
 export function addPermissionOptions(builder: SlashCommandOptionsOnlyBuilder) {
   return builder
+    .addBooleanOption((opt) =>
+      opt
+        .setName("grant-all")
+        .setDescription(
+          "Grants all permissions to the user. Can be overridden by individual options."
+        )
+    )
     .addBooleanOption((opt) =>
       opt
         .setName("add-sticker")

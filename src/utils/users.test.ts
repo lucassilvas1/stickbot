@@ -213,7 +213,8 @@ describe("parsePermissionOptions", () => {
     const interaction = mockInteraction({}) as any;
     // Mock getBoolean to return proper boolean values
     interaction.options.getBoolean = (name: string) => {
-      const values: Record<string, boolean> = {
+      const values: Record<string, boolean | null> = {
+        "grant-all": null,
         "add-sticker": true,
         "edit-sticker": false,
         "delete-sticker": true,
@@ -241,7 +242,8 @@ describe("parsePermissionOptions", () => {
 
     // Mock getBoolean to return proper boolean values
     interaction.options.getBoolean = (name: string) => {
-      const values: Record<string, boolean> = {
+      const values: Record<string, boolean | null> = {
+        "grant-all": null,
         "add-sticker": true,
         "edit-sticker": false,
         "delete-sticker": true,
@@ -264,10 +266,13 @@ describe("parsePermissionOptions", () => {
     });
   });
 
-  it("converts all false permissions to 0 in integer mode", () => {
+  it("converts explicitly set false permissions to 0 in integer mode", () => {
     const interaction = mockInteraction() as any;
 
-    interaction.options.getBoolean = () => false;
+    interaction.options.getBoolean = (name: string) => {
+      if (name === "grant-all") return null;
+      return false;
+    };
 
     const result = parsePermissionOptions(interaction, "integer");
 
@@ -281,10 +286,13 @@ describe("parsePermissionOptions", () => {
     });
   });
 
-  it("converts all true permissions to 1 in integer mode", () => {
+  it("converts explicitly set true permissions to 1 in integer mode", () => {
     const interaction = mockInteraction() as any;
 
-    interaction.options.getBoolean = () => true;
+    interaction.options.getBoolean = (name: string) => {
+      if (name === "grant-all") return null;
+      return true;
+    };
 
     const result = parsePermissionOptions(interaction, "integer");
 
@@ -298,10 +306,13 @@ describe("parsePermissionOptions", () => {
     });
   });
 
-  it("converts all false permissions to false in boolean mode", () => {
+  it("converts explicitly set false permissions to false in boolean mode", () => {
     const interaction = mockInteraction() as any;
 
-    interaction.options.getBoolean = () => false;
+    interaction.options.getBoolean = (name: string) => {
+      if (name === "grant-all") return null;
+      return false;
+    };
 
     const result = parsePermissionOptions(interaction, "boolean");
 
@@ -315,10 +326,13 @@ describe("parsePermissionOptions", () => {
     });
   });
 
-  it("converts all true permissions to true in boolean mode", () => {
+  it("converts explicitly set true permissions to true in boolean mode", () => {
     const interaction = mockInteraction() as any;
 
-    interaction.options.getBoolean = () => true;
+    interaction.options.getBoolean = (name: string) => {
+      if (name === "grant-all") return null;
+      return true;
+    };
 
     const result = parsePermissionOptions(interaction, "boolean");
 
@@ -332,7 +346,7 @@ describe("parsePermissionOptions", () => {
     });
   });
 
-  it("handles null/undefined from getBoolean as false in boolean mode", () => {
+  it("returns undefined for unset permissions in boolean mode", () => {
     const interaction = mockInteraction() as any;
 
     interaction.options.getBoolean = () => null;
@@ -340,16 +354,16 @@ describe("parsePermissionOptions", () => {
     const result = parsePermissionOptions(interaction, "boolean");
 
     expect(result).toEqual({
-      addSticker: false,
-      editSticker: false,
-      deleteSticker: false,
-      addUser: false,
-      editUser: false,
-      deleteUser: false,
+      addSticker: undefined,
+      editSticker: undefined,
+      deleteSticker: undefined,
+      addUser: undefined,
+      editUser: undefined,
+      deleteUser: undefined,
     });
   });
 
-  it("handles null/undefined from getBoolean as 0 in integer mode", () => {
+  it("returns undefined for unset permissions in integer mode", () => {
     const interaction = mockInteraction() as any;
 
     interaction.options.getBoolean = () => null;
@@ -357,12 +371,318 @@ describe("parsePermissionOptions", () => {
     const result = parsePermissionOptions(interaction, "integer");
 
     expect(result).toEqual({
-      addSticker: 0,
-      editSticker: 0,
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 0,
+      addSticker: undefined,
+      editSticker: undefined,
+      deleteSticker: undefined,
+      addUser: undefined,
+      editUser: undefined,
+      deleteUser: undefined,
+    });
+  });
+
+  describe("grantAll option", () => {
+    it("grants all permissions when grantAll is true in boolean mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        if (name === "grant-all") return true;
+        return null;
+      };
+
+      const result = parsePermissionOptions(interaction, "boolean");
+
+      expect(result).toEqual({
+        addSticker: true,
+        editSticker: true,
+        deleteSticker: true,
+        addUser: true,
+        editUser: true,
+        deleteUser: true,
+      });
+    });
+
+    it("grants all permissions when grantAll is true in integer mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        if (name === "grant-all") return true;
+        return null;
+      };
+
+      const result = parsePermissionOptions(interaction, "integer");
+
+      expect(result).toEqual({
+        addSticker: 1,
+        editSticker: 1,
+        deleteSticker: 1,
+        addUser: 1,
+        editUser: 1,
+        deleteUser: 1,
+      });
+    });
+
+    it("individual options override grantAll=true in boolean mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": true,
+          "add-sticker": false,
+          "delete-sticker": false,
+          "delete-user": false,
+          "edit-sticker": null,
+          "add-user": null,
+          "edit-user": null,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "boolean");
+
+      expect(result).toEqual({
+        addSticker: false,
+        editSticker: true, // from grantAll
+        deleteSticker: false,
+        addUser: true, // from grantAll
+        editUser: true, // from grantAll
+        deleteUser: false,
+      });
+    });
+
+    it("individual options override grantAll=true in integer mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": true,
+          "add-sticker": false,
+          "delete-sticker": false,
+          "delete-user": false,
+          "edit-sticker": null,
+          "add-user": null,
+          "edit-user": null,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "integer");
+
+      expect(result).toEqual({
+        addSticker: 0,
+        editSticker: 1, // from grantAll
+        deleteSticker: 0,
+        addUser: 1, // from grantAll
+        editUser: 1, // from grantAll
+        deleteUser: 0,
+      });
+    });
+
+    it("individual options override grantAll=false in boolean mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": false,
+          "add-sticker": true,
+          "edit-user": true,
+          "add-user": true,
+          "delete-sticker": null,
+          "edit-sticker": null,
+          "delete-user": null,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "boolean");
+
+      expect(result).toEqual({
+        addSticker: true,
+        editSticker: undefined, // not explicitly set, grantAll=false doesn't affect it
+        deleteSticker: undefined, // not explicitly set
+        addUser: true,
+        editUser: true,
+        deleteUser: undefined, // not explicitly set
+      });
+    });
+
+    it("individual options override grantAll=false in integer mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": false,
+          "add-sticker": true,
+          "edit-user": true,
+          "add-user": true,
+          "delete-sticker": null,
+          "edit-sticker": null,
+          "delete-user": null,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "integer");
+
+      expect(result).toEqual({
+        addSticker: 1,
+        editSticker: undefined,
+        deleteSticker: undefined, // not explicitly set
+        addUser: 1,
+        editUser: 1,
+        deleteUser: undefined, // not explicitly set
+      });
+    });
+
+    it("all individual options can override grantAll in boolean mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": true,
+          "add-sticker": false,
+          "edit-sticker": false,
+          "delete-sticker": false,
+          "add-user": false,
+          "edit-user": false,
+          "delete-user": false,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "boolean");
+
+      expect(result).toEqual({
+        addSticker: false,
+        editSticker: false,
+        deleteSticker: false,
+        addUser: false,
+        editUser: false,
+        deleteUser: false,
+      });
+    });
+
+    it("all individual options can override grantAll in integer mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": true,
+          "add-sticker": false,
+          "edit-sticker": false,
+          "delete-sticker": false,
+          "add-user": false,
+          "edit-user": false,
+          "delete-user": false,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "integer");
+
+      expect(result).toEqual({
+        addSticker: 0,
+        editSticker: 0,
+        deleteSticker: 0,
+        addUser: 0,
+        editUser: 0,
+        deleteUser: 0,
+      });
+    });
+
+    it("only explicitly set permissions are returned in boolean mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": null,
+          "add-sticker": true,
+          "edit-sticker": false,
+          "delete-sticker": null,
+          "add-user": null,
+          "edit-user": null,
+          "delete-user": null,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "boolean");
+
+      expect(result).toEqual({
+        addSticker: true,
+        editSticker: false,
+        deleteSticker: undefined,
+        addUser: undefined,
+        editUser: undefined,
+        deleteUser: undefined,
+      });
+    });
+
+    it("only explicitly set permissions are returned in integer mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        const values: Record<string, boolean | null> = {
+          "grant-all": null,
+          "add-sticker": true,
+          "edit-sticker": false,
+          "delete-sticker": null,
+          "add-user": null,
+          "edit-user": null,
+          "delete-user": null,
+        };
+        return values[name];
+      };
+
+      const result = parsePermissionOptions(interaction, "integer");
+
+      expect(result).toEqual({
+        addSticker: 1,
+        editSticker: 0,
+        deleteSticker: undefined,
+        addUser: undefined,
+        editUser: undefined,
+        deleteUser: undefined,
+      });
+    });
+
+    it("does not set permissions when grantAll=false in boolean mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        if (name === "grant-all") return false;
+        return null;
+      };
+
+      const result = parsePermissionOptions(interaction, "boolean");
+
+      expect(result).toEqual({
+        addSticker: undefined,
+        editSticker: undefined,
+        deleteSticker: undefined,
+        addUser: undefined,
+        editUser: undefined,
+        deleteUser: undefined,
+      });
+    });
+
+    it("does not set permissions when grantAll=false in integer mode", () => {
+      const interaction = mockInteraction() as any;
+
+      interaction.options.getBoolean = (name: string) => {
+        if (name === "grant-all") return false;
+        return null;
+      };
+
+      const result = parsePermissionOptions(interaction, "integer");
+
+      expect(result).toEqual({
+        addSticker: undefined,
+        editSticker: undefined,
+        deleteSticker: undefined,
+        addUser: undefined,
+        editUser: undefined,
+        deleteUser: undefined,
+      });
     });
   });
 });
