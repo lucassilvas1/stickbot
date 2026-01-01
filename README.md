@@ -93,7 +93,7 @@ You can delete stickers with the `/deletesticker` command. Its only option is `q
 
 **Availability**: Any Server, Any DM.
 
-### Adding users
+### Adding Users
 
 ![Adding a user](/docs/assets/commands/adduser.webp)
 
@@ -115,7 +115,20 @@ There are also six other options that correspond to the user's permissions: `add
 > Users will still need to add the app to their account to be able to use any of the commands. They can do that from the BOT's profile on Discord.
 
 > [!IMPORTANT]
-> Users will only be able to use user commands like this one if you invite them to your server[^bot_guild].
+> Users will only be able to use permission commands like this one if you invite them to your server[^bot_guild].
+
+### Editing User Permissions
+
+![Editing a user's permissions](/docs/assets/commands/edituser.webp)
+
+You can edit an existing user's permission with the `/edituser` command. Its only required option is `id`, the user's ID. It's also got the same optional options as [the `/adduser` command](#adding-users), and it's those options you're gonna use to edit permissions. You only need to use the options you wish to edit, other permissions won't be affected.
+
+**Example**:
+```
+/edituser id:315430983126210624 edit-sticker:False delete-sticker:False
+```
+
+**Availability**: Your Server Only
 
 ## Requirements
 
