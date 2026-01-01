@@ -78,7 +78,6 @@ describe("autocomplete", () => {
     const stickers = [
       { id: "sticker1", title: "Dancing Cat" },
       { id: "sticker2", title: "Fat Cat" },
-      { id: "sticker3", title: "Funny Dog" },
     ] as SimplifiedSticker[];
 
     vi.mocked(dbActions.search).mockResolvedValue({ stickers } as any);
