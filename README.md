@@ -97,7 +97,7 @@ You can delete stickers with the `/deletesticker` command. Its only option is `q
 
 ![Adding a user](/docs/assets/commands/adduser.webp)
 
-Out of the box, only you, the owner, are allowed to add, edit, delete, or send stickers. If you wish to allow someone else to use the BOT, you need to use the `/adduser` command. The command only has two required options: `id` and `username`. You can find a user's ID by right-clicking their name on Discord[^discord_dev_mode]. The `username` option doesn't have to match their actual username.
+Out of the box, only you, the owner, are allowed to use any command. If you wish to allow someone else to use the BOT, you need to use the `/adduser` command. The command only has two required options: `id` and `username`. You can find a user's ID by right-clicking their name on Discord[^discord_dev_mode]. The `username` option doesn't have to match their actual username.
 
 There are also six other options that correspond to the user's permissions: `add-sticker`, `edit-sticker`, `delete-sticker`, `add-user`, `edit-user`, `delete-user`. The values for each of these options defaults to False, so you only need to set them to True if you wish to grant the user that permission.
 
@@ -129,6 +129,20 @@ You can edit an existing user's permission with the `/edituser` command. Its onl
 ```
 
 **Availability**: Your Server Only
+
+### Deleting Users
+
+![Deleting a user](/docs/assets/commands/deleteuser.webp)
+
+You can delete users from the app with the `/deleteuser` command. Like the `/edituser` command, its only option is `id`.
+
+**Availability**: Your Server Only
+
+> [!IMPORTANT]
+> Deleting a user from the app is the only way to keep them from being able to list/send stickers, setting all their permissions to False will still allow them to send stickers!
+
+> [!NOTE]
+> While anyone might be able to add the BOT to their account, they won't be able to use any of the commands unless you explicitly let them with [/adduser](#adding-users).
 
 ## Requirements
 
