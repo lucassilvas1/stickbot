@@ -77,11 +77,21 @@ To edit a sticker you use the `/editsticker` command. The command only has one r
 
 After selecting a sticker from the `query` dropdown, you can edit titles and/or tags with their respective options.
 
+**Availability**: Any Server, Any DM.
+
 > [!TIP]
 > After selecting a sticker to edit with the `query` option, the `title` and `tags` options will suggest you their original values, so you don't have to type everything again.
 
 > [!NOTE]
 > If you need to replace a sticker's file, you can grab its title and tags with the help of `/liststickers info:True`, then delete the sticker and add a new one with the old title and tags.
+
+### Deleting Stickers
+
+![Deleting a sticker](/docs/assets/commands/delete.webp)
+
+You can delete stickers with the `/deletesticker` command. Its only option is `query`, use it to find the sticker you want and delete it.
+
+**Availability**: Any Server, Any DM.
 
 ## Requirements
 
