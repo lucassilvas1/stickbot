@@ -68,13 +68,22 @@ const commandData: CommandData = {
     try {
       const username = interaction.options.getString("username") ?? undefined;
 
-      await updatedUserPermissions(targetId, {
+      const updated = await updatedUserPermissions(targetId, {
         username,
         ...targetPermissions,
       });
-      logger.info({ ...info }, "updated user permissions");
+
+      if (updated) {
+        logger.info({ ...info }, "updated user permissions");
+        return interaction.reply({
+          content: `Edits to ${updated.username} (${targetId}) have been successfully saved`,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      logger.debug({ ...info }, "user to edit not found");
       return interaction.reply({
-        content: `Edits to ${username} (${targetId}) have been successfully saved`,
+        content: `User with ID ${targetId} not found in database`,
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {

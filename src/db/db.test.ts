@@ -169,7 +169,7 @@ describe.each([
       userFlipped[p] = ~~!user[p];
     });
     const updated = await _updateUserPermissions(db, user.id, userFlipped);
-    expect(updated).toBe(true);
+    expect(updated).toStrictEqual(userFlipped);
 
     const retrievedUser = await db
       .selectFrom("userPermissions")

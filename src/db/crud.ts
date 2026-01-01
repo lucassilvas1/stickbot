@@ -61,7 +61,7 @@ export async function _updateUserPermissions(
     .executeTakeFirst();
   if (updatedUserPermissions)
     userPermissionsCache.set(id, updatedUserPermissions);
-  return !!updatedUserPermissions;
+  return updatedUserPermissions;
 }
 
 export async function _deleteUserPermissions(db: Kysely<Database>, id: string) {
