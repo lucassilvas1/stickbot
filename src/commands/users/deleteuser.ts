@@ -1,23 +1,20 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import { deleteUserPermissions } from "../../db/dbActions.js";
-import { addPermissionOptions } from "../../utils/users.js";
 import { logger } from "../../logger.js";
 
 const commandData: CommandData = {
   isGlobal: false,
   permissions: ["deleteUser"],
-  data: addPermissionOptions(
-    new SlashCommandBuilder()
-      .setName("deleteuser")
-      .setDescription("Delete a user from the database")
-      .addStringOption((opt) =>
-        opt
-          .setName("id")
-          .setDescription("User ID (NOT guild member ID) of the user")
-          .setRequired(true)
-      )
-  ),
+  data: new SlashCommandBuilder()
+    .setName("deleteuser")
+    .setDescription("Delete a user from the database")
+    .addStringOption((opt) =>
+      opt
+        .setName("id")
+        .setDescription("User ID (NOT guild member ID) of the user")
+        .setRequired(true)
+    ),
   async execute(interaction) {
     const targetId = interaction.options.getString("id", true);
     const info = { targetId, userId: interaction.user.id };
