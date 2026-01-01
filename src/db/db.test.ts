@@ -22,6 +22,7 @@ import {
   _deleteSticker,
   _deleteUserPermissions,
   _getStickerById,
+  _getStickerByTitle,
   _getUserPermissionsById,
   _incrementStickerUsage,
   _insertSticker,
@@ -38,6 +39,7 @@ import {
   generateStickerVariants,
   generateTestString,
   mockCaches,
+  seedStickers,
 } from "./test.js";
 
 let db: Kysely<Database>;
@@ -309,6 +311,17 @@ describe.each([
 
     const fetchedOther = await _getStickerById(db, other.id);
     expect(fetchedOther!.usageCount).toBe(1);
+  });
+
+  it("retrieves simplified sticker by title", async () => {
+    const title = "UniqueTitle123";
+    const sticker = generateStickerData({ title });
+    const variants = generateStickerVariants(sticker.id);
+    await _insertSticker(db, sticker, variants);
+    await seedStickers(db, _insertSticker, 5);
+
+    const fetchedSticker = await _getStickerByTitle(db, title);
+    expect(compareStickers(sticker, fetchedSticker!)).toBe(true);
   });
 
   it("updates sticker title and tags", async () => {

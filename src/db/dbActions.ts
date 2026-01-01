@@ -3,6 +3,7 @@ import {
   _deleteSticker,
   _deleteUserPermissions,
   _getStickerById,
+  _getStickerByTitle,
   _getUserPermissionsById,
   _incrementStickerUsage,
   _insertSticker,
@@ -48,6 +49,7 @@ export const incrementStickerUsage = withDb(_incrementStickerUsage);
 export const updateSticker = withDb(_updateSticker);
 export const deleteSticker = withDb(_deleteSticker);
 export const search = withDb(_search);
+export const getStickerByTitle = withDb(_getStickerByTitle);
 
 export function getStickerById(id: string): ReturnType<typeof _getStickerById>;
 export function getStickerById(

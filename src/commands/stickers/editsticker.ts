@@ -6,7 +6,12 @@ import {
 } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import type { SimplifiedSticker } from "../../types/stickers.js";
-import { getStickerById, search, updateSticker } from "../../db/dbActions.js";
+import {
+  getStickerById,
+  getStickerByTitle,
+  search,
+  updateSticker,
+} from "../../db/dbActions.js";
 import {
   MAX_DESCRIPTION_LENGTH,
   MAX_TAGS_LENGTH,
@@ -78,6 +83,15 @@ const commandData: CommandData = {
       interaction.options.getString("description") ?? undefined;
 
     try {
+      if (title && (await getStickerByTitle(title))) {
+        logger.debug({ title }, "sticker title already already taken");
+        return interaction.reply({
+          content:
+            "A sticker with this title already exists. Please choose a different title.",
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
       await updateSticker(id, { title, tags, description });
       logger.info({ id, title, tags, description }, "updated sticker");
       return interaction.reply({

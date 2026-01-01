@@ -18,6 +18,7 @@ import {
   generateStickerData,
   generateStickerVariants,
   mockCaches,
+  seedStickers,
 } from "./test.js";
 import { initDb } from "./db.js";
 import type { Kysely } from "kysely";
@@ -79,7 +80,7 @@ describe.each([
 
   it("properly paginates results", async () => {
     const stickerCount = 13;
-    const { stickers } = await seedStickers(stickerCount);
+    const { stickers } = await seedStickers(db, _insertSticker, stickerCount);
     const userId = stickers[0]!.uploaderId;
 
     const page1 = await _search(db, { userId, limit: 5 });
@@ -111,7 +112,7 @@ describe.each([
     await Promise.all(
       stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
     );
-    await seedStickers(10);
+    await seedStickers(db, _insertSticker, 10);
 
     const results = await _search(db, {
       query: "sticker",
@@ -132,7 +133,7 @@ describe.each([
     await Promise.all(
       stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
     );
-    await seedStickers(10);
+    await seedStickers(db, _insertSticker, 10);
 
     const results = await _search(db, {
       query: "laugh",
@@ -148,7 +149,7 @@ describe.each([
     const sticker = { ...generateStickerData(), tags: "NaZaRé confusa" };
     const variants = generateStickerVariants(sticker.id);
     await _insertSticker(db, sticker, variants);
-    await seedStickers(10);
+    await seedStickers(db, _insertSticker, 10);
 
     const results = await _search(db, {
       query: "$n@a%z\na?re!",
@@ -172,7 +173,7 @@ describe.each([
     await Promise.all(
       stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
     );
-    await seedStickers(10);
+    await seedStickers(db, _insertSticker, 10);
 
     vi.useFakeTimers();
 
@@ -238,7 +239,7 @@ describe.each([
 
   it("correctly handles offsets higher than total result count", async () => {
     const total = 20;
-    await seedStickers(total);
+    await seedStickers(db, _insertSticker, total);
     const results = await _search(db, { userId: "user", offset: 9999 });
     expect(results).toStrictEqual({
       stickers: [],
@@ -247,28 +248,3 @@ describe.each([
     });
   });
 });
-
-async function seedStickers(
-  amount: number,
-  stickerModifier?: (
-    sticker: NewStickerWithoutTimestamps
-  ) => NewStickerWithoutTimestamps,
-  variantModifier?: (variants: NewVariant[]) => NewVariant[]
-) {
-  const stickers = Array(amount)
-    .fill(null)
-    .map(() => {
-      let sticker = generateStickerData();
-      if (stickerModifier) sticker = stickerModifier(sticker);
-      return sticker;
-    });
-  const variants = stickers.map((s) => {
-    let variants = generateStickerVariants(s.id);
-    if (variantModifier) variants = variantModifier(variants);
-    return variants;
-  });
-  await Promise.all(
-    stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
-  );
-  return { stickers, variants };
-}

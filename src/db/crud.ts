@@ -187,6 +187,14 @@ export async function _getStickerById(
   return sticker;
 }
 
+export function _getStickerByTitle(db: Kysely<Database>, title: string) {
+  return db
+    .selectFrom("sticker")
+    .where("title", "=", sanitizeString(title))
+    .select(simplifiedStickerColumns)
+    .executeTakeFirst();
+}
+
 export async function _updateSticker(
   db: Kysely<Database>,
   id: string,

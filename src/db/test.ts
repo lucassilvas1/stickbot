@@ -10,6 +10,7 @@ import type {
 } from "../types/db.js";
 import { VariantEncodingMap } from "../utils/constants.js";
 import type { SimplifiedSticker } from "../types/stickers.js";
+import type { _insertSticker } from "./crud.js";
 
 export function deleteTestFolder(rootPath: string) {
   return Promise.all([rm(rootPath, { recursive: true, force: true })]);
@@ -89,12 +90,24 @@ export function generateStickerVariants(stickerId: string): NewVariant[] {
   }));
 }
 
-export function generateStickerData(): NewStickerWithoutTimestamps {
-  return {
+export function generateStickerData(
+  options: {
+    id?: string;
+    title?: string;
+    tags?: string;
+    uploaderId?: string;
+  } = {}
+): NewStickerWithoutTimestamps {
+  const defaults = {
     id: generateId(8),
     title: generateTestString(16),
     tags: generateTestString(64),
     uploaderId: generateId(6),
+  };
+  const opts = { ...defaults, ...options };
+
+  return {
+    ...opts,
     sourceUrl: "https://example.com",
   };
 }
@@ -115,4 +128,29 @@ export function compareStickers(
     typeof fetched.usageCount === "number" &&
     typeof fetched.timeLastUsed === "number"
   );
+}
+
+export async function seedStickers(
+  db: Kysely<Database>,
+  insertSticker: typeof _insertSticker,
+  amount: number,
+  stickerModifier?: (
+    sticker: NewStickerWithoutTimestamps
+  ) => NewStickerWithoutTimestamps,
+  variantModifier?: (variants: NewVariant[]) => NewVariant[]
+) {
+  const stickers = Array(amount)
+    .fill(null)
+    .map(() => {
+      let sticker = generateStickerData();
+      if (stickerModifier) sticker = stickerModifier(sticker);
+      return sticker;
+    });
+  const variants = stickers.map((s) => {
+    let variants = generateStickerVariants(s.id);
+    if (variantModifier) variants = variantModifier(variants);
+    return variants;
+  });
+  await Promise.all(stickers.map((s, i) => insertSticker(db, s, variants[i]!)));
+  return { stickers, variants };
 }
