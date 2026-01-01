@@ -81,7 +81,7 @@ const commandData: CommandData = {
       await updateSticker(id, { title, tags, description });
       logger.info({ id, title, tags, description }, "updated sticker");
       return interaction.reply({
-        content: "Changes were successfully saved",
+        content: "Changes have been saved",
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {

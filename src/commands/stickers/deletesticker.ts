@@ -44,7 +44,7 @@ const commandData: CommandData = {
           "deleted sticker"
         );
         return interaction.reply({
-          content: "Sticker successfully deleted",
+          content: "Sticker deleted",
           flags: MessageFlags.Ephemeral,
         });
       } else {

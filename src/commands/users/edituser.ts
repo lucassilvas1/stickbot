@@ -76,7 +76,7 @@ const commandData: CommandData = {
       if (updated) {
         logger.info({ ...info }, "updated user permissions");
         return interaction.reply({
-          content: `Edits to ${updated.username} (${targetId}) have been successfully saved`,
+          content: `Edits to ${updated.username} (${targetId}) have been saved`,
           flags: MessageFlags.Ephemeral,
         });
       }

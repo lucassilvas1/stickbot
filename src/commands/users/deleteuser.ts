@@ -25,7 +25,7 @@ const commandData: CommandData = {
       if (user) {
         logger.info(info, "deleted user");
         return interaction.reply({
-          content: `${user.username}(${targetId}) has been deleted`,
+          content: `${user.username} (${targetId}) has been deleted`,
           flags: MessageFlags.Ephemeral,
         });
       }

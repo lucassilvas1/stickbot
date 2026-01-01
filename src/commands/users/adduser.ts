@@ -45,7 +45,7 @@ const commandData: CommandData = {
       if (inserted) {
         logger.info(info, "added user");
         return interaction.reply({
-          content: `User ${username} (${targetId}) has been successfully added to the database`,
+          content: `${username} (${targetId}) has been added to the database`,
           flags: MessageFlags.Ephemeral,
         });
       }
