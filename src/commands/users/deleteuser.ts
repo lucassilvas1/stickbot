@@ -20,18 +20,18 @@ const commandData: CommandData = {
     const info = { targetId, userId: interaction.user.id };
 
     try {
-      const deleted = await deleteUserPermissions(targetId);
+      const user = await deleteUserPermissions(targetId);
 
-      if (deleted) {
+      if (user) {
         logger.info(info, "deleted user");
         return interaction.reply({
-          content: `${targetId} has been deleted from the database`,
+          content: `${user.username}(${targetId}) has been deleted`,
           flags: MessageFlags.Ephemeral,
         });
       }
       logger.info(info, "user not in db");
       return interaction.reply({
-        content: `${targetId} is not in the database`,
+        content: `User with ID ${targetId} could not be found`,
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {

@@ -68,9 +68,10 @@ export async function _deleteUserPermissions(db: Kysely<Database>, id: string) {
   const result = await db
     .deleteFrom("userPermissions")
     .where("id", "=", id)
+    .returningAll()
     .executeTakeFirst();
-  if (result.numDeletedRows) userPermissionsCache.delete(id);
-  return !!result.numDeletedRows;
+  if (result) userPermissionsCache.delete(id);
+  return result;
 }
 
 export function _insertSticker(
