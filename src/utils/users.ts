@@ -1,11 +1,14 @@
-import type {
-  CacheType,
-  ChatInputCommandInteraction,
-  Interaction,
-  SlashCommandOptionsOnlyBuilder,
+import {
+  SlashCommandBuilder,
+  type CacheType,
+  type ChatInputCommandInteraction,
+  type Interaction,
 } from "discord.js";
 import type { Permissions } from "../types/db.js";
-import { USER_PERMISSION_WEIGHT_MAP } from "./constants.js";
+import {
+  MAX_USERNAME_LENGTH,
+  USER_PERMISSION_WEIGHT_MAP,
+} from "./constants.js";
 import { getStickerById, getUserPermissionsById } from "../db/dbActions.js";
 
 export async function authorizeStickerUploader(
@@ -112,8 +115,23 @@ export function getUserPermissionWeight(user: Permissions) {
   return highestWeight;
 }
 
-export function addPermissionOptions(builder: SlashCommandOptionsOnlyBuilder) {
-  return builder
+export function baseUserCommand(requireUsername = false) {
+  return new SlashCommandBuilder()
+    .addStringOption((opt) =>
+      opt
+        .setName("id")
+        .setDescription("User ID (NOT guild member ID) of the user")
+        .setRequired(true)
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("username")
+        .setDescription(
+          "A nickname to make it easier to identify the user later. Does not have to match Discord username."
+        )
+        .setMaxLength(MAX_USERNAME_LENGTH)
+        .setRequired(requireUsername)
+    )
     .addBooleanOption((opt) =>
       opt
         .setName("grant-all")

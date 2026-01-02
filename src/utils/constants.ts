@@ -26,6 +26,7 @@ export const MAX_TITLE_LENGTH = 64;
 export const MIN_TAGS_LENGTH = 10;
 export const MAX_TAGS_LENGTH = 256;
 export const MAX_DESCRIPTION_LENGTH = 512;
+export const MAX_USERNAME_LENGTH = 24;
 
 export const GRID_PLACEHOLDER_IMG_PATH = "placeholder.png";
 

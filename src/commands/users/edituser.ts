@@ -1,11 +1,11 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import { MessageFlags } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import {
   getUserPermissionsById,
   updatedUserPermissions,
 } from "../../db/dbActions.js";
 import {
-  addPermissionOptions,
+  baseUserCommand,
   getUserPermissionWeight,
   isFromOwner,
   parsePermissionOptions,
@@ -16,24 +16,9 @@ import { logger } from "../../logger.js";
 const commandData: CommandData = {
   isGlobal: false,
   permissions: ["editUser"],
-  data: addPermissionOptions(
-    new SlashCommandBuilder()
-      .setName("edituser")
-      .setDescription("Edit username or permissions of an existing user")
-      .addStringOption((opt) =>
-        opt
-          .setName("id")
-          .setDescription("User ID (NOT guild member ID) of the user")
-          .setRequired(true)
-      )
-      .addStringOption((opt) =>
-        opt
-          .setName("username")
-          .setDescription(
-            "A nickname to make it easier to identify the user later. Does not have to match Discord username."
-          )
-      )
-  ),
+  data: baseUserCommand()
+    .setName("edituser")
+    .setDescription("Edit username or permissions of an existing user"),
   async execute(interaction) {
     const targetId = interaction.options.getString("id", true);
     const targetPermissions = parsePermissionOptions(interaction, "integer");
