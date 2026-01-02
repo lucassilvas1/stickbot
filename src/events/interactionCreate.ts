@@ -62,27 +62,15 @@ export async function handle(interaction: Interaction<CacheType>) {
 
     try {
       await command.execute(interaction);
-      logger.debug(
-        {
-          command: interaction.commandName,
-          options: interaction.options.data,
-          user: interaction.user.id,
-        },
-        "command handled"
-      );
+      logger.debug(info, "command handled");
     } catch (error) {
       logger.error({ error, ...info }, "command handler threw");
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({
-          content: "Something went wrong while executing this command!",
-          flags: MessageFlags.Ephemeral,
-        });
-      } else {
-        await interaction.reply({
-          content: "Something went wrong while executing this command!",
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+      const method =
+        interaction.replied || interaction.deferred ? "followUp" : "reply";
+      await interaction[method]({
+        content: "Something went wrong while executing this command!",
+        flags: MessageFlags.Ephemeral,
+      });
     }
   } else if (interaction.isAutocomplete()) {
     try {
