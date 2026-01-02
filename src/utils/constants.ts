@@ -40,7 +40,7 @@ export const USER_PERMISSION_WEIGHT_MAP: Record<keyof Permissions, number> = {
 } as const;
 
 export const PERMISSION_PUNT_MESSAGE =
-  "You do not have permission to run this command";
+  "You do not have the permissions necessary to run this command";
 export const NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE =
   "You do not have enough clearance to grant these permissions";
 
