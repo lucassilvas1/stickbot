@@ -7,7 +7,6 @@ import {
   ChatInputCommandInteraction,
   ComponentType,
   ContainerBuilder,
-  Emoji,
   InteractionContextType,
   MediaGalleryBuilder,
   Message,
