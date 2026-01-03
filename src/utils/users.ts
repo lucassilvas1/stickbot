@@ -7,6 +7,7 @@ import {
 import type { Permissions } from "../types/db.js";
 import {
   MAX_USERNAME_LENGTH,
+  MIN_USERNAME_LENGTH,
   USER_PERMISSION_WEIGHT_MAP,
 } from "./constants.js";
 import { getStickerById, getUserPermissionsById } from "../db/dbActions.js";
@@ -129,6 +130,7 @@ export function baseUserCommand(requireUsername = false) {
         .setDescription(
           "A nickname to make it easier to identify the user later. Does not have to match Discord username."
         )
+        .setMinLength(MIN_USERNAME_LENGTH)
         .setMaxLength(MAX_USERNAME_LENGTH)
         .setRequired(requireUsername)
     )
