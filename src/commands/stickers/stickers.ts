@@ -27,9 +27,13 @@ import {
 } from "../../db/dbActions.js";
 import { generateId } from "../../utils/misc.js";
 import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
-import { GRID_PLACEHOLDER_IMG_PATH } from "../../utils/constants.js";
+import {
+  GENERIC_ERROR_MESSAGE,
+  GRID_PLACEHOLDER_IMG_PATH,
+} from "../../utils/constants.js";
 import { logger } from "../../logger.js";
 import { BaseButton, NavButtonRow } from "../../components/buttons.js";
+import { safeReply } from "../../utils/discord.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -230,8 +234,9 @@ function handleMenuInteractions(
       try {
         switch (type) {
           case "sticker": {
-            if (!value)
+            if (!value) {
               throw Error(`Malformed button customId: "${i.customId}"`);
+            }
             await onSendSticker(interaction, i, value, userId);
             break;
           }
@@ -265,6 +270,10 @@ function handleMenuInteractions(
         resolve();
       } catch (error) {
         logger.error({ error, buttonInteraction: i, interaction });
+        await safeReply(i, {
+          content: GENERIC_ERROR_MESSAGE,
+          flags: MessageFlags.Ephemeral,
+        });
         reject(error);
       }
     });
