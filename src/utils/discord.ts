@@ -1,8 +1,23 @@
 import path from "node:path";
 import fs from "node:fs";
 import type { CommandData } from "../types/commands.js";
-import type { Client } from "discord.js";
+import type {
+  ButtonInteraction,
+  Client,
+  CommandInteraction,
+  InteractionReplyOptions,
+  ModalSubmitInteraction,
+} from "discord.js";
 import { logger } from "../logger.js";
+
+export function safeReply(
+  interaction: CommandInteraction | ModalSubmitInteraction | ButtonInteraction,
+  replyOptions: InteractionReplyOptions
+) {
+  const method =
+    interaction.replied || interaction.deferred ? "followUp" : "reply";
+  return interaction[method](replyOptions);
+}
 
 export async function getCommands(
   commandsDirPath = path.join(import.meta.dirname, "../commands")
