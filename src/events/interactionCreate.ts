@@ -7,6 +7,7 @@ import {
 import { authorization, rateLimit } from "../utils/middleware.js";
 import { PERMISSION_PUNT_MESSAGE } from "../utils/constants.js";
 import { logger } from "../logger.js";
+import { safeReply } from "../utils/discord.js";
 
 export const name = Events.InteractionCreate;
 
@@ -65,9 +66,7 @@ export async function handle(interaction: Interaction<CacheType>) {
       logger.debug(info, "command handled");
     } catch (error) {
       logger.error({ error, ...info }, "command handler threw");
-      const method =
-        interaction.replied || interaction.deferred ? "followUp" : "reply";
-      await interaction[method]({
+      await safeReply(interaction, {
         content: "Something went wrong while executing this command!",
         flags: MessageFlags.Ephemeral,
       });
