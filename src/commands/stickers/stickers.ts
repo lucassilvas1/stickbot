@@ -96,7 +96,7 @@ const commandData: CommandData = {
       });
     }
 
-    handleMenuInteractions(
+    await handleMenuInteractions(
       interaction,
       message,
       userId,
@@ -207,7 +207,7 @@ async function onPaginate(
     results.totalResultCount
   );
 
-  await interaction.update({ components: [menu] });
+  return interaction.update({ components: [menu] });
 }
 
 function handleMenuInteractions(
@@ -223,45 +223,51 @@ function handleMenuInteractions(
     time: 15 * 60 * 1000,
   });
 
-  collector?.on("collect", async (i) => {
-    const [type, value] = i.customId.split(":");
+  return new Promise<void>((resolve, reject) => {
+    collector?.on("collect", async (i) => {
+      const [type, value] = i.customId.split(":");
 
-    try {
-      switch (type) {
-        case "sticker": {
-          if (!value) throw Error(`Malformed button customId: "${i.customId}"`);
-          await onSendSticker(interaction, i, value, userId);
-          break;
+      try {
+        switch (type) {
+          case "sticker": {
+            if (!value)
+              throw Error(`Malformed button customId: "${i.customId}"`);
+            await onSendSticker(interaction, i, value, userId);
+            break;
+          }
+          case "offset": {
+            await onPaginate(i, +value!, userId, query, order);
+            break;
+          }
+          case "first": {
+            await onPaginate(i, 0, userId, query, order);
+            break;
+          }
+          case "last": {
+            await onPaginate(
+              i,
+              resultCount - (resultCount % 9 || 9),
+              userId,
+              query,
+              order
+            );
+            break;
+          }
+          default: {
+            // should never happen
+            await i.reply({
+              content: "Something went wrong...",
+              flags: MessageFlags.Ephemeral,
+            });
+          }
         }
-        case "offset": {
-          await onPaginate(i, +value!, userId, query, order);
-          break;
-        }
-        case "first": {
-          await onPaginate(i, 0, userId, query, order);
-          break;
-        }
-        case "last": {
-          await onPaginate(
-            i,
-            resultCount - (resultCount % 9 || 9),
-            userId,
-            query,
-            order
-          );
-          break;
-        }
-        default: {
-          // should never happen
-          await i.reply({
-            content: "Something went wrong...",
-            flags: MessageFlags.Ephemeral,
-          });
-        }
+
+        resolve();
+      } catch (error) {
+        logger.error({ error, buttonInteraction: i, interaction });
+        reject(error);
       }
-    } catch (error) {
-      logger.error({ error, buttonInteraction: i, interaction });
-    }
+    });
   });
 }
 
