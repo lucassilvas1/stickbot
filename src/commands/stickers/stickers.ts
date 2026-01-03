@@ -16,7 +16,6 @@ import {
   type CacheType,
 } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
-import { type Align, padStringToWidth } from "discord-button-width";
 import type {
   SimplifiedSticker,
   StickerSearchOrder,
@@ -30,6 +29,7 @@ import { generateId } from "../../utils/misc.js";
 import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
 import { GRID_PLACEHOLDER_IMG_PATH } from "../../utils/constants.js";
 import { logger } from "../../logger.js";
+import { BaseButton, NavButtonRow } from "../../components/buttons.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -118,46 +118,6 @@ function buildHeader(
   return new TextDisplayBuilder().setContent(headerText);
 }
 
-function buildButton(
-  id: string,
-  style: ButtonStyle,
-  options: {
-    label?: string | number;
-    emoji?: string;
-    width?: number;
-    disabled?: boolean;
-  } = {}
-) {
-  const defaults = { width: 0, disabled: false };
-  const opts = { ...defaults, ...options };
-
-  const button = new ButtonBuilder()
-    // .setLabel(label.toString())
-    .setCustomId(id)
-    .setStyle(style)
-    .setDisabled(opts.disabled);
-
-  if (opts.label) {
-    const label = opts.width
-      ? "\u200b" +
-        padStringToWidth(
-          String(opts.label),
-          // 162
-          opts.width,
-          "center" as Align
-        ) +
-        "\u200b"
-      : String(opts.label);
-
-    button.setLabel(label);
-  }
-  if (opts.emoji) {
-    button.setEmoji(opts.emoji);
-  }
-
-  return button;
-}
-
 function buildStickerButtons(stickers: SimplifiedSticker[]) {
   const rows = [];
   let donePlacing = false;
@@ -171,7 +131,7 @@ function buildStickerButtons(stickers: SimplifiedSticker[]) {
       }
       const customId =
         "sticker:" + (stickers[stickerIndex]?.id ?? generateId(4));
-      const button = buildButton(customId, ButtonStyle.Secondary, {
+      const button = new BaseButton(customId, ButtonStyle.Secondary, {
         label: stickerIndex + 1,
         disabled: donePlacing,
         // width: 60,
@@ -181,37 +141,6 @@ function buildStickerButtons(stickers: SimplifiedSticker[]) {
     rows.push(rowBuilder);
   }
   return rows;
-}
-
-function buildNavigationButtons(offset: number, resultCount: number) {
-  const prevOffset = offset - 9;
-  const isFirstPage = prevOffset < 0;
-  const nextOffset = offset + 9;
-  const isLastPage = nextOffset >= resultCount;
-
-  return [
-    buildButton(
-      "first",
-      ButtonStyle.Primary,
-      {
-        emoji: "⏪",
-        disabled: isFirstPage,
-      }
-      // Avoid duplicating customId
-    ),
-    buildButton("offset:" + prevOffset, ButtonStyle.Primary, {
-      emoji: "⬅️",
-      disabled: isFirstPage,
-    }),
-    buildButton("offset:" + nextOffset, ButtonStyle.Primary, {
-      emoji: "➡️",
-      disabled: isLastPage,
-    }),
-    buildButton("last", ButtonStyle.Primary, {
-      emoji: "⏩",
-      disabled: isLastPage,
-    }),
-  ];
 }
 
 function buildMenu(
@@ -232,14 +161,12 @@ function buildMenu(
   const gallery = new MediaGalleryBuilder().addItems(...galleryItems);
   const header = buildHeader(query, offset + stickers.length, resultCount);
   const stickerButtons = buildStickerButtons(stickers);
+  const navButtons = new NavButtonRow(offset, resultCount);
   const container = new ContainerBuilder()
     .addTextDisplayComponents(header)
     .addMediaGalleryComponents(gallery)
-    .addActionRowComponents(stickerButtons);
-
-  container.addActionRowComponents((rowBuilder) =>
-    rowBuilder.setComponents(buildNavigationButtons(offset, resultCount))
-  );
+    .addActionRowComponents(stickerButtons)
+    .addActionRowComponents(navButtons);
 
   return container;
 }
