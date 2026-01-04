@@ -3,6 +3,7 @@ import type { CommandData } from "../../types/commands.js";
 import { insertUserPermissions } from "../../db/dbActions.js";
 import { baseUserCommand, parsePermissionOptions } from "../../utils/users.js";
 import { logger } from "../../logger.js";
+import { invalidCharGuard } from "../../utils/middleware.js";
 
 const commandData: CommandData = {
   isGlobal: false,
@@ -13,9 +14,12 @@ const commandData: CommandData = {
       "Add a new user to database. All permissions default to false"
     ),
   async execute(interaction) {
+    const isInvalidInput = await invalidCharGuard(interaction);
+    if (isInvalidInput) return;
+
     const targetId = interaction.options.getString("id", true);
     const username = interaction.options.getString("username", true);
-    const info = { targetId, userId: interaction.user.id };
+    const info = { targetId, userId: interaction.user.id, username };
 
     try {
       const inserted = await insertUserPermissions({

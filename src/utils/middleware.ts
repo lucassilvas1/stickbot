@@ -94,12 +94,13 @@ export async function invalidCharGuard(
 ) {
   const title = interaction.options.getString("title") ?? "";
   const tags = interaction.options.getString("tags") ?? "";
-  const invalidChars = getNonLNZCharSet(title + tags);
+  const username = interaction.options.getString("username") ?? "";
+  const invalidChars = getNonLNZCharSet(title + tags + username);
 
   if (invalidChars.length > 0) {
     logger.debug({ invalidChars }, "found invalid chars");
     await interaction.reply({
-      content: `The title and tags can only contain letters, numbers, and spaces. The following characters are not allowed: ${invalidChars.join(
+      content: `The titles, tags and usernames can only contain letters, numbers, and spaces. The following characters are not allowed: ${invalidChars.join(
         " "
       )}. Use Ctrl+Z to remove them and try again.`,
     });

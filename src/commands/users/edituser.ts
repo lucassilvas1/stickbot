@@ -12,6 +12,7 @@ import {
 } from "../../utils/users.js";
 import { NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE } from "../../utils/constants.js";
 import { logger } from "../../logger.js";
+import { invalidCharGuard } from "../../utils/middleware.js";
 
 const commandData: CommandData = {
   isGlobal: false,
@@ -20,6 +21,9 @@ const commandData: CommandData = {
     .setName("edituser")
     .setDescription("Edit username or permissions of an existing user"),
   async execute(interaction) {
+    const isInvalidInput = await invalidCharGuard(interaction);
+    if (isInvalidInput) return;
+
     const targetId = interaction.options.getString("id", true);
     const targetPermissions = parsePermissionOptions(interaction, "integer");
     const info = { editorId: interaction.user.id, targetId, targetPermissions };
