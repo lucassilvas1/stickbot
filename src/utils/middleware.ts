@@ -95,7 +95,13 @@ export async function invalidCharGuard(
 ) {
   const getValue = interaction.isChatInputCommand()
     ? (key: string) => interaction.options.getString(key)
-    : (key: string) => interaction.fields.getTextInputValue(key);
+    : (key: string) => {
+        try {
+          return interaction.fields.getTextInputValue(key);
+        } catch (_) {
+          return "";
+        }
+      };
 
   const title = getValue("title") ?? "";
   const tags = getValue("tags") ?? "";
