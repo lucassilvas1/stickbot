@@ -108,6 +108,7 @@ export async function invalidCharGuard(
       content: `Titles, tags and usernames can only contain letters, numbers, and spaces. The following characters are not allowed: ${invalidChars.join(
         " "
       )}.`,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
