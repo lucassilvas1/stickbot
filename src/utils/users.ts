@@ -128,7 +128,7 @@ export function baseUserCommand(requireUsername = false) {
       opt
         .setName("username")
         .setDescription(
-          "A nickname to make it easier to identify the user later. Does not have to match Discord username."
+          "Does not have to match their username on Discord. Only letters, numbers and spaces allowed!"
         )
         .setMinLength(MIN_USERNAME_LENGTH)
         .setMaxLength(MAX_USERNAME_LENGTH)
