@@ -46,6 +46,26 @@ export function isFromOwner(interaction: Interaction<CacheType>) {
   return owner.id === interaction.user.id;
 }
 
+export function permissionArrayToObj(array: (keyof Permissions)[]) {
+  return Object.keys(USER_PERMISSION_WEIGHT_MAP).reduce(
+    (permissions, permission) => {
+      const hasPermission = array.includes(permission as keyof Permissions);
+      permissions[permission as keyof Permissions] = ~~hasPermission;
+
+      return permissions;
+    },
+    {} as Permissions
+  );
+}
+
+export function isValidPermissionArray(
+  array: readonly string[]
+): array is (keyof Permissions)[] {
+  return array.every(
+    (p) => USER_PERMISSION_WEIGHT_MAP[p as keyof Permissions] !== undefined
+  );
+}
+
 type IntToBoolProps<T> = {
   [K in keyof T]: T[K] extends number ? boolean : T[K];
 };
