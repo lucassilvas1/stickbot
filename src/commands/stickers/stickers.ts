@@ -225,6 +225,7 @@ function handleMenuInteractions(
   const collector = message.createMessageComponentCollector({
     componentType: ComponentType.Button,
     time: 15 * 60 * 1000,
+    filter: (i) => i.user.id === interaction.user.id,
   });
 
   return new Promise<void>((resolve, reject) => {
