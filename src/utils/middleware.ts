@@ -1,6 +1,7 @@
 import {
   Collection,
   MessageFlags,
+  ModalSubmitInteraction,
   type CacheType,
   type ChatInputCommandInteraction,
   type Interaction,
@@ -90,19 +91,23 @@ export async function rateLimit(
  * false otherwise
  */
 export async function invalidCharGuard(
-  interaction: ChatInputCommandInteraction
+  interaction: ChatInputCommandInteraction | ModalSubmitInteraction
 ) {
-  const title = interaction.options.getString("title") ?? "";
-  const tags = interaction.options.getString("tags") ?? "";
-  const username = interaction.options.getString("username") ?? "";
+  const getValue = interaction.isChatInputCommand()
+    ? (key: string) => interaction.options.getString(key)
+    : (key: string) => interaction.fields.getTextInputValue(key);
+
+  const title = getValue("title") ?? "";
+  const tags = getValue("tags") ?? "";
+  const username = getValue("username") ?? "";
   const invalidChars = getNonLNZCharSet(title + tags + username);
 
   if (invalidChars.length > 0) {
     logger.debug({ invalidChars }, "found invalid chars");
     await interaction.reply({
-      content: `The titles, tags and usernames can only contain letters, numbers, and spaces. The following characters are not allowed: ${invalidChars.join(
+      content: `Titles, tags and usernames can only contain letters, numbers, and spaces. The following characters are not allowed: ${invalidChars.join(
         " "
-      )}. Use Ctrl+Z to remove them and try again.`,
+      )}.`,
     });
   }
 
