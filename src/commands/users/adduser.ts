@@ -19,13 +19,19 @@ const commandData: CommandData = {
 
     const targetId = interaction.options.getString("id", true);
     const username = interaction.options.getString("username", true);
-    const info = { targetId, userId: interaction.user.id, username };
+    const permissions = parsePermissionOptions(interaction, "integer");
+    const info = {
+      targetId,
+      userId: interaction.user.id,
+      username,
+      permissions,
+    };
 
     try {
       const inserted = await insertUserPermissions({
         id: targetId,
         username,
-        ...parsePermissionOptions(interaction, "integer"),
+        ...permissions,
       });
       if (inserted) {
         logger.info(info, "added user");
