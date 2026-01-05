@@ -14,6 +14,14 @@ export function safeReply(
   interaction: CommandInteraction | ModalSubmitInteraction | ButtonInteraction,
   replyOptions: InteractionReplyOptions
 ) {
+  if (Date.now() - interaction.createdTimestamp >= 15 * 60 * 1000) {
+    logger.warn(
+      { interaction, replyOptions },
+      "interaction is too old to reply to"
+    );
+    return;
+  }
+
   const method =
     interaction.replied || interaction.deferred ? "followUp" : "reply";
   return interaction[method](replyOptions);
