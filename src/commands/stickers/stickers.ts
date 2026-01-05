@@ -161,7 +161,7 @@ function buildMenu(
   const gallery = new MediaGalleryBuilder().addItems(...galleryItems);
   const header = buildHeader(query, offset + stickers.length, resultCount);
   const stickerButtons = buildStickerButtons(stickers);
-  const navButtons = new NavButtonRow(offset, resultCount);
+  const navButtons = new NavButtonRow(offset, 9, resultCount);
   const container = new ContainerBuilder()
     .addTextDisplayComponents(header)
     .addMediaGalleryComponents(gallery)

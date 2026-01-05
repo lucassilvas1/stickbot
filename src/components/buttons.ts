@@ -35,12 +35,12 @@ export class BaseButton extends ButtonBuilder {
 }
 
 export class NavButtonRow extends ActionRowBuilder<ButtonBuilder> {
-  constructor(offset: number, total: number) {
+  constructor(offset: number, pageSize: number, total: number) {
     super();
 
-    const prevOffset = offset - 9;
+    const prevOffset = offset - pageSize;
     const isFirstPage = prevOffset < 0;
-    const nextOffset = offset + 9;
+    const nextOffset = offset + pageSize;
     const isLastPage = nextOffset >= total;
     const buttons = [
       new BaseButton("first", ButtonStyle.Primary, {
