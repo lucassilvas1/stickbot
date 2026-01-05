@@ -11,11 +11,17 @@ import { vi } from "vitest";
 type MockInteractionOptions = {
   userId?: string;
   stringOptions?: Record<string, string>;
+  fields?: Record<string, string>;
   owner?: User | Team | null;
 };
 
 export function mockInteraction(options: MockInteractionOptions = {}) {
-  const { userId = "test-user-id", stringOptions = {}, owner = null } = options;
+  const {
+    userId = "test-user-id",
+    stringOptions = {},
+    fields = {},
+    owner = null,
+  } = options;
   return {
     user: { id: userId },
     client: {
@@ -28,6 +34,11 @@ export function mockInteraction(options: MockInteractionOptions = {}) {
       getString: vi.fn().mockImplementation((name: string) => {
         return stringOptions[name];
       }),
+    },
+    fields: {
+      getTextInputValue: vi
+        .fn()
+        .mockImplementation((key: string) => fields[key]),
     },
     reply: vi.fn(),
     respond: vi.fn(),

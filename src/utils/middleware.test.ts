@@ -227,6 +227,8 @@ describe("invalid character guard", () => {
       },
     });
 
+    interaction.isChatInputCommand.mockReturnValue(true);
+
     expect(await invalidCharGuard(interaction as any)).toBe(true);
     const messageContent = (
       interaction.reply.mock.calls[0]![0] as InteractionReplyOptions
@@ -247,7 +249,27 @@ describe("invalid character guard", () => {
       },
     });
 
-    expect(await invalidCharGuard(interaction as any)).toBe(false);
+    await expect(invalidCharGuard(interaction as any)).resolves.toBe(false);
     expect(interaction.reply).toBeCalledTimes(0);
+  });
+
+  it("resolves false if no unsupported character is found in username", async () => {
+    const interaction = mockInteraction({
+      fields: { username: "allowed nickname 123" },
+    });
+
+    interaction.isChatInputCommand.mockReturnValue(false);
+
+    await expect(invalidCharGuard(interaction as any)).resolves.toBe(false);
+  });
+
+  it("resolves true if any unsupported character is found in username", async () => {
+    const interaction = mockInteraction({
+      fields: { username: "forb!dden_username" },
+    });
+
+    interaction.isChatInputCommand.mockReturnValue(false);
+
+    await expect(invalidCharGuard(interaction as any)).resolves.toBe(true);
   });
 });
