@@ -1,4 +1,9 @@
-import { Client, Collection, GatewayIntentBits } from "discord.js";
+import {
+  Client,
+  Collection,
+  DiscordAPIError,
+  GatewayIntentBits,
+} from "discord.js";
 import { env } from "./env.js";
 import express from "express";
 import { getCommands, registerEventHandlers } from "./utils/discord.js";
@@ -39,6 +44,12 @@ assetsServer.listen(env.ASSETS_SERVER_PORT, () => {
 });
 
 process.on("uncaughtException", (err) => {
+  if (err instanceof DiscordAPIError) {
+    if (err.message === "Invalid Webhook Token") {
+      logger.error({ err }, "attempted to use old interaction");
+      return;
+    }
+  }
   logger.fatal({ err }, "uncaught exception detected");
   // If a graceful shutdown is not achieved after 1 second,
   // shut down the process completely
