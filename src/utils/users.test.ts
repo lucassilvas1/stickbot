@@ -6,9 +6,12 @@ import {
   isUserAllowed,
   getUserPermissionWeight,
   authorizeStickerUploader,
+  permissionArrayToObj,
+  isValidPermissionArray,
 } from "./users.js";
 import * as dbActions from "../db/dbActions.js";
 import { mockInteraction } from "./test.js";
+import type { Permissions } from "../types/db.js";
 
 vi.mock("../db/db.js");
 vi.mock("../db/dbActions.js");
@@ -960,5 +963,87 @@ describe("getUserPermissionWeight", () => {
 
     // Should return 5 (deleteUser is highest)
     expect(weight).toBe(5);
+  });
+});
+
+describe("permissionArrayToObj", () => {
+  it("converts array with some permissions to object with 1s and 0s", () => {
+    const permissions = ["addSticker", "deleteSticker", "editUser"];
+
+    const result = permissionArrayToObj(permissions as (keyof Permissions)[]);
+
+    expect(result).toEqual({
+      addSticker: 1,
+      editSticker: 0,
+      deleteSticker: 1,
+      addUser: 0,
+      editUser: 1,
+      deleteUser: 0,
+    });
+  });
+});
+
+describe("isValidPermissionArray", () => {
+  it("returns true for array with all valid permissions", () => {
+    const permissions = [
+      "addSticker",
+      "editSticker",
+      "deleteSticker",
+      "addUser",
+      "editUser",
+      "deleteUser",
+    ];
+
+    const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(true);
+  });
+
+  it("returns true for empty array", () => {
+    const permissions: string[] = [];
+
+    const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(true);
+  });
+
+  it("returns true for single valid permission", () => {
+    const permissions = ["addSticker"];
+
+    const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(true);
+  });
+
+  it("returns false for array with one invalid permission", () => {
+    const permissions = ["invalidPermission"];
+
+    const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(false);
+  });
+
+  it("returns false for array with some valid and some invalid permissions", () => {
+    const permissions = ["addSticker", "invalidPermission", "editUser"];
+
+    const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(false);
+  });
+
+  it("returns false when all permissions are invalid", () => {
+    const permissions = ["fakePermission", "notAPermission", "badPerm"];
+
+    const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(false);
+  });
+
+  it("returns true for subset of valid permissions", () => {
+    const permissions = ["addSticker", "editUser", "deleteUser"];
+
+    const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(true);
   });
 });
