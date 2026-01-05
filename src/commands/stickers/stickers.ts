@@ -228,47 +228,42 @@ function handleMenuInteractions(
     collector?.on("collect", async (i) => {
       const [type, value] = i.customId.split(":");
 
-      try {
-        switch (type) {
-          case "sticker": {
-            if (!value) {
-              throw Error(`Malformed button customId: "${i.customId}"`);
-            }
-            await onSendSticker(interaction, i, value, userId);
-            break;
+      switch (type) {
+        case "sticker": {
+          if (!value) {
+            throw Error(`Malformed button customId: "${i.customId}"`);
           }
-          case "offset": {
-            await onPaginate(i, +value!, userId, query, order);
-            break;
-          }
-          case "first": {
-            await onPaginate(i, 0, userId, query, order);
-            break;
-          }
-          case "last": {
-            await onPaginate(
-              i,
-              resultCount - (resultCount % 9 || 9),
-              userId,
-              query,
-              order
-            );
-            break;
-          }
-          default: {
-            // should never happen
-            await i.reply({
-              content: "Something went wrong...",
-              flags: MessageFlags.Ephemeral,
-            });
-          }
+          await onSendSticker(interaction, i, value, userId);
+          break;
         }
-
-        resolve();
-      } catch (error) {
-        logger.error({ error, buttonInteraction: i, interaction });
-        reject(error);
+        case "offset": {
+          await onPaginate(i, +value!, userId, query, order);
+          break;
+        }
+        case "first": {
+          await onPaginate(i, 0, userId, query, order);
+          break;
+        }
+        case "last": {
+          await onPaginate(
+            i,
+            resultCount - (resultCount % 9 || 9),
+            userId,
+            query,
+            order
+          );
+          break;
+        }
+        default: {
+          // should never happen
+          await i.reply({
+            content: "Something went wrong...",
+            flags: MessageFlags.Ephemeral,
+          });
+        }
       }
+
+      resolve();
     });
   });
 }
