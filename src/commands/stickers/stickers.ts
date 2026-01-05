@@ -27,13 +27,9 @@ import {
 } from "../../db/dbActions.js";
 import { generateId } from "../../utils/misc.js";
 import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
-import {
-  GENERIC_ERROR_MESSAGE,
-  GRID_PLACEHOLDER_IMG_PATH,
-} from "../../utils/constants.js";
+import { GRID_PLACEHOLDER_IMG_PATH } from "../../utils/constants.js";
 import { logger } from "../../logger.js";
 import { BaseButton, NavButtonRow } from "../../components/buttons.js";
-import { safeReply } from "../../utils/discord.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -271,10 +267,6 @@ function handleMenuInteractions(
         resolve();
       } catch (error) {
         logger.error({ error, buttonInteraction: i, interaction });
-        await safeReply(i, {
-          content: GENERIC_ERROR_MESSAGE,
-          flags: MessageFlags.Ephemeral,
-        });
         reject(error);
       }
     });
