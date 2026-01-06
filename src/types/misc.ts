@@ -1,5 +1,9 @@
 import z from "zod";
 
+export type FromKeyArray<T extends readonly PropertyKey[], V> = {
+  [K in T[number]]: V;
+};
+
 export type TypedErrorCode =
   | "HTTP"
   | "TOO_LARGE"

@@ -6,17 +6,21 @@ import type {
   Updateable,
 } from "kysely";
 import type { StickerVariant } from "./stickers.js";
+import type { FromKeyArray } from "./misc.js";
+
+export const PERMISSIONS = [
+  "addSticker",
+  "editSticker",
+  "deleteSticker",
+  "addUser",
+  "editUser",
+  "deleteUser",
+] as const;
 
 export type UserPermissionsTable = {
   id: ColumnType<string, string, never>;
   username: string;
-  addSticker: Generated<number>;
-  editSticker: Generated<number>;
-  deleteSticker: Generated<number>;
-  addUser: Generated<number>;
-  editUser: Generated<number>;
-  deleteUser: Generated<number>;
-};
+} & FromKeyArray<typeof PERMISSIONS, Generated<number>>;
 
 export type StickerTable = {
   rowid: ColumnType<number, never, never>;

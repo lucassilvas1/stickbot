@@ -6,7 +6,7 @@ import {
 } from "../../db/dbActions.js";
 import {
   baseUserCommand,
-  getUserPermissionWeight,
+  canAlterPermissions,
   isFromOwner,
   parsePermissionOptions,
 } from "../../utils/users.js";
@@ -25,8 +25,8 @@ const commandData: CommandData = {
     if (isInvalidInput) return;
 
     const targetId = interaction.options.getString("id", true);
-    const targetPermissions = parsePermissionOptions(interaction, "integer");
-    const info = { editorId: interaction.user.id, targetId, targetPermissions };
+    const newPermissions = parsePermissionOptions(interaction, "integer");
+    const info = { editorId: interaction.user.id, targetId, newPermissions };
 
     if (!isFromOwner(interaction)) {
       const editor = await getUserPermissionsById(interaction.user.id);
@@ -39,12 +39,11 @@ const commandData: CommandData = {
         });
       }
 
-      const editorPermissionWeight = getUserPermissionWeight(editor);
-      const targetPermissionWeight = getUserPermissionWeight(targetPermissions);
+      const oldPermissions = await getUserPermissionsById(targetId);
 
-      if (targetPermissionWeight > editorPermissionWeight) {
+      if (!canAlterPermissions(editor, newPermissions, oldPermissions)) {
         logger.info(
-          { targetPermissionWeight, editorPermissionWeight, ...info },
+          { editor, ...info },
           "not enough clearance to grant these permissions"
         );
         return interaction.reply({
@@ -59,7 +58,7 @@ const commandData: CommandData = {
 
       const updated = await updatedUserPermissions(targetId, {
         username,
-        ...targetPermissions,
+        ...newPermissions,
       });
 
       if (updated) {

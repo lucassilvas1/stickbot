@@ -31,15 +31,6 @@ export const MAX_USERNAME_LENGTH = 24;
 
 export const GRID_PLACEHOLDER_IMG_PATH = "placeholder.png";
 
-export const USER_PERMISSION_WEIGHT_MAP: Record<keyof Permissions, number> = {
-  editSticker: 1,
-  deleteSticker: 2,
-  addSticker: 3,
-  editUser: 4,
-  deleteUser: 5,
-  addUser: 6,
-} as const;
-
 export const PERMISSION_PUNT_MESSAGE =
   "You do not have the permissions necessary to run this command";
 export const NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE =

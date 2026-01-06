@@ -4,10 +4,11 @@ import {
   isFromOwner,
   parsePermissionOptions,
   isUserAllowed,
-  getUserPermissionWeight,
   authorizeStickerUploader,
   permissionArrayToObj,
   isValidPermissionArray,
+  diffPermissions,
+  canAlterPermissions,
 } from "./users.js";
 import * as dbActions from "../db/dbActions.js";
 import { mockInteraction } from "./test.js";
@@ -803,169 +804,6 @@ describe("isUserAllowed", () => {
   });
 });
 
-describe("getUserPermissionWeight", () => {
-  // Permission weights from constants:
-  // editSticker: 1
-  // deleteSticker: 2
-  // addSticker: 3
-  // editUser: 4
-  // deleteUser: 5
-  // addUser: 6
-
-  it("returns 0 when user has no permissions", () => {
-    const user = {
-      addSticker: 0,
-      editSticker: 0,
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 0,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    expect(weight).toBe(0);
-  });
-
-  it("returns 1 for editSticker permission only", () => {
-    const user = {
-      addSticker: 0,
-      editSticker: 1,
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 0,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    expect(weight).toBe(1);
-  });
-
-  it("returns 2 for deleteSticker permission only", () => {
-    const user = {
-      addSticker: 0,
-      editSticker: 0,
-      deleteSticker: 1,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 0,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    expect(weight).toBe(2);
-  });
-
-  it("returns 3 for addSticker permission only", () => {
-    const user = {
-      addSticker: 1,
-      editSticker: 0,
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 0,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    expect(weight).toBe(3);
-  });
-
-  it("returns 4 for editUser permission only", () => {
-    const user = {
-      addSticker: 0,
-      editSticker: 0,
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 1,
-      deleteUser: 0,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    expect(weight).toBe(4);
-  });
-
-  it("returns 5 for deleteUser permission only", () => {
-    const user = {
-      addSticker: 0,
-      editSticker: 0,
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 1,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    expect(weight).toBe(5);
-  });
-
-  it("returns 6 for addUser permission only", () => {
-    const user = {
-      addSticker: 0,
-      editSticker: 0,
-      deleteSticker: 0,
-      addUser: 1,
-      editUser: 0,
-      deleteUser: 0,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    expect(weight).toBe(6);
-  });
-
-  it("returns highest weight when multiple permissions are granted", () => {
-    const user = {
-      addSticker: 1,
-      editSticker: 1,
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 1,
-      deleteUser: 0,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    // Should return 4 (editUser) not 3 (addSticker) or 1 (editSticker)
-    expect(weight).toBe(4);
-  });
-
-  it("returns highest weight when all permissions are granted", () => {
-    const user = {
-      addSticker: 1,
-      editSticker: 1,
-      deleteSticker: 1,
-      addUser: 1,
-      editUser: 1,
-      deleteUser: 1,
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    // Should return 6 (addUser is highest)
-    expect(weight).toBe(6);
-  });
-
-  it("handles mixed low and high permissions correctly", () => {
-    const user = {
-      addSticker: 0,
-      editSticker: 1, // weight 1
-      deleteSticker: 0,
-      addUser: 0,
-      editUser: 0,
-      deleteUser: 1, // weight 5
-    };
-
-    const weight = getUserPermissionWeight(user);
-
-    // Should return 5 (deleteUser is highest)
-    expect(weight).toBe(5);
-  });
-});
-
 describe("permissionArrayToObj", () => {
   it("converts array with some permissions to object with 1s and 0s", () => {
     const permissions = ["addSticker", "deleteSticker", "editUser"];
@@ -1043,6 +881,220 @@ describe("isValidPermissionArray", () => {
     const permissions = ["addSticker", "editUser", "deleteUser"];
 
     const result = isValidPermissionArray(permissions);
+
+    expect(result).toBe(true);
+  });
+});
+
+describe("diffPermissions", () => {
+  it("returns empty array when both objects are the same", () => {
+    const perms = {
+      addSticker: 1,
+      editSticker: 0,
+      deleteSticker: 1,
+      addUser: 0,
+      editUser: 1,
+      deleteUser: 0,
+    };
+
+    const result = diffPermissions(perms, perms);
+
+    expect(result).toEqual([]);
+  });
+
+  it("returns permission keys that differ between left and right", () => {
+    const left = {
+      addSticker: 1,
+      editSticker: 0,
+      deleteSticker: 1,
+      addUser: 0,
+      editUser: 1,
+      deleteUser: 0,
+    };
+    const right = {
+      addSticker: 0, // different
+      editSticker: 0,
+      deleteSticker: 1,
+      addUser: 1, // different
+      editUser: 1,
+      deleteUser: 1, // different
+    };
+
+    const result = diffPermissions(left, right);
+
+    expect(result).toContain("addSticker");
+    expect(result).toContain("addUser");
+    expect(result).toContain("deleteUser");
+    expect(result).not.toContain("editSticker");
+    expect(result).not.toContain("deleteSticker");
+    expect(result).not.toContain("editUser");
+  });
+
+  it("returns all permissions in left when all differ", () => {
+    const left = {
+      addSticker: 1,
+      editSticker: 1,
+      deleteSticker: 1,
+    } as Permissions;
+    const right = {
+      addSticker: 0,
+      editSticker: 0,
+      deleteSticker: 0,
+    } as Permissions;
+
+    const result = diffPermissions(left, right);
+
+    expect(result).toEqual(
+      expect.arrayContaining(["addSticker", "editSticker", "deleteSticker"])
+    );
+    expect(result).toHaveLength(3);
+  });
+});
+
+describe("canAlterPermissions", () => {
+  it("returns true when editor has all permissions being changed", () => {
+    const editor = {
+      addSticker: 1,
+      editSticker: 1,
+      deleteSticker: 1,
+      addUser: 1,
+      editUser: 1,
+      deleteUser: 1,
+    };
+    const oldPerms = {
+      addSticker: 0,
+      editSticker: 0,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+    const newPerms = {
+      addSticker: 1,
+      editSticker: 1,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+
+    const result = canAlterPermissions(editor, newPerms, oldPerms);
+
+    expect(result).toBe(true);
+  });
+
+  it("returns false when editor lacks a permission being granted", () => {
+    const editor = {
+      addSticker: 1,
+      editSticker: 0, // editor doesn't have this
+      deleteSticker: 1,
+      addUser: 1,
+      editUser: 1,
+      deleteUser: 1,
+    };
+    const oldPerms = {
+      addSticker: 0,
+      editSticker: 0,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+    const newPerms = {
+      addSticker: 0,
+      editSticker: 1, // trying to grant this
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+
+    const result = canAlterPermissions(editor, newPerms, oldPerms);
+
+    expect(result).toBe(false);
+  });
+
+  it("returns true when no permissions are being changed", () => {
+    const editor = {
+      addSticker: 0,
+      editSticker: 0,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+    const oldPerms = {
+      addSticker: 0,
+      editSticker: 0,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+    const newPerms = {
+      addSticker: 0,
+      editSticker: 0,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+
+    const result = canAlterPermissions(editor, newPerms, oldPerms);
+
+    expect(result).toBe(true);
+  });
+
+  it("doesn't allow removing permissions the editor doesn't have", () => {
+    const editor: Permissions = {
+      addSticker: 1,
+      editSticker: 0, // editor doesn't have this
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+    const oldPerms = {
+      addSticker: 0,
+      editSticker: 1, // target currently has it
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+    const newPerms: Permissions = {
+      addSticker: 0,
+      editSticker: 0, // trying to remove it
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+
+    const result = canAlterPermissions(editor, newPerms, oldPerms);
+
+    expect(result).toBe(false);
+  });
+
+  it("handles missing oldPerms", () => {
+    const editor = {
+      addSticker: 1,
+      editSticker: 1,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+    const newPerms = {
+      addSticker: 1,
+      editSticker: 1,
+      deleteSticker: 0,
+      addUser: 0,
+      editUser: 0,
+      deleteUser: 0,
+    };
+
+    const result = canAlterPermissions(editor, newPerms);
 
     expect(result).toBe(true);
   });

@@ -4,12 +4,8 @@ import {
   type ChatInputCommandInteraction,
   type Interaction,
 } from "discord.js";
-import type { Permissions } from "../types/db.js";
-import {
-  MAX_USERNAME_LENGTH,
-  MIN_USERNAME_LENGTH,
-  USER_PERMISSION_WEIGHT_MAP,
-} from "./constants.js";
+import { PERMISSIONS, type Permissions } from "../types/db.js";
+import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from "./constants.js";
 import { getStickerById, getUserPermissionsById } from "../db/dbActions.js";
 
 export async function authorizeStickerUploader(
@@ -47,23 +43,18 @@ export function isFromOwner(interaction: Interaction<CacheType>) {
 }
 
 export function permissionArrayToObj(array: (keyof Permissions)[]) {
-  return Object.keys(USER_PERMISSION_WEIGHT_MAP).reduce(
-    (permissions, permission) => {
-      const hasPermission = array.includes(permission as keyof Permissions);
-      permissions[permission as keyof Permissions] = ~~hasPermission;
+  return PERMISSIONS.reduce((permissions, permission) => {
+    const hasPermission = array.includes(permission);
+    permissions[permission] = ~~hasPermission;
 
-      return permissions;
-    },
-    {} as Permissions
-  );
+    return permissions;
+  }, {} as Permissions);
 }
 
 export function isValidPermissionArray(
   array: readonly string[]
 ): array is (keyof Permissions)[] {
-  return array.every(
-    (p) => USER_PERMISSION_WEIGHT_MAP[p as keyof Permissions] !== undefined
-  );
+  return array.every((p) => PERMISSIONS.includes(p as keyof Permissions));
 }
 
 type IntToBoolProps<T> = {
@@ -125,15 +116,26 @@ export async function isUserAllowed<P extends keyof Permissions>(
   return Boolean(user && user[permission]);
 }
 
-export function getUserPermissionWeight(user: Permissions) {
-  let highestWeight = 0;
-  for (const key of Object.keys(USER_PERMISSION_WEIGHT_MAP)) {
-    const permission = key as keyof typeof USER_PERMISSION_WEIGHT_MAP;
-    if (!user[permission]) continue;
-    const weight = USER_PERMISSION_WEIGHT_MAP[permission];
-    if (weight > highestWeight) highestWeight = weight;
+export function diffPermissions(New: Permissions, Old?: Permissions) {
+  if (!Old) {
+    // If there are no old permissions, only return new granted permissions
+    return Object.keys(New).filter(
+      (p) => New[p as keyof Permissions]
+    ) as (keyof Permissions)[];
   }
-  return highestWeight;
+  // Otherwise return any difference between the two states
+  return Object.keys(New).filter(
+    (p) => New[p as keyof Permissions] !== Old[p as keyof Permissions]
+  ) as (keyof Permissions)[];
+}
+
+export function canAlterPermissions(
+  editor: Permissions,
+  newPermissions: Permissions,
+  oldPermissions?: Permissions
+) {
+  const diff = diffPermissions(newPermissions, oldPermissions);
+  return diff.every((p) => editor[p]);
 }
 
 export function baseUserCommand(requireUsername = false) {
