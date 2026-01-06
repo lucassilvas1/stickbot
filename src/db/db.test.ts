@@ -21,6 +21,7 @@ import type { Database, NewUserPermissions, Permissions } from "../types/db.js";
 import {
   _deleteSticker,
   _deleteUserPermissions,
+  _getUsers,
   _getStickerById,
   _getStickerByTitle,
   _getUserPermissionsById,
@@ -189,6 +190,195 @@ describe.each([
     await _deleteUserPermissions(db, target.id);
     const users = await db.selectFrom("userPermissions").selectAll().execute();
     expect(users).toStrictEqual([other]);
+  });
+
+  it("retrieves paginated users in ascending username order", async () => {
+    const users = [
+      { id: "user1", username: "charlie" },
+      { id: "user2", username: "alice" },
+      { id: "user3", username: "bob" },
+    ];
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const result = await _getUsers(db, 0, 10);
+
+    expect(result.users).toHaveLength(3);
+    expect(result.users[0]!.username).toBe("alice");
+    expect(result.users[1]!.username).toBe("bob");
+    expect(result.users[2]!.username).toBe("charlie");
+  });
+
+  it("returns correct isLastPage when on last page", async () => {
+    const users = Array(5)
+      .fill(null)
+      .map((_, i) => ({
+        id: `user${i}`,
+        username: `user${i}`,
+      }));
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const result = await _getUsers(db, 0, 5);
+
+    expect(result.isLastPage).toBe(true);
+    expect(result.totalResultCount).toBe(5);
+  });
+
+  it("returns correct isLastPage when not on last page", async () => {
+    const users = Array(10)
+      .fill(null)
+      .map((_, i) => ({
+        id: `user${i}`,
+        username: `user${i}`,
+      }));
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const result = await _getUsers(db, 0, 5);
+
+    expect(result.isLastPage).toBe(false);
+    expect(result.users).toHaveLength(5);
+  });
+
+  it("handles offset correctly", async () => {
+    const users = Array(10)
+      .fill(null)
+      .map((_, i) => ({
+        id: `user${i}`,
+        username: `user${String(i).padStart(2, "0")}`, // user00, user01, etc.
+      }));
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const result = await _getUsers(db, 5, 3);
+
+    expect(result.users).toHaveLength(3);
+    expect(result.users[0]!.username).toBe("user05");
+    expect(result.users[1]!.username).toBe("user06");
+    expect(result.users[2]!.username).toBe("user07");
+  });
+
+  it("returns correct totalResultCount", async () => {
+    const users = Array(7)
+      .fill(null)
+      .map((_, i) => ({
+        id: `user${i}`,
+        username: `user${i}`,
+      }));
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const result = await _getUsers(db, 0, 3);
+
+    expect(result.totalResultCount).toBe(7);
+  });
+
+  // it("caches users after retrieval", async () => {
+  //   const user = generateRandomUser();
+  //   await _insertUserPermissions(db, user);
+
+  //   const result = await _getUsers(db, 0, 10);
+
+  //   const cachedModule = await import("./cache.js");
+  //   const cachedUser = cachedModule.userPermissionsCache.get(user.id);
+  //   expect(cachedUser).toBeDefined();
+  //   expect(cachedUser).toStrictEqual(user);
+  // });
+
+  it("returns empty array when offset exceeds total users", async () => {
+    const users = Array(5)
+      .fill(null)
+      .map((_, i) => ({
+        id: `user${i}`,
+        username: `user${i}`,
+      }));
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const result = await _getUsers(db, 10, 5);
+
+    expect(result.users).toHaveLength(0);
+    expect(result.isLastPage).toBe(true);
+    expect(result.totalResultCount).toBe(5);
+  });
+
+  it("works with single user", async () => {
+    const user = generateRandomUser();
+    await _insertUserPermissions(db, user);
+
+    const result = await _getUsers(db, 0, 10);
+
+    expect(result.users).toHaveLength(1);
+    expect(result.users[0]).toStrictEqual(user);
+    expect(result.isLastPage).toBe(true);
+    expect(result.totalResultCount).toBe(1);
+  });
+
+  it("handles multiple pages correctly", async () => {
+    const users = Array(25)
+      .fill(null)
+      .map((_, i) => ({
+        id: `user${i}`,
+        username: `user${String(i).padStart(2, "0")}`,
+      }));
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const page1 = await _getUsers(db, 0, 10);
+    const page2 = await _getUsers(db, 10, 10);
+    const page3 = await _getUsers(db, 20, 10);
+
+    expect(page1.users).toHaveLength(10);
+    expect(page1.isLastPage).toBe(false);
+    expect(page2.users).toHaveLength(10);
+    expect(page2.isLastPage).toBe(false);
+    expect(page3.users).toHaveLength(5);
+    expect(page3.isLastPage).toBe(true);
+    expect(page1.totalResultCount).toBe(25);
+    expect(page3.totalResultCount).toBe(25);
+  });
+
+  it("returns users with all their permissions", async () => {
+    const user: NewUserPermissions = {
+      id: "testuser",
+      username: "testuser",
+      addSticker: 1,
+      editSticker: 0,
+      deleteSticker: 1,
+      addUser: 0,
+      editUser: 1,
+      deleteUser: 0,
+    };
+    await _insertUserPermissions(db, user);
+
+    const result = await _getUsers(db, 0, 10);
+
+    expect(result.users[0]).toStrictEqual(user);
+  });
+
+  it("limits results correctly when limit exceeds available users", async () => {
+    const users = Array(3)
+      .fill(null)
+      .map((_, i) => ({
+        id: `user${i}`,
+        username: `user${i}`,
+      }));
+    for (const user of users) {
+      await _insertUserPermissions(db, user as NewUserPermissions);
+    }
+
+    const result = await _getUsers(db, 0, 100);
+
+    expect(result.users).toHaveLength(3);
+    expect(result.isLastPage).toBe(true);
   });
 
   it("inserts new sticker and variants", async () => {

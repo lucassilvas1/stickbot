@@ -19,11 +19,11 @@ import { logger } from "../logger.js";
 
 export async function _insertUserPermissions(
   db: Kysely<Database>,
-  NewUserPermissions: NewUserPermissions
+  newUserPermissions: NewUserPermissions
 ) {
   const userPermissions = await db
     .insertInto("userPermissions")
-    .values(NewUserPermissions)
+    .values(newUserPermissions)
     .returningAll()
     .onConflict((oc) => oc.doNothing())
     .executeTakeFirst();
@@ -59,8 +59,9 @@ export async function _updateUserPermissions(
     .where("id", "=", id)
     .returningAll()
     .executeTakeFirst();
-  if (updatedUserPermissions)
+  if (updatedUserPermissions) {
     userPermissionsCache.set(id, updatedUserPermissions);
+  }
   return updatedUserPermissions;
 }
 
@@ -70,8 +71,39 @@ export async function _deleteUserPermissions(db: Kysely<Database>, id: string) {
     .where("id", "=", id)
     .returningAll()
     .executeTakeFirst();
+
   if (result) userPermissionsCache.delete(id);
   return result;
+}
+
+export async function _getUsers(
+  db: Kysely<Database>,
+  offset: number,
+  limit: number
+) {
+  const countResult = await db
+    .selectFrom("userPermissions")
+    .select(db.fn.countAll().as("count"))
+    .executeTakeFirstOrThrow();
+  const count = Number(countResult.count);
+
+  const users = await db
+    .selectFrom("userPermissions")
+    .selectAll()
+    .orderBy("username", "asc")
+    .offset(offset)
+    .limit(limit)
+    .execute();
+
+  for (const user of users) {
+    userPermissionsCache.set(user.id, user);
+  }
+
+  return {
+    users: users,
+    isLastPage: offset + limit >= count,
+    totalResultCount: count,
+  };
 }
 
 export function _insertSticker(

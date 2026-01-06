@@ -5,6 +5,7 @@ import {
   _getStickerById,
   _getStickerByTitle,
   _getUserPermissionsById,
+  _getUsers,
   _incrementStickerUsage,
   _insertSticker,
   _insertUserPermissions,
@@ -44,6 +45,7 @@ export const insertUserPermissions = withDb(_insertUserPermissions);
 export const getUserPermissionsById = withDb(_getUserPermissionsById);
 export const updatedUserPermissions = withDb(_updateUserPermissions);
 export const deleteUserPermissions = withDb(_deleteUserPermissions);
+export const getUsers = withDb(_getUsers);
 export const insertSticker = withDb(_insertSticker);
 export const incrementStickerUsage = withDb(_incrementStickerUsage);
 export const updateSticker = withDb(_updateSticker);

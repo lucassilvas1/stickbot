@@ -125,7 +125,7 @@ There are also six other options that correspond to the user's permissions: `add
 
 ![Editing a user's permissions](/docs/assets/commands/edituser.webp)
 
-You can edit an existing user's permission with the `/edituser` command. Its only required option is `id`, the user's ID. It's also got the same optional options as [the `/adduser` command](#adding-users), and it's those options you're gonna use to edit permissions. You only need to use the options you wish to edit, other permissions won't be affected.
+You can edit an existing user's permission with the `/edituser` command. Its only required option is `id`, the user's ID. It's also got the same optional options as [the `/adduser` command](#adding-users), and it's those options you're gonna use to edit permissions. You only need to use the options you wish to edit, other permissions will be unaffected.
 
 **Example**:
 ```
@@ -153,6 +153,19 @@ You can delete users from the app with the `/deleteuser` command. Like the `/edi
 
 > [!NOTE]
 > While anyone might be able to add the BOT to their account, they won't be able to use any of the commands unless you explicitly let them with [/adduser](#adding-users).
+
+### Listing Users
+
+![Editing user permissions](/docs/assets/commands/manage_edit.webp)
+
+![Deleting a user](/docs//assets/commands/manage_delete.webp)
+
+You don't have to keep track of every user you add to the app. `/manageusers` allows you to quickly edit permissions or delete users from your app. To delete a user, click on the "Edit" button next to their name and type `DELETE` in the "Delete User" field.
+
+**Availability**: Your Server Only
+
+> [!NOTE]
+> Only the owner and users with permission to add, edit and delete users can use this command.
 
 ## Requirements
 
