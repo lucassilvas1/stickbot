@@ -18,9 +18,7 @@ export async function migrateToLatest(database: Kysely<any>) {
 
   results?.forEach((result) => {
     if (result.status === "Success") {
-      // console.log(
-      //   `migration "${result.migrationName}" was executed successfully`
-      // );
+      logger.debug({ migration: result.migrationName }, "migrated db");
     } else if (result.status === "Error") {
       logger.error(
         { migration: result.migrationName },
