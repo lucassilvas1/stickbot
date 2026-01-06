@@ -35,7 +35,7 @@ function withDb<F extends (db: Kysely<Database>, ...args: any[]) => any>(
 ) {
   return async (
     ...args: Parameters<F> extends [any, ...infer Rest] ? Rest : never
-  ): Promise<ReturnType<F>> => {
+  ): Promise<Awaited<ReturnType<F>>> => {
     const db = await getDb();
     return fn(db, ...args);
   };
