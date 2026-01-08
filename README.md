@@ -1,5 +1,7 @@
 # stickbot
 
+A self-hosted Discord bot for managing and sharing custom stickers. Upload images and videos, tag them for quick searching, and share stickers in any server or DM. Includes permission management for sharing with friends.
+
 ## Usage
 
 ### Adding Stickers
