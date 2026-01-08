@@ -42,7 +42,7 @@ You can use the `/liststickers` command to view a list of all your stickers. The
 **Availability**: Any Server, Any DM.
 
 > [!TIP]
-> You can view sticker titles and tags by setting the `info` option to `True`. Now when you pick one of the stickers from the list, the BOT will also return its title and tags.
+> You can view sticker titles and tags by setting the `info` option to `True`. Now when you pick one of the stickers from the list, the bot will also return its title and tags.
 
 ### Sending Stickers
 
@@ -61,7 +61,7 @@ The query in the example would narrow down the suggestions to stickers whose tit
 **Availability**: Any Server, Any DM.
 
 > [!IMPORTANT]
-> Even if you know the exact title of the sticker you're looking for, **you still need to pick it from the suggestion list**! That is because the BOT doesn't use the title to find the stickers, it uses unique IDs. When you choose one of the suggestions, what you're sending to the BOT is that sticker's ID, not its title.
+> Even if you know the exact title of the sticker you're looking for, **you still need to pick it from the suggestion list**! That is because the bot doesn't use the title to find the stickers, it uses unique IDs. When you choose one of the suggestions, what you're sending to the bot is that sticker's ID, not its title.
 
 > [!TIP]
 > The `query` option works with tags as well, not just titles!
@@ -99,7 +99,7 @@ You can delete stickers with the `/deletesticker` command. Its only option is `q
 
 ![Adding a user](/docs/assets/commands/adduser.webp)
 
-Out of the box, only you, the owner, are allowed to use any command. If you wish to allow someone else to use the BOT, you need to use the `/adduser` command. The command only has two required options: `id` and `username`. You can find a user's ID by right-clicking their name on Discord[^discord_dev_mode]. The `username` option doesn't have to match their actual username.
+Out of the box, only you, the owner, are allowed to use any command. If you wish to allow someone else to use the bot, you need to use the `/adduser` command. The command only has two required options: `id` and `username`. You can find a user's ID by right-clicking their name on Discord[^discord_dev_mode]. The `username` option doesn't have to match their actual username.
 
 If you're granting the user most/all permissions, it might be faster to set the `grant-all` option to True. You can still override individual permissions when using the `grant-all` option.
 
@@ -118,7 +118,7 @@ There are also six other options that correspond to the user's permissions: `add
 > If only wish to give the user permission to list/send stickers, you don't need to grant any permission. Adding them with all permissions set to False (default) will suffice.
 
 > [!IMPORTANT]
-> Users will still need to add the app to their account to be able to use any of the commands. They can do that from the BOT's profile on Discord.
+> Users will still need to add the app to their account to be able to use any of the commands. They can do that from the bot's profile on Discord.
 
 > [!IMPORTANT]
 > Users will only be able to use permission commands like this one if you invite them to your server[^bot_guild].
@@ -154,7 +154,7 @@ You can delete users from the app with the `/deleteuser` command. Like the `/edi
 > Deleting a user from the app is the **only** way to keep them from being able to list/send stickers, setting all their permissions to False will still allow them to send stickers!
 
 > [!NOTE]
-> While anyone might be able to add the BOT to their account, they won't be able to use any of the commands unless you explicitly let them with [/adduser](#adding-users).
+> While anyone might be able to add the bot to their account, they won't be able to use any of the commands unless you explicitly let them with [/adduser](#adding-users).
 
 ### Listing Users
 
@@ -184,11 +184,11 @@ You don't have to keep track of every user you add to the app. `/manageusers` al
 
 ## Creating a Discord App
 
-Before using the BOT, you'll need to create a Discord App to deploy the commands to.
+Before using the bot, you'll need to create a Discord App to deploy the commands to.
 
 To do this, go to the [Discord Developer Portal](https://discord.com/developers/applications), sign in, click "New Application" at the top right, give your app a name (this will be visible to other users), and create the app.
 
-You can find the Application ID in the General Information tab, and the BOT token in the Bot tab. You'll need these values during [installation](#installation).
+You can find the Application ID in the General Information tab, and the bot token in the Bot tab. You'll need these values during [installation](#installation).
 
 
 ## Installation
@@ -212,22 +212,22 @@ You can find the Application ID in the General Information tab, and the BOT toke
 > [!TIP]
 > If you wish to see the logs in the terminal as well, set `LOG_TO_CONSOLE` to `true` in `.env`.
 
-## Adding the BOT
+## Adding the bot
 
-After installing, you'll need to add the BOT to the guild you created, otherwise you won't be able to allow other users to use the BOT.
+After installing, you'll need to add the bot to the guild you created, otherwise you won't be able to allow other users to use the bot.
 
 Go to the Installation tab of the [Developer Portal](https://discord.com/developers/applications), copy the Install Link and follow it.
 
 Choose "Add to Server", pick the server you created earlier from the list, and authorize it.
 
-You can follow this same link again to add the BOT to your account, so you can use it in DMs or other servers. You can also add directly from Discord now by clicking "Add App" on the BOT's profile.
+You can follow this same link again to add the bot to your account, so you can use it in DMs or other servers. You can also add directly from Discord now by clicking "Add App" on the bot's profile.
 
 
 ## Running
 
 [Run](#running-commands) `npm run start:prod` 
 
-If everything worked, your BOT should now be online and working on Discord.
+If everything worked, your bot should now be online and working on Discord.
 
 ## Running commands
 
