@@ -1,7 +1,24 @@
 {
   "name": "stickbot",
   "version": "1.2.0",
-  "description": "",
+  "description": "A bot that works as an alternative to built-in stickers, turning media into stickers",
+  "keywords": [
+    "bot",
+    "discord",
+    "stickers",
+    "sticker",
+    "node",
+    "typescript",
+    "lightweight",
+    "self-hosted"
+  ],
+  "author": "Lucas Silva",
+  "homepage": "https://github.com/lucassilvas1/stickbot/",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucassilvas1/stickbot.git"
+  },
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -12,9 +29,6 @@
     "deploy:prod": "npm run build && cross-env NODE_ENV=production node dist/deploy-commands.js",
     "test": "vitest -c src/vitest.config.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.5",
