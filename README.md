@@ -171,35 +171,35 @@ You don't have to keep track of every user you add to the app. `/manageusers` al
 
 ## Requirements
 
-- [NodeJS v16+](https://nodejs.org/en/download/).
+- [NodeJS v18+](https://nodejs.org/en/download/).
 - Recent version of [FFMPEG](https://github.com/BtbN/FFmpeg-Builds/releases). Download and extract the full GPL version (not `shared`) compatible with your setup. E.g., if you're running Windows on an Intel or AMD CPU, download the win64 GPL zip file.
-- You'll need to be reachable. If you're not behind [CGNAT](https://en.wikipedia.org/wiki/Carrier-grade_NAT#:~:text=prevents%20the%20ISP%27s%20customers%20from%20using%20port%20forwarding) all you'll need to do is forward port `ASSETS_SERVER_PORT` on your router (read step 5.vi. of the installation section for more). If you are, however, you'll need to use a service like [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/) to work around that limitation. You can check if port forwarding worked [here](https://portchecker.co/), just enter the value of `ASSETS_SERVER_PORT` in "Port Number" and click check. If you can't find a way of being reachable, users won't be able to see your stickers.
+- If you plan on self-hosting, you'll need to be reachable. If you're not behind [CGNAT](https://en.wikipedia.org/wiki/Carrier-grade_NAT#:~:text=prevents%20the%20ISP%27s%20customers%20from%20using%20port%20forwarding) all you'll need to do is forward port `ASSETS_SERVER_PORT` on your router (read step 5.vi. of the installation section for more). If you are, however, you'll need to use a service like [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/) to work around that limitation. You can check if port forwarding worked [here](https://portchecker.co/), just enter the value of `ASSETS_SERVER_PORT` in "Port Number" and click check. If you can't find a way of being reachable, users won't be able to see your stickers.
 
 
 > [!NOTE]
 > If you have a dynamic IP address, you'll want to look into DDNS services like the ones offered by [DuckDNS](https://www.duckdns.org/), [No-IP](https://www.noip.com/) or [Cloudflare](https://github.com/favonia/cloudflare-ddns). The app will not respond to IP changes on its own.
 
 > [!CAUTION]
-> If you don't set up a reverse proxy or use a service like [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/), your public IP will be exposed to anyone you send stickers to! This isn't necessarily a problem if you plan on using the app *only* with people you trust.
+> If you don't set up a reverse proxy or use a service like [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/), your public IP will be exposed to anyone you send stickers to! This isn't necessarily a problem if you plan on sharing stickers *only* with people you trust.
 
 ## Creating a Discord App
 
 Before using the bot, you'll need to create a Discord App to deploy the commands to.
 
-To do this, go to the [Discord Developer Portal](https://discord.com/developers/applications), sign in, click "New Application" at the top right, give your app a name (this will be visible to other users), and create the app.
+To do this, go to the [Discord Developer Portal](https://discord.com/developers/applications), sign in, click "New Application" at the top right, give your app a name, and create the app.
 
 You can find the Application ID in the General Information tab, and the bot token in the Bot tab. You'll need these values during [installation](#installation).
 
 
 ## Installation
 
-1. Clone the repository or [download it as zip](https://github.com/lucassilvas1/stickbot/archive/refs/heads/main.zip) and extract it.
-2. [Run](#running-commands) `npm run install` to install all necessary dependencies.
+1. [Download](/releases/latest) the latest version of the project and extract it.
+2. [Run](#running-commands) `npm install` to install all necessary dependencies.
 3. Rename the `.env.example` file to `.env`
-4. [Enable Developer Mode on Discord](https://discord.com/developers/docs/activities/building-an-activity#step-0-enable-developer-mode). You'll need it to be able to grab your Server ID and User IDs in the future.
+4. [Enable Developer Mode on Discord](https://discord.com/developers/docs/activities/building-an-activity#step-0-enable-developer-mode). You'll need it to be able to grab your Server ID and User IDs later.
 5. Open `.env` in any text editor and fill out every variable marked Required:
    1. Set `BOT_TOKEN` and `APPLICATION_ID` to [the values you found](#creating-a-discord-app) in the Developer Portal.
-   2. Create a Discord server and copy its ID by right-clicking on it in the server list > Copy Server ID[^discord_dev_mode]. Paste the ID after `GUILD_ID=`. You may use an existing server for this[^bot_guild].
+   2. Create a Discord server and copy its ID by right-clicking on it in the server list and clicking Copy Server ID[^discord_dev_mode]. Paste the ID after `GUILD_ID=`. You may use an existing server for this[^bot_guild].
    3. Decide where you want the sticker database, the media files themselves, and the app's logs to be saved. Set the variables in the `Storage` section of to the absolute paths you decide on. For example, I have mine configured like this: `DB_DIR_PATH=C:/Users/Lucas/stickbot/db`, `ASSETS_DIR_PATH=C:/Users/Lucas/stickbot/assets`, `LOG_DIR_PATH=C:/Users/Lucas/stickbot/logs`[^storage_paths].
    4. Set the `FFMPEG_PATH` and `FFPROBE_PATH` variables to the absolute path to the `ffmpeg.exe` and `ffprobe.exe` executables that can be found in the `bin` folder after you extract the ffmpeg zip. For example: `FFMPEG_PATH=C:\Lucas\ffmpeg\bin\ffmpeg.exe`.
    5. `ASSETS_SERVER_PORT` is set to `4675` by default. You don't need to alter it unless that port is already in use for you.
@@ -207,12 +207,12 @@ You can find the Application ID in the General Information tab, and the bot toke
 6. [Run](#running-commands) `npm run deploy:prod` to deploy the commands to Discord. You may need to restart/reload Discord, and possibly wait up to an hour for the commands to become available for the first time. You **only** need to run this command during installation unless instructed otherwise!
 
 > [!NOTE]
-> Paths containing spaces need to be wrapped in double quotes (" ") both in the `.env` and in the terminal!
+> Paths containing spaces need to be wrapped in double quotes (" ") both in the `.env` and CLI!
 
 > [!TIP]
 > If you wish to see the logs in the terminal as well, set `LOG_TO_CONSOLE` to `true` in `.env`.
 
-## Adding the bot
+## Adding the Bot
 
 After installing, you'll need to add the bot to the guild you created, otherwise you won't be able to allow other users to use the bot.
 
@@ -229,15 +229,15 @@ You can follow this same link again to add the bot to your account, so you can u
 
 If everything worked, your bot should now be online and working on Discord.
 
-## Running commands
+## Running Commands
 
-You'll need to run some commands to setup and start the app. If you're unfamilar with running terminal commands:  
+You'll need to run some commands to setup and start the app. If you're unfamilar with running CLI commands:  
 1. On **Windows**, open The Terminal, PowerShell, or Command Prompt from the Start Menu. On **Mac**, find the Terminal in the Launchpad and open it. You should know what you're doing if you're on Linux.
 2. Navigate to the app's root folder with the `cd` command. E.g. `cd "C:\Lucas\stickbot"`. This is where all `npm` commands mentioned in the instructions **need** to be run in.
 
 [^credentials]: After creating a new application, you can find your `APPLICATION_ID` in the `General Information` tab, and your `BOT_TOKEN` in the `Bot` tab, after clicking the `Reset Token` button.
 
-[^discord_dev_mode]: You'll to enable Developer Mode in Discord to do this.
+[^discord_dev_mode]: You'll need to enable Developer Mode in Discord to do this.
 
 [^bot_guild]: Permission management commands (e.g. `/adduser`) will only be available in this guild.
 
