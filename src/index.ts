@@ -45,9 +45,13 @@ assetsServer.listen(env.ASSETS_SERVER_PORT, () => {
 
 process.on("uncaughtException", (err) => {
   if (err instanceof DiscordAPIError) {
-    if (err.message === "Invalid Webhook Token") {
-      logger.error({ err }, "attempted to use old interaction");
-      return;
+    switch (err.message) {
+      case "Invalid Webhook Token":
+        logger.error({ err }, "attempted to use old interaction");
+        return;
+      case "Unknown interaction":
+        logger.error({ err }, "took too long to reply");
+        return;
     }
   }
   logger.fatal({ err }, "uncaught exception detected");
