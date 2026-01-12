@@ -11,7 +11,7 @@ import {
   parsePermissionOptions,
 } from "../../utils/users.js";
 import { NOT_ENOUGH_CLEARANCE_PUNT_MESSAGE } from "../../utils/constants.js";
-import { logger } from "../../logger.js";
+import { logger } from "../../logging/logger.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
 
 const commandData: CommandData = {

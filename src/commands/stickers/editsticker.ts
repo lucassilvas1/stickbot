@@ -22,7 +22,7 @@ import {
 import { authorizeStickerUploader } from "../../utils/users.js";
 import { toAutocompleteType } from "../../utils/stickers.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
-import { logger } from "../../logger.js";
+import { logger } from "../../logging/logger.js";
 import { env } from "../../env.js";
 
 const commandData: CommandData = {

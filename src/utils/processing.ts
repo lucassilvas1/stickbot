@@ -4,7 +4,7 @@ import type {
   StickerVariant,
   StickerVariantEncodingConfig,
 } from "../types/stickers.js";
-import { spawn, TypedError } from "./misc.js";
+import { spawn } from "./misc.js";
 import { env } from "../env.js";
 import sharp from "sharp";
 import {
@@ -17,7 +17,8 @@ import {
 import { rm } from "fs/promises";
 import { extname, join } from "path";
 import type { NewVariant } from "../types/db.js";
-import { logger } from "../logger.js";
+import { logger } from "../logging/logger.js";
+import { TypedError } from "./error.js";
 
 export type ProcessingDependencies = {
   saveFile: typeof saveFile;

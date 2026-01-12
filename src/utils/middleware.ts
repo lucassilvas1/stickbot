@@ -11,7 +11,7 @@ import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
 import { getNonLNZCharSet } from "./misc.js";
 import { isFromOwner } from "./users.js";
 import { getUserPermissionsById } from "../db/dbActions.js";
-import { logger } from "../logger.js";
+import { logger } from "../logging/logger.js";
 
 export async function authorization(
   command: CommandData,

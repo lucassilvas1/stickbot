@@ -6,7 +6,7 @@ import {
 } from "discord.js";
 import { authorization, rateLimit } from "../utils/middleware.js";
 import { PERMISSION_PUNT_MESSAGE } from "../utils/constants.js";
-import { logger } from "../logger.js";
+import { logger } from "../logging/logger.js";
 import { safeReply } from "../utils/discord.js";
 
 export const name = Events.InteractionCreate;

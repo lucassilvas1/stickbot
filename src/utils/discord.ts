@@ -8,7 +8,7 @@ import type {
   InteractionReplyOptions,
   ModalSubmitInteraction,
 } from "discord.js";
-import { logger } from "../logger.js";
+import { logger } from "../logging/logger.js";
 
 export function safeReply(
   interaction: CommandInteraction | ModalSubmitInteraction | ButtonInteraction,

@@ -8,7 +8,7 @@ import type { CommandData } from "../../types/commands.js";
 import { authorizeStickerUploader } from "../../utils/users.js";
 import { deleteSticker } from "../../db/dbActions.js";
 import { autocomplete } from "../../utils/stickers.js";
-import { logger } from "../../logger.js";
+import { logger } from "../../logging/logger.js";
 
 const commandData: CommandData = {
   isGlobal: true,

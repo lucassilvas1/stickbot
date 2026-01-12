@@ -1,7 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import { deleteUserPermissions } from "../../db/dbActions.js";
-import { logger } from "../../logger.js";
+import { logger } from "../../logging/logger.js";
 
 const commandData: CommandData = {
   isGlobal: false,

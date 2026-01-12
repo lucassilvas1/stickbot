@@ -19,6 +19,7 @@ import { env } from "../env.js";
 import { join } from "path";
 import sharp from "sharp";
 import type { StickerVariantEncodingConfig } from "../types/stickers.js";
+import { TypedError } from "./error.js";
 
 vi.mock("fs");
 vi.mock("fs/promises");
@@ -28,7 +29,6 @@ vi.mock("./misc.js", async () => {
   const actual = await vi.importActual<typeof import("./misc.js")>("./misc.js");
   return {
     spawn: vi.fn(),
-    TypedError: actual.TypedError,
   };
 });
 
@@ -1316,7 +1316,7 @@ describe("processWebp with sharp", () => {
   it("it throws if input path leads to non webp file", async () => {
     await expect(
       processWebp("input.png", "out.webp", options)
-    ).rejects.toBeInstanceOf(miscModule.TypedError);
+    ).rejects.toBeInstanceOf(TypedError);
 
     await expect(
       processWebp("input.png", "out.webp", options)

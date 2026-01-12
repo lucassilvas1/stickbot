@@ -1,5 +1,21 @@
-import type { TypedErrorCode } from "../types/misc.js";
+import { promises as fs } from "fs";
 import { spawn as _spawn, type SpawnOptionsWithoutStdio } from "child_process";
+import { isSystemError } from "./error.js";
+
+export async function getFileInfo(filePath: string) {
+  try {
+    const stats = await fs.stat(filePath);
+    stats.birthtimeMs;
+    return {
+      path: filePath,
+      birthTime: stats.birthtimeMs,
+      size: stats.size,
+    };
+  } catch (error) {
+    if (isSystemError(error) && error.code === "ENOENT") return null;
+    throw error;
+  }
+}
 
 /**
  * Generates a random alphanumeric ID (case insensitive)
@@ -87,19 +103,6 @@ export function spawn(
       reject(new Error("stdin error: " + error));
     });
   });
-}
-
-export class TypedError extends Error {
-  readonly code: TypedErrorCode;
-
-  constructor(
-    code: TypedErrorCode,
-    options: { cause?: unknown; message?: string } = {}
-  ) {
-    super(options.message, { cause: options.cause });
-    this.name = "TypedError";
-    this.code = code;
-  }
 }
 
 export class Cache<K extends PropertyKey, V> {

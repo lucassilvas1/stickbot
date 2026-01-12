@@ -4,15 +4,6 @@ export type FromKeyArray<T extends readonly PropertyKey[], V> = {
   [K in T[number]]: V;
 };
 
-export type TypedErrorCode =
-  | "HTTP"
-  | "TOO_LARGE"
-  | "INVALID_TYPE"
-  | "PROCESSING_ERROR"
-  | "FFPROBE_ERROR"
-  | "FFMPEG_ERROR"
-  | "SHARP_ERROR";
-
 export const logLevels = [
   "fatal",
   "error",

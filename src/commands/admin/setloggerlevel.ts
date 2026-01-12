@@ -1,7 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import { logLevelParser, logLevels } from "../../types/misc.js";
-import { logger, setLogLevel } from "../../logger.js";
+import { logger, setLogLevel } from "../../logging/logger.js";
 
 const commandData: CommandData = {
   isGlobal: false,

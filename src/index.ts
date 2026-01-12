@@ -7,7 +7,13 @@ import {
 import { env } from "./env.js";
 import express from "express";
 import { getCommands, registerEventHandlers } from "./utils/discord.js";
-import { logger } from "./logger.js";
+import { logger, startLogRotation } from "./logging/logger.js";
+
+await startLogRotation(
+  env.MAX_LOG_AGE_DAYS,
+  env.MAX_LOG_SIZE_MB,
+  env.MAX_LOG_ROTATIONS
+);
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 

@@ -15,7 +15,7 @@ import {
 } from "./cache.js";
 import type { Kysely, Transaction } from "kysely";
 import { deleteAllVariants } from "../utils/processing.js";
-import { logger } from "../logger.js";
+import { logger } from "../logging/logger.js";
 
 export async function _insertUserPermissions(
   db: Kysely<Database>,

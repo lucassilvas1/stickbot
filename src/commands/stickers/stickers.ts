@@ -28,7 +28,7 @@ import {
 import { generateId } from "../../utils/misc.js";
 import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
 import { GRID_PLACEHOLDER_IMG_PATH } from "../../utils/constants.js";
-import { logger } from "../../logger.js";
+import { logger } from "../../logging/logger.js";
 import { BaseButton, NavButtonRow } from "../../components/buttons.js";
 
 const commandData: CommandData = {

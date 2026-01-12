@@ -29,7 +29,7 @@ import {
   getUsers,
   updatedUserPermissions,
 } from "../../db/dbActions.js";
-import { logger } from "../../logger.js";
+import { logger } from "../../logging/logger.js";
 import {
   GENERIC_ERROR_MESSAGE,
   MAX_USERNAME_LENGTH,

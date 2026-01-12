@@ -8,7 +8,6 @@ import type { CommandData } from "../../types/commands.js";
 import { join } from "path";
 import { env } from "../../env.js";
 import { rm } from "fs/promises";
-import type { TypedErrorCode } from "../../types/misc.js";
 import {
   MAX_ATTACHMENT_SIZE_MB,
   MAX_DESCRIPTION_LENGTH,
@@ -20,12 +19,13 @@ import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
   STICKER_ID_LENGTH,
 } from "../../utils/constants.js";
-import { generateId, TypedError } from "../../utils/misc.js";
+import { generateId } from "../../utils/misc.js";
 import { generateVariants, fetchMedia } from "../../utils/processing.js";
 import { getVariantPaths, getVariantUrl } from "../../utils/stickers.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
-import { logger } from "../../logger.js";
+import { logger } from "../../logging/logger.js";
 import { insertSticker } from "../../db/dbActions.js";
+import { TypedError, type TypedErrorCode } from "../../utils/error.js";
 
 const commandData: CommandData = {
   isGlobal: true,

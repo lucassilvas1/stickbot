@@ -10,7 +10,7 @@ import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
   VariantEncodingMap,
 } from "../utils/constants.js";
-import { logger } from "../logger.js";
+import { logger } from "../logging/logger.js";
 
 function moveStaticFiles(assetsDirPath: string) {
   const originalPath = join(import.meta.dirname, "../../assets");

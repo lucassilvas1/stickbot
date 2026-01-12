@@ -1,7 +1,7 @@
 import * as path from "path";
 import { promises as fs } from "fs";
 import { Kysely, Migrator, FileMigrationProvider } from "kysely";
-import { logger } from "../logger.js";
+import { logger } from "../logging/logger.js";
 
 export async function migrateToLatest(database: Kysely<any>) {
   const migrator = new Migrator({
