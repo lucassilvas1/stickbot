@@ -1,0 +1,56 @@
+name: Question
+description: Ask a question about usage, behavior, setup, etc.
+labels: ["question"]
+body:
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm you've checked the following before opening this question.
+      options:
+        - label: I searched the existing issues ([open and closed](/issues?q=is%3Aissue))
+          required: true
+        - label: I read the [README](/blob/main/README.md)
+          required: true
+        - label: This isn't a bug report or feature request
+          required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What is Your Question?
+      description: Clearly describe what you're trying to understand or decide.
+      placeholder: |
+        I'm trying to do X, but I'm not sure whether Y or Z is the intended approach…
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / Goal
+      description: What are you trying to do?
+      placeholder: |
+        My use case is…
+
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What Have You Tried?
+      description: Links to docs, issues, or explanations you've already looked at help a lot.
+      placeholder: |
+        I checked #123 and the README section on…
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: Exact version of your OS, if relevant
+      placeholder: Windows 10 Pro 22H2 19045.6691
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Anything else that might be useful.
+    validations:
