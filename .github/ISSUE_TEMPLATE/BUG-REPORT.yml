@@ -56,7 +56,7 @@ body:
     id: expected
     attributes:
       label: Expected Behavior
-      description: What did you think would happen when following those steps?
+      description: What did you think would happen when you followed those steps?
     validations:
       required: true
 
@@ -89,5 +89,5 @@ body:
     attributes:
       label: Aditional Context
       description: >
-        Aditional information you may want to share about your setup.
+        Aditional information you may want to share.
         This could prove useful if you have a less common setup.
