@@ -8,9 +8,9 @@ body:
       label: Prerequisites
       description: Please confirm you've checked the following before opening this question.
       options:
-        - label: I searched the existing issues ([open and closed](/issues?q=is%3Aissue))
+        - label: I searched the existing issues ([open and closed](issues?q=is%3Aissue))
           required: true
-        - label: I read the [README](/blob/main/README.md)
+        - label: I read the [README](/README.md)
           required: true
         - label: This isn't a bug report or feature request
           required: true
