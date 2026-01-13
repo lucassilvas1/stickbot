@@ -83,6 +83,7 @@ body:
         ```text
         paste logs here
         ```
+
   - type: textarea
     id: additional
     attributes:
