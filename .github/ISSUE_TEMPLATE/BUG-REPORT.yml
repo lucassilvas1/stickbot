@@ -1,0 +1,92 @@
+name: Bug Report
+description: Report unexpected behavior
+labels: ["bug", "status: unconfirmed"]
+
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to fill out this bug report.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        label: >
+          [I have made sure there is no existing issue for this](/issues?q=is%3Aissue)
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Bot Version
+      description: >
+        Version of the bot you're running. Can be found in the `package.json`
+        file where you extracted the files during setup.
+      placeholder: e.g. 1.3.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: Exact version of your os
+      placeholder: Windows 10 Pro 22H2 19045.6691
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: >
+        Consider including linking or uploading the file if the bug is related
+        to adding stickers.
+      placeholder: |
+        1.
+        2.
+        3.
+        4.
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you think would happen when following those steps?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened when you followed those steps?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >
+        Providing logs can speed up things.
+        Logs can be found in the folder you chose during installation.
+        Skim through the log files to find the one that corresponds to
+        the period this bug took place.
+        Keep in mind logs will likely contain information about users
+        and stickers!
+      placeholder: |
+        ```text
+        paste logs here
+        ```
+  - type: textarea
+    id: additional
+    attributes:
+      label: Aditional Context
+      description: >
+        Aditional information you may want to share about your setup.
+        This could prove useful if you have a less common setup.
