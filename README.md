@@ -180,7 +180,7 @@ You don't have to keep track of every user you add to the app. `/manageusers` al
 > If you have a dynamic IP address, you'll want to look into DDNS services like the ones offered by [DuckDNS](https://www.duckdns.org/), [No-IP](https://www.noip.com/) or [Cloudflare](https://github.com/favonia/cloudflare-ddns). The app will not respond to IP changes on its own.
 
 > [!CAUTION]
-> If you don't set up a reverse proxy or use a service like [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/), your public IP will be exposed to anyone you send stickers to! This isn't necessarily a problem if you plan on sharing stickers *only* with people you trust.
+> If you don't set up a reverse proxy or use a service like [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/), your public IP will be exposed to anyone you send stickers to! This isn't necessarily a problem if you plan on sharing stickers *only* with people you trust.
 
 ## Creating a Discord App
 
@@ -188,7 +188,7 @@ Before using the bot, you'll need to create a Discord App to deploy the commands
 
 To do this, go to the [Discord Developer Portal](https://discord.com/developers/applications), sign in, click "New Application" at the top right, give your app a name, and create the app.
 
-You can find the Application ID in the General Information tab, and the bot token in the Bot tab. You'll need these values during [installation](#installation).
+You can find the Application ID in the General Information tab, and the bot token in the Bot tab. You'll need these values during [installation](#setup).
 
 
 ## Setup
