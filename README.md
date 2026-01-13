@@ -160,7 +160,7 @@ You can delete users from the app with the `/deleteuser` command. Like the `/edi
 
 ![Editing user permissions](/docs/assets/commands/manage_edit.webp)
 
-![Deleting a user](/docs//assets/commands/manage_delete.webp)
+![Deleting a user](/docs/assets/commands/manage_delete.webp)
 
 You don't have to keep track of every user you add to the app. `/manageusers` allows you to quickly edit permissions or delete users from your app. To delete a user, click on the "Edit" button next to their name and type `DELETE` in the "Delete User" field.
 
@@ -193,7 +193,7 @@ You can find the Application ID in the General Information tab, and the bot toke
 
 ## Setup
 
-1. [Download](/releases/latest) the latest version of the project and extract it.
+1. [Download](/../../releases/latest) the latest version of the project and extract it.
 2. [Run](#running-commands) `npm install` to install all necessary dependencies.
 3. Rename the `.env.example` file to `.env`
 4. [Enable Developer Mode on Discord](https://discord.com/developers/docs/activities/building-an-activity#step-0-enable-developer-mode). You'll need it to be able to grab your Server ID and User IDs later.
