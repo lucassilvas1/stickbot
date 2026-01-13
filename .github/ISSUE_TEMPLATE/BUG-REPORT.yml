@@ -12,7 +12,7 @@ body:
     attributes:
       label: Checklist
       options:
-        label: >
+        - label: >
           [I have made sure there is no existing issue for this](/issues?q=is%3Aissue)
           required: true
 
