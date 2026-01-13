@@ -191,7 +191,7 @@ To do this, go to the [Discord Developer Portal](https://discord.com/developers/
 You can find the Application ID in the General Information tab, and the bot token in the Bot tab. You'll need these values during [installation](#installation).
 
 
-## Installation
+## Setup
 
 1. [Download](/releases/latest) the latest version of the project and extract it.
 2. [Run](#running-commands) `npm install` to install all necessary dependencies.
