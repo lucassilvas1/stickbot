@@ -21,7 +21,7 @@ const commandData: CommandData = {
         )
         .setRequired(true)
     ),
-  async execute(interaction) {
+  async execute(_, interaction) {
     const rawLevel = interaction.options.getString("level", true);
     const info = { level: rawLevel, user: interaction.user.id };
     const { data: level } = logLevelParser.safeParse(rawLevel);

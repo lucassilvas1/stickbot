@@ -5,7 +5,6 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
-import { getStickerById } from "../../db/dbActions.js";
 import { getVariantUrl } from "../../utils/stickers.js";
 import { autocomplete } from "../../utils/stickers.js";
 
@@ -31,9 +30,9 @@ const commandData: CommandData = {
         .setRequired(true)
         .setAutocomplete(true)
     ),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const id = interaction.options.getString("query", true);
-    const sticker = await getStickerById(id, true, interaction.user.id);
+    const sticker = await db.getStickerById(id, true, interaction.user.id);
 
     if (sticker) {
       return interaction.reply(getVariantUrl(id, "high"));

@@ -20,16 +20,12 @@ import type {
   SimplifiedSticker,
   StickerSearchOrder,
 } from "../../types/stickers.js";
-import {
-  getStickerById,
-  incrementStickerUsage,
-  search,
-} from "../../db/dbActions.js";
 import { generateId } from "../../utils/misc.js";
 import { getAssetUrl, getVariantUrl } from "../../utils/stickers.js";
 import { GRID_PLACEHOLDER_IMG_PATH } from "../../utils/constants.js";
 import { logger } from "../../logging/logger.js";
 import { BaseButton, NavButtonRow } from "../../components/buttons.js";
+import type { BoundDBFunctions } from "../../db/dbActions.js";
 
 const commandData: CommandData = {
   isGlobal: true,
@@ -63,12 +59,12 @@ const commandData: CommandData = {
         .setName("info")
         .setDescription("Display title and tags for the chosen sticker")
     ),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const query = interaction.options.getString("query") ?? undefined;
     const order = (interaction.options.getString("order") ??
       "usage.timeLastUsed") as StickerSearchOrder;
     const userId = interaction.user.id;
-    const results = await search({
+    const results = await db.search({
       query,
       userId,
       limit: 9,
@@ -97,6 +93,7 @@ const commandData: CommandData = {
     }
 
     await handleMenuInteractions(
+      db,
       interaction,
       message,
       userId,
@@ -172,6 +169,7 @@ function buildMenu(
 }
 
 async function onSendSticker(
+  db: BoundDBFunctions,
   commandInteraction: ChatInputCommandInteraction<CacheType>,
   buttonInteraction: ButtonInteraction<CacheType>,
   stickerId: string,
@@ -179,7 +177,7 @@ async function onSendSticker(
 ) {
   const showInfo = commandInteraction.options.getBoolean("info");
   if (showInfo) {
-    const sticker = await getStickerById(stickerId);
+    const sticker = await db.getStickerById(stickerId);
     await commandInteraction.editReply({
       components: [
         new TextDisplayBuilder({
@@ -189,17 +187,18 @@ async function onSendSticker(
     });
   } else await commandInteraction.deleteReply();
   await buttonInteraction.reply(getVariantUrl(stickerId, "high"));
-  await incrementStickerUsage(stickerId, userId);
+  await db.incrementStickerUsage(stickerId, userId);
 }
 
 async function onPaginate(
+  db: BoundDBFunctions,
   interaction: ButtonInteraction<CacheType>,
   offset: number,
   userId: string,
   query?: string,
   order?: StickerSearchOrder
 ) {
-  const results = await search({ query, userId, offset, limit: 9, order });
+  const results = await db.search({ query, userId, offset, limit: 9, order });
   const menu = buildMenu(
     query,
     results.stickers,
@@ -211,6 +210,7 @@ async function onPaginate(
 }
 
 function handleMenuInteractions(
+  db: BoundDBFunctions,
   interaction: ChatInputCommandInteraction<CacheType>,
   message: Message<boolean>,
   userId: string,
@@ -233,19 +233,20 @@ function handleMenuInteractions(
           if (!value) {
             throw Error(`Malformed button customId: "${i.customId}"`);
           }
-          await onSendSticker(interaction, i, value, userId);
+          await onSendSticker(db, interaction, i, value, userId);
           break;
         }
         case "offset": {
-          await onPaginate(i, +value!, userId, query, order);
+          await onPaginate(db, i, +value!, userId, query, order);
           break;
         }
         case "first": {
-          await onPaginate(i, 0, userId, query, order);
+          await onPaginate(db, i, 0, userId, query, order);
           break;
         }
         case "last": {
           await onPaginate(
+            db,
             i,
             resultCount - (resultCount % 9 || 9),
             userId,

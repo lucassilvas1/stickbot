@@ -7,13 +7,9 @@ import {
   getVariantPaths,
 } from "./stickers.js";
 import type { SimplifiedSticker } from "../types/stickers.js";
-import * as dbActions from "../db/dbActions.js";
-import { mockInteraction } from "./test.js";
+import { mockBoundDbFunctions, mockInteraction } from "./test.js";
 import { env } from "../env.js";
 import { join } from "path";
-
-vi.mock("../db/db.js");
-vi.mock("../db/dbActions.js");
 
 describe("toAutocompleteType", () => {
   it("transforms stickers to autocomplete format", () => {
@@ -80,11 +76,14 @@ describe("autocomplete", () => {
       { id: "sticker2", title: "Fat Cat" },
     ] as SimplifiedSticker[];
 
-    vi.mocked(dbActions.search).mockResolvedValue({ stickers } as any);
+    const db = mockBoundDbFunctions();
+    db.search.mockResolvedValue({
+      stickers,
+    } as any);
 
-    await autocomplete(interaction as any);
+    await autocomplete(db as any, interaction as any);
 
-    expect(dbActions.search).toHaveBeenCalledWith({
+    expect(db.search).toHaveBeenCalledWith({
       isAutocomplete: true,
       query: "cat",
       userId,
@@ -100,9 +99,12 @@ describe("autocomplete", () => {
     const interaction = mockInteraction();
     interaction.options.getString = vi.fn().mockReturnValue("nonexistent");
 
-    vi.mocked(dbActions.search).mockResolvedValue({ stickers: [] } as any);
+    const db = mockBoundDbFunctions();
+    db.search.mockResolvedValue({
+      stickers: [],
+    } as any);
 
-    await autocomplete(interaction as any);
+    await autocomplete(db as any, interaction as any);
 
     expect(interaction.respond).toHaveBeenCalledWith([]);
   });

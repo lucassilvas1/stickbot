@@ -3,13 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateId, getNonLNZCharSet } from "./misc.js";
 import { authorization, invalidCharGuard, rateLimit } from "./middleware.js";
 import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
-import { mockCommand, mockInteraction } from "./test.js";
+import { mockBoundDbFunctions, mockCommand, mockInteraction } from "./test.js";
 import { isFromOwner } from "./users.js";
-import { getUserPermissionsById } from "../db/dbActions.js";
 
-vi.mock("../db/db.js");
 vi.mock("./users.js", () => ({ isFromOwner: vi.fn() }));
-vi.mock("../db/dbActions.js", () => ({ getUserPermissionsById: vi.fn() }));
 
 describe("authorization", () => {
   beforeEach(() => {
@@ -22,34 +19,42 @@ describe("authorization", () => {
       owner: { id: "user" },
       userId: "user",
     } as any);
-    const result = await authorization(mockCommand(), interaction as any);
+    const db = mockBoundDbFunctions();
+    const result = await authorization(
+      db as any,
+      mockCommand(),
+      interaction as any
+    );
 
     expect(result).toBe(true);
-    expect(getUserPermissionsById).not.toHaveBeenCalled();
+    expect(db.getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("allows when overridePermissions returns true", async () => {
     vi.mocked(isFromOwner).mockReturnValue(false);
 
+    const db = mockBoundDbFunctions();
     const overridePermissions = vi.fn().mockResolvedValue(true);
-
     const result = await authorization(
+      db as any,
       mockCommand({ overridePermissions }),
       mockInteraction() as any
     );
 
     expect(result).toBe(true);
     expect(overridePermissions).toHaveBeenCalled();
-    expect(getUserPermissionsById).not.toHaveBeenCalled();
+    expect(db.getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("falls through when overridePermissions returns false", async () => {
+    const db = mockBoundDbFunctions();
     vi.mocked(isFromOwner).mockReturnValue(false);
-    vi.mocked(getUserPermissionsById).mockResolvedValue({
+    vi.mocked(db.getUserPermissionsById).mockResolvedValue({
       editSticker: 1,
     } as any);
 
     const result = await authorization(
+      db as any,
       mockCommand({
         overridePermissions: vi.fn().mockResolvedValue(false),
         permissions: ["editSticker"],
@@ -67,11 +72,16 @@ describe("authorization", () => {
       permissions: "special",
       overridePermissions: vi.fn(),
     });
-    const result = await authorization(command, mockInteraction() as any);
+    const db = mockBoundDbFunctions();
+    const result = await authorization(
+      db as any,
+      command,
+      mockInteraction() as any
+    );
 
     expect(result).toBe(true);
     expect(command.overridePermissions).not.toHaveBeenCalled();
-    expect(getUserPermissionsById).not.toHaveBeenCalled();
+    expect(db.getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("lets user through if overridePermissions returns true", async () => {
@@ -81,10 +91,15 @@ describe("authorization", () => {
       permissions: "special",
       overridePermissions: vi.fn().mockReturnValue(true),
     });
-    const result = await authorization(command, mockInteraction() as any);
+    const db = mockBoundDbFunctions();
+    const result = await authorization(
+      db as any,
+      command,
+      mockInteraction() as any
+    );
 
     expect(result).toBe(true);
-    expect(getUserPermissionsById).not.toHaveBeenCalled();
+    expect(db.getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("denies user if not owner and overridePermissions returns false", async () => {
@@ -94,18 +109,26 @@ describe("authorization", () => {
       permissions: "special",
       overridePermissions: vi.fn().mockReturnValue(false),
     });
+    const db = mockBoundDbFunctions();
 
-    const result = await authorization(command, mockInteraction() as any);
+    const result = await authorization(
+      db as any,
+      command,
+      mockInteraction() as any
+    );
 
     expect(result).toBe(false);
-    expect(getUserPermissionsById).not.toHaveBeenCalled();
+    expect(db.getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("lets user through if they're in db and command permission array is empty", async () => {
     vi.mocked(isFromOwner).mockReturnValue(false);
-    vi.mocked(getUserPermissionsById).mockResolvedValue({} as any);
+
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue({} as any);
 
     const result = await authorization(
+      db as any,
       mockCommand({ permissions: [] }),
       mockInteraction() as any
     );
@@ -115,12 +138,15 @@ describe("authorization", () => {
 
   it("allows user with all required permissions", async () => {
     vi.mocked(isFromOwner).mockReturnValue(false);
-    vi.mocked(getUserPermissionsById).mockResolvedValue({
+
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue({
       editUser: 1,
       deleteUser: 1,
     } as any);
 
     const result = await authorization(
+      db as any,
       mockCommand({
         permissions: ["editUser", "deleteUser"],
       }),
@@ -132,11 +158,14 @@ describe("authorization", () => {
 
   it("denies user missing at least one permission", async () => {
     vi.mocked(isFromOwner).mockReturnValue(false);
-    vi.mocked(getUserPermissionsById).mockResolvedValue({
+
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue({
       editUser: 1,
     } as any);
 
     const result = await authorization(
+      db as any,
       mockCommand({
         permissions: ["editUser", "deleteUser"],
       }),
@@ -148,9 +177,12 @@ describe("authorization", () => {
 
   it("denies user not found in database and replies", async () => {
     vi.mocked(isFromOwner).mockReturnValue(false);
-    vi.mocked(getUserPermissionsById).mockResolvedValue(undefined);
+
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue(undefined);
 
     const result = await authorization(
+      db as any,
       mockCommand({ permissions: ["addUser"] }),
       mockInteraction() as any
     );

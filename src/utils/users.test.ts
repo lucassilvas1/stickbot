@@ -10,12 +10,8 @@ import {
   diffPermissions,
   canAlterPermissions,
 } from "./users.js";
-import * as dbActions from "../db/dbActions.js";
-import { mockInteraction } from "./test.js";
+import { mockBoundDbFunctions, mockInteraction } from "./test.js";
 import type { Permissions } from "../types/db.js";
-
-vi.mock("../db/db.js");
-vi.mock("../db/dbActions.js");
 
 describe("authorizeStickerUploader", () => {
   beforeEach(() => {
@@ -26,37 +22,50 @@ describe("authorizeStickerUploader", () => {
     const interaction = mockInteraction();
     interaction.isAutocomplete.mockReturnValue(false);
     interaction.isChatInputCommand.mockReturnValue(false);
-    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
-      false
-    );
+
+    const db = mockBoundDbFunctions();
+
+    await expect(
+      authorizeStickerUploader(db as any, interaction as any)
+    ).resolves.toBe(false);
+
     expect(interaction.options?.getString).not.toHaveBeenCalled();
   });
 
   it("allows anyone in the db to get autocomplete suggestions", async () => {
     const interaction = mockInteraction();
     interaction.isAutocomplete.mockReturnValue(true);
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue({} as any);
-    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
-      true
-    );
+
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue({} as any);
+
+    await expect(
+      authorizeStickerUploader(db as any, interaction as any)
+    ).resolves.toBe(true);
   });
 
   it("keeps users not in db from getting autocomplete suggestions", async () => {
     const interaction = mockInteraction();
     interaction.isAutocomplete.mockReturnValue(true);
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(undefined);
-    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
-      false
-    );
+
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue(undefined);
+
+    await expect(
+      authorizeStickerUploader(db as any, interaction as any)
+    ).resolves.toBe(false);
   });
 
   it("returns false if command interaction doesn't have query option", async () => {
     const interaction = mockInteraction();
     interaction.isAutocomplete.mockReturnValue(false);
     interaction.isChatInputCommand.mockReturnValue(true);
-    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
-      false
-    );
+
+    const db = mockBoundDbFunctions();
+
+    await expect(
+      authorizeStickerUploader(db as any, interaction as any)
+    ).resolves.toBe(false);
   });
 
   it("returns false if user did not upload the sticker", async () => {
@@ -66,12 +75,15 @@ describe("authorizeStickerUploader", () => {
     });
     interaction.isAutocomplete.mockReturnValue(false);
     interaction.isChatInputCommand.mockReturnValue(true);
-    vi.mocked(dbActions.getStickerById).mockResolvedValue({
+
+    const db = mockBoundDbFunctions();
+    db.getStickerById.mockResolvedValue({
       uploaderId: "uploader",
     } as any);
-    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
-      false
-    );
+
+    await expect(
+      authorizeStickerUploader(db as any, interaction as any)
+    ).resolves.toBe(false);
   });
 
   it("returns true if user uploaded the sticker", async () => {
@@ -81,12 +93,15 @@ describe("authorizeStickerUploader", () => {
     });
     interaction.isAutocomplete.mockReturnValue(false);
     interaction.isChatInputCommand.mockReturnValue(true);
-    vi.mocked(dbActions.getStickerById).mockResolvedValue({
+
+    const db = mockBoundDbFunctions();
+    db.getStickerById.mockResolvedValue({
       uploaderId: "uploader",
     } as any);
-    await expect(authorizeStickerUploader(interaction as any)).resolves.toBe(
-      true
-    );
+
+    await expect(
+      authorizeStickerUploader(db as any, interaction as any)
+    ).resolves.toBe(true);
   });
 
   it("does not treat autocomplete interactions as commands", async () => {
@@ -97,9 +112,13 @@ describe("authorizeStickerUploader", () => {
     interaction.isAutocomplete.mockReturnValue(true);
     interaction.isChatInputCommand.mockReturnValue(true);
 
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue({} as any);
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue({} as any);
 
-    const result = await authorizeStickerUploader(interaction as any);
+    const result = await authorizeStickerUploader(
+      db as any,
+      interaction as any
+    );
 
     expect(result).toBe(true);
     expect(interaction.options.getString).not.toHaveBeenCalled();
@@ -113,35 +132,41 @@ describe("isUploader", () => {
 
   it("returns true when userId matches sticker uploaderId", async () => {
     const mockSticker = { uploaderId: "user123", id: "sticker1" };
-    vi.mocked(dbActions.getStickerById).mockResolvedValue(mockSticker as any);
 
-    const result = await isUploader("user123", "sticker1");
+    const db = mockBoundDbFunctions();
+    db.getStickerById.mockResolvedValue(mockSticker as any);
+
+    const result = await isUploader(db as any, "user123", "sticker1");
 
     expect(result).toBe(true);
-    expect(dbActions.getStickerById).toHaveBeenCalledWith("sticker1");
+    expect(db.getStickerById).toHaveBeenCalledWith("sticker1");
   });
 
   it("returns false when userId does not match sticker uploaderId", async () => {
     const mockSticker = { uploaderId: "user123", id: "sticker1" };
-    vi.mocked(dbActions.getStickerById).mockResolvedValue(mockSticker as any);
 
-    const result = await isUploader("user456", "sticker1");
+    const db = mockBoundDbFunctions();
+    db.getStickerById.mockResolvedValue(mockSticker as any);
+
+    const result = await isUploader(db as any, "user456", "sticker1");
 
     expect(result).toBe(false);
   });
 
   it("returns false when sticker is not found", async () => {
-    vi.mocked(dbActions.getStickerById).mockResolvedValue(undefined);
+    const db = mockBoundDbFunctions();
+    db.getStickerById.mockResolvedValue(undefined);
 
-    const result = await isUploader("user123", "sticker1");
+    const result = await isUploader(db as any, "user123", "sticker1");
 
     expect(result).toBe(false);
   });
 
   it("returns false when sticker is undefined", async () => {
-    vi.mocked(dbActions.getStickerById).mockResolvedValue(undefined as any);
+    const db = mockBoundDbFunctions();
+    db.getStickerById.mockResolvedValue(undefined as any);
 
-    const result = await isUploader("user123", "sticker1");
+    const result = await isUploader(db as any, "user123", "sticker1");
 
     expect(result).toBe(false);
   });
@@ -700,11 +725,16 @@ describe("isUserAllowed", () => {
     const userId = "owner123";
     const owner = { id: userId } as any;
     const interaction = mockInteraction({ userId, owner });
+    const db = mockBoundDbFunctions();
 
-    const result = await isUserAllowed("addUser", interaction as any);
+    const result = await isUserAllowed(
+      db as any,
+      "addUser",
+      interaction as any
+    );
 
     expect(result).toBe(true);
-    expect(dbActions.getUserPermissionsById).not.toHaveBeenCalled();
+    expect(db.getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("returns true when user has the specific permission", async () => {
@@ -719,14 +749,17 @@ describe("isUserAllowed", () => {
       deleteUser: 0,
     };
 
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(
-      mockPermissions as any
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue(mockPermissions as any);
+
+    const result = await isUserAllowed(
+      db as any,
+      "addSticker",
+      interaction as any
     );
 
-    const result = await isUserAllowed("addSticker", interaction as any);
-
     expect(result).toBe(true);
-    expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);
+    expect(db.getUserPermissionsById).toHaveBeenCalledWith(userId);
   });
 
   it("returns false when user does not have the specific permission", async () => {
@@ -741,11 +774,14 @@ describe("isUserAllowed", () => {
       deleteUser: 0,
     };
 
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(
-      mockPermissions as any
-    );
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue(mockPermissions as any);
 
-    const result = await isUserAllowed("editSticker", interaction as any);
+    const result = await isUserAllowed(
+      db as any,
+      "editSticker",
+      interaction as any
+    );
 
     expect(result).toBe(false);
   });
@@ -754,23 +790,29 @@ describe("isUserAllowed", () => {
     const userId = "user123";
     const interaction = mockInteraction({ userId, owner: null });
 
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(undefined);
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue(undefined);
 
-    const result = await isUserAllowed("addSticker", interaction as any);
+    const result = await isUserAllowed(
+      db as any,
+      "addSticker",
+      interaction as any
+    );
 
     expect(result).toBe(false);
-    expect(dbActions.getUserPermissionsById).toHaveBeenCalledWith(userId);
+    expect(db.getUserPermissionsById).toHaveBeenCalledWith(userId);
   });
 
   it("works with team-owned applications", async () => {
     const userId = "owner123";
     const owner = { ownerId: userId } as any;
     const interaction = mockInteraction({ userId, owner }) as any;
+    const db = mockBoundDbFunctions();
 
-    const result = await isUserAllowed("addUser", interaction);
+    const result = await isUserAllowed(db as any, "addUser", interaction);
 
     expect(result).toBe(true);
-    expect(dbActions.getUserPermissionsById).not.toHaveBeenCalled();
+    expect(db.getUserPermissionsById).not.toHaveBeenCalled();
   });
 
   it("can check all permission types", async () => {
@@ -785,22 +827,29 @@ describe("isUserAllowed", () => {
       deleteUser: 0,
     };
 
-    vi.mocked(dbActions.getUserPermissionsById).mockResolvedValue(
-      mockPermissions as any
-    );
+    const db = mockBoundDbFunctions();
+    db.getUserPermissionsById.mockResolvedValue(mockPermissions as any);
 
     // Test allowed permissions
-    expect(await isUserAllowed("addSticker", interaction)).toBe(true);
-    expect(await isUserAllowed("editSticker", interaction)).toBe(true);
-    expect(await isUserAllowed("editUser", interaction)).toBe(true);
+    expect(await isUserAllowed(db as any, "addSticker", interaction)).toBe(
+      true
+    );
+    expect(await isUserAllowed(db as any, "editSticker", interaction)).toBe(
+      true
+    );
+    expect(await isUserAllowed(db as any, "editUser", interaction)).toBe(true);
 
     // Test denied permissions
-    expect(await isUserAllowed("deleteSticker", interaction)).toBe(false);
-    expect(await isUserAllowed("addUser", interaction)).toBe(false);
-    expect(await isUserAllowed("deleteUser", interaction)).toBe(false);
+    expect(await isUserAllowed(db as any, "deleteSticker", interaction)).toBe(
+      false
+    );
+    expect(await isUserAllowed(db as any, "addUser", interaction)).toBe(false);
+    expect(await isUserAllowed(db as any, "deleteUser", interaction)).toBe(
+      false
+    );
 
     // Should have called database only once per call
-    expect(dbActions.getUserPermissionsById).toHaveBeenCalledTimes(6);
+    expect(db.getUserPermissionsById).toHaveBeenCalledTimes(6);
   });
 });
 

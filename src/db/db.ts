@@ -1,23 +1,22 @@
 import SQLite from "better-sqlite3";
-import { copyFile, mkdir } from "fs/promises";
 import { join } from "path";
+import { promises as fs } from "fs";
 import { env } from "../env.js";
 import { migrateToLatest } from "./migrate.js";
 import { CamelCasePlugin, Kysely, SqliteDialect } from "kysely";
 import type { Database } from "../types/db.js";
-import { readdirSync } from "fs";
+import { logger } from "../logging/logger.js";
 import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
   VariantEncodingMap,
 } from "../utils/constants.js";
-import { logger } from "../logging/logger.js";
 
-function moveStaticFiles(assetsDirPath: string) {
+async function moveStaticFiles(assetsDirPath: string) {
   const originalPath = join(import.meta.dirname, "../../assets");
-  const names = readdirSync(originalPath);
+  const names = await fs.readdir(originalPath);
   const promises = Promise.all(
     names.map((name) =>
-      copyFile(join(originalPath, name), join(assetsDirPath, name))
+      fs.copyFile(join(originalPath, name), join(assetsDirPath, name))
     )
   );
   return promises;
@@ -28,14 +27,18 @@ function createDirs(dbDirPath: string, assetsDirPath: string) {
   const mkdirOptions = {
     recursive: true,
   };
-
+  // Create db original media directory
   promises.push(
-    mkdir(join(assetsDirPath, ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME), mkdirOptions),
-    mkdir(dbDirPath, mkdirOptions)
+    fs.mkdir(
+      join(assetsDirPath, ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME),
+      mkdirOptions
+    ),
+    fs.mkdir(dbDirPath, mkdirOptions)
   );
+  // Create variant directories
   promises.push(
     ...Object.values(VariantEncodingMap).map(({ dirName }) =>
-      mkdir(join(assetsDirPath, dirName), mkdirOptions)
+      fs.mkdir(join(assetsDirPath, dirName), mkdirOptions)
     )
   );
 
@@ -51,15 +54,10 @@ function createDb(dbPath: string) {
   return db;
 }
 
-type DBInitOptions = {
-  dbDirPath?: string;
-  assetsDirPath?: string;
-};
-
 export async function initDb({
   dbDirPath = env.DB_DIR_PATH,
   assetsDirPath = env.ASSETS_DIR_PATH,
-}: DBInitOptions = {}) {
+} = {}) {
   if (
     process.env.NODE_ENV === "test" &&
     (!dbDirPath.includes("test") || !assetsDirPath.includes("test"))
@@ -69,6 +67,7 @@ export async function initDb({
 
   await createDirs(dbDirPath, assetsDirPath);
   await moveStaticFiles(assetsDirPath);
+
   const sqlite = createDb(join(dbDirPath, "stickbot.db"));
   const db = new Kysely<Database>({
     dialect: new SqliteDialect({ database: sqlite }),

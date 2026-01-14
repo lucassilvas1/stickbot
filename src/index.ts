@@ -8,6 +8,16 @@ import { env } from "./env.js";
 import express from "express";
 import { getCommands, registerEventHandlers } from "./utils/discord.js";
 import { logger, startLogRotation } from "./logging/logger.js";
+import { initDb } from "./db/db.js";
+import * as dbFunctions from "./db/crud.js";
+import * as searchModule from "./db/search.js";
+import { bindDbFunctions } from "./db/dbActions.js";
+
+const db = await initDb();
+const boundDbFunctions = bindDbFunctions(db, {
+  ...dbFunctions,
+  ...searchModule,
+});
 
 await startLogRotation(
   env.MAX_LOG_AGE_DAYS,
@@ -24,7 +34,7 @@ const commands = new Collection(
 );
 client.commands = new Collection(commands);
 
-await registerEventHandlers(client);
+await registerEventHandlers(client, boundDbFunctions);
 
 client.login(env.BOT_TOKEN);
 

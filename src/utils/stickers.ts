@@ -6,15 +6,14 @@ import {
   ORIGINAL_MEDIA_DOWNLOAD_DIR_NAME,
   VariantEncodingMap,
 } from "./constants.js";
-import { search } from "../db/dbActions.js";
 
 export function toAutocompleteType(stickers: SimplifiedSticker[]) {
   return stickers.map((s) => ({ name: s.title, value: s.id }));
 }
 
-export const autocomplete: CommandAutocomplete = async (interaction) => {
+export const autocomplete: CommandAutocomplete = async (db, interaction) => {
   const query = interaction.options.getString("query", true);
-  const { stickers } = await search({
+  const { stickers } = await db.search({
     isAutocomplete: true,
     userId: interaction.user.id,
     query,

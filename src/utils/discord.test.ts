@@ -24,18 +24,18 @@ describe("registerEventHandlers", () => {
   });
 
   it("registers once handlers with client.once()", async () => {
-    await registerEventHandlers(mockClient as Client, path);
+    await registerEventHandlers(mockClient as Client, {} as any, path);
     // Should call either once or on depending on handler configuration
     expect((mockClient.once as any)?.mock?.calls?.length > 0).toBe(true);
   });
 
   it("registers on handlers with client.on()", async () => {
-    await registerEventHandlers(mockClient as Client, path);
+    await registerEventHandlers(mockClient as Client, {} as any, path);
     expect((mockClient.on as any)?.mock?.calls?.length > 0).toBe(true);
   });
 
   it("passes handler name and wrapped handler function to client", async () => {
-    await registerEventHandlers(mockClient as Client, path);
+    await registerEventHandlers(mockClient as Client, {} as any, path);
     // Verify that at least one handler was registered
     const totalCalls =
       ((mockClient.once as any)?.mock?.calls?.length || 0) +

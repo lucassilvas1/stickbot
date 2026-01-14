@@ -6,14 +6,15 @@ import {
 } from "discord.js";
 import { PERMISSIONS, type Permissions } from "../types/db.js";
 import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from "./constants.js";
-import { getStickerById, getUserPermissionsById } from "../db/dbActions.js";
+import type { BoundDBFunctions } from "../db/dbActions.js";
 
 export async function authorizeStickerUploader(
+  db: BoundDBFunctions,
   interaction: Interaction<CacheType>
 ) {
   if (interaction.isAutocomplete()) {
     // Anyone in the db can get autocomplete suggestions
-    const permissions = await getUserPermissionsById(interaction.user.id);
+    const permissions = await db.getUserPermissionsById(interaction.user.id);
     return !!permissions;
   }
   // autocomplete and command are the only interactions supported
@@ -22,11 +23,15 @@ export async function authorizeStickerUploader(
   // Shouldn't be necessary, but just to make sure
   if (!stickerId) return false;
   // Uploaders can always manage their own stickers
-  return isUploader(interaction.user.id, stickerId);
+  return isUploader(db, interaction.user.id, stickerId);
 }
 
-export async function isUploader(userId: string, stickerId: string) {
-  const sticker = await getStickerById(stickerId);
+export async function isUploader(
+  db: BoundDBFunctions,
+  userId: string,
+  stickerId: string
+) {
+  const sticker = await db.getStickerById(stickerId);
   return Boolean(sticker && sticker.uploaderId === userId);
 }
 
@@ -108,11 +113,12 @@ export function parsePermissionOptions(
 }
 
 export async function isUserAllowed<P extends keyof Permissions>(
+  db: BoundDBFunctions,
   permission: P,
   interaction: ChatInputCommandInteraction<CacheType>
 ) {
   if (isFromOwner(interaction)) return true;
-  const user = await getUserPermissionsById(interaction.user.id);
+  const user = await db.getUserPermissionsById(interaction.user.id);
   return Boolean(user && user[permission]);
 }
 

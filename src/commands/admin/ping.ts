@@ -21,7 +21,7 @@ const commandData: CommandData = {
     ])
     .setName("ping")
     .setDescription("Estimates the latency between you and the BOT"),
-  async execute(interaction) {
+  async execute(_, interaction) {
     const start = performance.now();
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const totalLatency = performance.now() - start;

@@ -1,6 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
-import { deleteUserPermissions } from "../../db/dbActions.js";
 import { logger } from "../../logging/logger.js";
 
 const commandData: CommandData = {
@@ -15,12 +14,12 @@ const commandData: CommandData = {
         .setDescription("User ID (NOT guild member ID) of the user")
         .setRequired(true)
     ),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const targetId = interaction.options.getString("id", true);
     const info = { targetId, userId: interaction.user.id };
 
     try {
-      const user = await deleteUserPermissions(targetId);
+      const user = await db.deleteUserPermissions(targetId);
 
       if (user) {
         logger.info(info, "deleted user");

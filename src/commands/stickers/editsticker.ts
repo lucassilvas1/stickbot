@@ -7,12 +7,6 @@ import {
 import type { CommandData } from "../../types/commands.js";
 import type { SimplifiedSticker } from "../../types/stickers.js";
 import {
-  getStickerById,
-  getStickerByTitle,
-  search,
-  updateSticker,
-} from "../../db/dbActions.js";
-import {
   MAX_DESCRIPTION_LENGTH,
   MAX_TAGS_LENGTH,
   MAX_TITLE_LENGTH,
@@ -72,7 +66,7 @@ const commandData: CommandData = {
         )
         .setMaxLength(MAX_DESCRIPTION_LENGTH)
     ),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const isInvalidInput = await invalidCharGuard(interaction);
     if (isInvalidInput) return;
 
@@ -83,7 +77,7 @@ const commandData: CommandData = {
       interaction.options.getString("description") ?? undefined;
 
     try {
-      if (title && (await getStickerByTitle(title))) {
+      if (title && (await db.getStickerByTitle(title))) {
         logger.debug({ title }, "sticker title already already taken");
         return interaction.reply({
           content:
@@ -92,7 +86,7 @@ const commandData: CommandData = {
         });
       }
 
-      await updateSticker(id, { title, tags, description });
+      await db.updateSticker(id, { title, tags, description });
       logger.info({ id, title, tags, description }, "updated sticker");
       return interaction.reply({
         content: "Changes have been saved",
@@ -109,10 +103,10 @@ const commandData: CommandData = {
       });
     }
   },
-  async autocomplete(interaction) {
+  async autocomplete(db, interaction) {
     const prop = interaction.options.getFocused(true);
     if (prop.name === "query") {
-      const { stickers } = await search({
+      const { stickers } = await db.search({
         isAutocomplete: true,
         userId: interaction.user.id,
         query: prop.value,
@@ -121,7 +115,7 @@ const commandData: CommandData = {
       return interaction.respond(toAutocompleteType(stickers));
     }
     const id = interaction.options.getString("query", true);
-    const sticker = await getStickerById(id);
+    const sticker = await db.getStickerById(id);
     if (!sticker) {
       logger.debug({ id }, "could not find sticker");
       return interaction.respond([

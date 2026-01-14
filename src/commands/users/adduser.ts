@@ -1,6 +1,5 @@
 import { MessageFlags } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
-import { insertUserPermissions } from "../../db/dbActions.js";
 import { baseUserCommand, parsePermissionOptions } from "../../utils/users.js";
 import { logger } from "../../logging/logger.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
@@ -13,7 +12,7 @@ const commandData: CommandData = {
     .setDescription(
       "Add a new user to database. All permissions default to false"
     ),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const isInvalidInput = await invalidCharGuard(interaction);
     if (isInvalidInput) return;
 
@@ -28,7 +27,7 @@ const commandData: CommandData = {
     };
 
     try {
-      const inserted = await insertUserPermissions({
+      const inserted = await db.insertUserPermissions({
         id: targetId,
         username,
         ...permissions,

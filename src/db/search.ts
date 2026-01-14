@@ -111,10 +111,7 @@ async function runQueryAndCacheIds(
   return ids;
 }
 
-export async function _search(
-  db: Kysely<Database>,
-  opts: StickerSearchOptions
-) {
+export async function search(db: Kysely<Database>, opts: StickerSearchOptions) {
   const { isAutocomplete, query, userId, offset, limit = 25, order } = opts;
 
   const key = searchCacheKey({ query, userId, order });

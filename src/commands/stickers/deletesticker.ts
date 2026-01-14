@@ -6,7 +6,6 @@ import {
 } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import { authorizeStickerUploader } from "../../utils/users.js";
-import { deleteSticker } from "../../db/dbActions.js";
 import { autocomplete } from "../../utils/stickers.js";
 import { logger } from "../../logging/logger.js";
 
@@ -33,11 +32,11 @@ const commandData: CommandData = {
         .setRequired(true)
         .setAutocomplete(true)
     ),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const id = interaction.options.getString("query", true);
 
     try {
-      const isDeleted = await deleteSticker(id);
+      const isDeleted = await db.deleteSticker(id);
       if (isDeleted) {
         logger.info(
           { sticker: id, user: interaction.user.id },

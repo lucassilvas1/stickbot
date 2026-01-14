@@ -23,12 +23,6 @@ import {
 import type { CommandData } from "../../types/commands.js";
 import type { Permissions, UserPermissions } from "../../types/db.js";
 import { BaseButton, NavButtonRow } from "../../components/buttons.js";
-import {
-  deleteUserPermissions,
-  getUserPermissionsById,
-  getUsers,
-  updatedUserPermissions,
-} from "../../db/dbActions.js";
 import { logger } from "../../logging/logger.js";
 import {
   GENERIC_ERROR_MESSAGE,
@@ -41,6 +35,7 @@ import {
 } from "../../utils/users.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
 import { type Align, padStringToWidth } from "discord-button-width";
+import type { BoundDBFunctions } from "../../db/dbActions.js";
 
 const USER_PER_PAGE_LIMIT = 10;
 const MAX_INTERACTION_AGE_MS = 15 * 60 * 1000;
@@ -52,8 +47,8 @@ const commandData: CommandData = {
   data: new SlashCommandBuilder()
     .setName("manageusers")
     .setDescription("Manage users and their permissions"),
-  async execute(interaction) {
-    const results = await getUsers(0, USER_PER_PAGE_LIMIT);
+  async execute(db, interaction) {
+    const results = await db.getUsers(0, USER_PER_PAGE_LIMIT);
     const menu = buildMenu(results.users, 0, results.totalResultCount);
 
     const response = await interaction.reply({
@@ -72,6 +67,7 @@ const commandData: CommandData = {
     }
 
     await handleMenuInteractions(
+      db,
       interaction,
       message,
       results.totalResultCount
@@ -80,14 +76,15 @@ const commandData: CommandData = {
 };
 
 async function onPaginate(
+  db: BoundDBFunctions,
   interaction: MessageComponentInteraction | ModalMessageModalSubmitInteraction,
   offset: number
 ) {
-  let results = await getUsers(offset, USER_PER_PAGE_LIMIT);
+  let results = await db.getUsers(offset, USER_PER_PAGE_LIMIT);
   // Probably means users were deleted after menu was sent, try previous page
   if (offset && !results.users.length) {
     const newOffset = Math.max(0, offset - USER_PER_PAGE_LIMIT);
-    results = await getUsers(newOffset, USER_PER_PAGE_LIMIT);
+    results = await db.getUsers(newOffset, USER_PER_PAGE_LIMIT);
   }
 
   const menu = buildMenu(results.users, offset, results.totalResultCount);
@@ -254,10 +251,11 @@ function buildMenu(
 }
 
 async function onDeleteUser(
+  db: BoundDBFunctions,
   interaction: ModalSubmitInteraction,
   id: string
 ): Promise<boolean> {
-  const deleted = await deleteUserPermissions(id);
+  const deleted = await db.deleteUserPermissions(id);
 
   if (deleted) {
     logger.info({ userId: interaction.user.id, targetId: id }, "deleted user");
@@ -271,6 +269,7 @@ async function onDeleteUser(
 }
 
 async function onEditUser(
+  db: BoundDBFunctions,
   interaction: ModalSubmitInteraction,
   userId: string
 ): Promise<boolean> {
@@ -289,7 +288,7 @@ async function onEditUser(
 
   const info = { userId: interaction.user.id, targetId: userId };
   const permissions = permissionArrayToObj(permissionArray);
-  const updated = await updatedUserPermissions(userId, {
+  const updated = await db.updateUserPermissions(userId, {
     username,
     ...permissions,
   });
@@ -307,6 +306,7 @@ async function onEditUser(
 }
 
 async function handleModalSubmission(
+  db: BoundDBFunctions,
   interaction: ModalSubmitInteraction
 ): Promise<boolean> {
   const [type, userId] = interaction.customId.split(":");
@@ -322,7 +322,7 @@ async function handleModalSubmission(
   const deleteAnswer = interaction.fields.getTextInputValue("delete");
   if (deleteAnswer) {
     if (deleteAnswer === DELETE_CONFIRMATION_TEXT) {
-      return onDeleteUser(interaction, userId);
+      return onDeleteUser(db, interaction, userId);
     }
     await interaction.reply({
       content: `To delete a user, you must type ${DELETE_CONFIRMATION_TEXT} (all caps) in the confirmation field. Unsaved changes have not been applied.`,
@@ -331,16 +331,17 @@ async function handleModalSubmission(
     return false;
   }
 
-  return onEditUser(interaction, userId);
+  return onEditUser(db, interaction, userId);
 }
 
 async function onEditButtonClick(
+  db: BoundDBFunctions,
   buttonInteraction: ButtonInteraction,
   commandInteraction: ChatInputCommandInteraction,
   userId: string,
   currentOffset: number
 ) {
-  const user = await getUserPermissionsById(userId);
+  const user = await db.getUserPermissionsById(userId);
   if (!user) {
     logger.error({ userId }, "user in menu not found");
     return;
@@ -351,16 +352,17 @@ async function onEditButtonClick(
     time: MAX_INTERACTION_AGE_MS,
     filter: (i) => i.user.id === commandInteraction.user.id,
   });
-  const refresh = await handleModalSubmission(submitInteraction);
+  const refresh = await handleModalSubmission(db, submitInteraction);
   // Refresh menu to reflect changes
   if (submitInteraction.isFromMessage()) {
-    if (refresh) await onPaginate(submitInteraction, currentOffset);
+    if (refresh) await onPaginate(db, submitInteraction, currentOffset);
   } else {
     logger.warn({ submitInteraction }, "could not refresh menu");
   }
 }
 
 function handleMenuInteractions(
+  db: BoundDBFunctions,
   interaction: ChatInputCommandInteraction<CacheType>,
   message: Message<boolean>,
   resultCount: number
@@ -380,26 +382,26 @@ function handleMenuInteractions(
       switch (type) {
         case "offset": {
           currentOffset = +value!;
-          await onPaginate(i, currentOffset);
+          await onPaginate(db, i, currentOffset);
           break;
         }
         case "first": {
           currentOffset = 0;
-          onPaginate(i, currentOffset);
+          onPaginate(db, i, currentOffset);
           break;
         }
         case "last": {
           currentOffset =
             resultCount -
             (resultCount % USER_PER_PAGE_LIMIT || USER_PER_PAGE_LIMIT);
-          await onPaginate(i, currentOffset);
+          await onPaginate(db, i, currentOffset);
           break;
         }
         case "edit": {
           if (!value) {
             throw Error(`Malformed button customId: "${i.customId}"`);
           }
-          await onEditButtonClick(i, interaction, value, currentOffset);
+          await onEditButtonClick(db, i, interaction, value, currentOffset);
           break;
         }
         default: {

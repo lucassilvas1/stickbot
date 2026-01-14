@@ -10,10 +10,11 @@ import type { CommandData } from "../types/commands.js";
 import { DEFAULT_COMMAND_COOLDOWN_MS } from "./constants.js";
 import { getNonLNZCharSet } from "./misc.js";
 import { isFromOwner } from "./users.js";
-import { getUserPermissionsById } from "../db/dbActions.js";
 import { logger } from "../logging/logger.js";
+import type { BoundDBFunctions } from "../db/dbActions.js";
 
 export async function authorization(
+  db: BoundDBFunctions,
   command: CommandData,
   interaction: Interaction<CacheType>
 ) {
@@ -23,13 +24,13 @@ export async function authorization(
     // `overridePermissions` is only taken into account if it returns true
     // User may still be allowed if they have all permissions in
     // `command.permissions`
-    const overridden = await command.overridePermissions(interaction);
+    const overridden = await command.overridePermissions(db, interaction);
     if (overridden) return true;
   }
   // only owner and `overridePermissions` can authorize special commands
   if (command.permissions === "special") return false;
 
-  const permissions = await getUserPermissionsById(interaction.user.id);
+  const permissions = await db.getUserPermissionsById(interaction.user.id);
   if (!permissions) return false;
   // If permissions array is empty, then the user just needs to be in the db
   // to be allowed

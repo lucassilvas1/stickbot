@@ -8,6 +8,7 @@ import { authorization, rateLimit } from "../utils/middleware.js";
 import { PERMISSION_PUNT_MESSAGE } from "../utils/constants.js";
 import { logger } from "../logging/logger.js";
 import { safeReply } from "../utils/discord.js";
+import type { BoundDBFunctions } from "../db/dbActions.js";
 
 export const name = Events.InteractionCreate;
 
@@ -37,7 +38,10 @@ function respondUnauthorized(interaction: Interaction<CacheType>) {
   }
 }
 
-export async function handle(interaction: Interaction<CacheType>) {
+export async function handle(
+  db: BoundDBFunctions,
+  interaction: Interaction<CacheType>
+) {
   if (!interaction.isAutocomplete() && !interaction.isChatInputCommand()) {
     return;
   }
@@ -51,7 +55,7 @@ export async function handle(interaction: Interaction<CacheType>) {
     command: interaction.commandName,
     options: interaction.options.data,
   };
-  const authorized = await authorization(command, interaction);
+  const authorized = await authorization(db, command, interaction);
   if (!authorized) {
     logger.debug(info, "booted unauthorized user");
     await respondUnauthorized(interaction);
@@ -62,7 +66,7 @@ export async function handle(interaction: Interaction<CacheType>) {
     if (await rateLimit(command, interaction)) return;
 
     try {
-      await command.execute(interaction);
+      await command.execute(db, interaction);
       logger.debug(info, "command handled");
     } catch (error) {
       logger.error({ error, ...info }, "command handler threw");
@@ -73,7 +77,7 @@ export async function handle(interaction: Interaction<CacheType>) {
     }
   } else if (interaction.isAutocomplete()) {
     try {
-      await command.autocomplete!(interaction);
+      await command.autocomplete!(db, interaction);
     } catch (error) {
       logger.error({ error, ...info }, "autocomplete handler threw");
     }

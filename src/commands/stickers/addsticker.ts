@@ -24,7 +24,6 @@ import { generateVariants, fetchMedia } from "../../utils/processing.js";
 import { getVariantPaths, getVariantUrl } from "../../utils/stickers.js";
 import { invalidCharGuard } from "../../utils/middleware.js";
 import { logger } from "../../logging/logger.js";
-import { insertSticker } from "../../db/dbActions.js";
 import { TypedError, type TypedErrorCode } from "../../utils/error.js";
 
 const commandData: CommandData = {
@@ -86,7 +85,7 @@ const commandData: CommandData = {
         .setRequired(false)
         .setMaxLength(MAX_DESCRIPTION_LENGTH)
     ),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const isInvalidInput = await invalidCharGuard(interaction);
     if (isInvalidInput) return;
 
@@ -138,7 +137,7 @@ const commandData: CommandData = {
         uploaderId: interaction.user.id,
         tags: interaction.options.getString("tags", true),
       };
-      await insertSticker(stickerData, variants);
+      await db.insertSticker(stickerData, variants);
 
       await interaction.deleteReply();
 

@@ -17,7 +17,7 @@ import type { Kysely, Transaction } from "kysely";
 import { deleteAllVariants } from "../utils/processing.js";
 import { logger } from "../logging/logger.js";
 
-export async function _insertUserPermissions(
+export async function insertUserPermissions(
   db: Kysely<Database>,
   newUserPermissions: NewUserPermissions
 ) {
@@ -32,10 +32,7 @@ export async function _insertUserPermissions(
   return true;
 }
 
-export async function _getUserPermissionsById(
-  db: Kysely<Database>,
-  id: string
-) {
+export async function getUserPermissionsById(db: Kysely<Database>, id: string) {
   const cachedUser = userPermissionsCache.get(id);
   if (cachedUser) return cachedUser;
 
@@ -48,24 +45,24 @@ export async function _getUserPermissionsById(
   return userPermissions;
 }
 
-export async function _updateUserPermissions(
+export async function updateUserPermissions(
   db: Kysely<Database>,
   id: string,
   userPermissions: UserPermissionsUpdate
 ) {
-  const updatedUserPermissions = await db
+  const updated = await db
     .updateTable("userPermissions")
     .set(userPermissions)
     .where("id", "=", id)
     .returningAll()
     .executeTakeFirst();
-  if (updatedUserPermissions) {
-    userPermissionsCache.set(id, updatedUserPermissions);
+  if (updated) {
+    userPermissionsCache.set(id, updated);
   }
-  return updatedUserPermissions;
+  return updated;
 }
 
-export async function _deleteUserPermissions(db: Kysely<Database>, id: string) {
+export async function deleteUserPermissions(db: Kysely<Database>, id: string) {
   const result = await db
     .deleteFrom("userPermissions")
     .where("id", "=", id)
@@ -76,7 +73,7 @@ export async function _deleteUserPermissions(db: Kysely<Database>, id: string) {
   return result;
 }
 
-export async function _getUsers(
+export async function getUsers(
   db: Kysely<Database>,
   offset: number,
   limit: number
@@ -106,7 +103,7 @@ export async function _getUsers(
   };
 }
 
-export function _insertSticker(
+export function insertSticker(
   db: Kysely<Database>,
   newSticker: NewStickerWithoutTimestamps,
   variants: NewVariant[]
@@ -128,20 +125,14 @@ export function _insertSticker(
       .returning(simplifiedStickerColumns)
       .executeTakeFirstOrThrow();
 
-    _incrementStickerUsage(
-      db,
-      sticker.id,
-      sticker.uploaderId,
-      undefined,
-      false
-    );
+    incrementStickerUsage(db, sticker.id, sticker.uploaderId, undefined, false);
     onStickerUpdated(newSticker.id, true, { sticker });
 
     await trx.insertInto("variant").values(variants).execute();
   });
 }
 
-export async function _incrementStickerUsage(
+export async function incrementStickerUsage(
   db: Kysely<Database>,
   stickerId: string,
   userId: string,
@@ -185,7 +176,7 @@ export async function _incrementStickerUsage(
   return db.transaction().execute(run);
 }
 
-export async function _getStickerById(
+export async function getStickerById(
   db: Kysely<Database>,
   id: string,
   incrementUsage?: boolean,
@@ -196,7 +187,7 @@ export async function _getStickerById(
   try {
     await db.transaction().execute(async (trx) => {
       if (incrementUsage && userId) {
-        sticker = await _incrementStickerUsage(db, id, userId, trx);
+        sticker = await incrementStickerUsage(db, id, userId, trx);
       } else if (!sticker) {
         sticker = await trx
           .selectFrom("sticker")
@@ -208,7 +199,7 @@ export async function _getStickerById(
     });
   } catch (err) {
     const error = err as any;
-    // _incrementStickerUsage will throw this if a sticker with `id` is not
+    // incrementStickerUsage will throw this if a sticker with `id` is not
     // in the db when it tries to update the "usage" table
     if (error?.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
       return;
@@ -219,7 +210,7 @@ export async function _getStickerById(
   return sticker;
 }
 
-export function _getStickerByTitle(db: Kysely<Database>, title: string) {
+export function getStickerByTitle(db: Kysely<Database>, title: string) {
   return db
     .selectFrom("sticker")
     .where("title", "=", sanitizeString(title))
@@ -227,12 +218,12 @@ export function _getStickerByTitle(db: Kysely<Database>, title: string) {
     .executeTakeFirst();
 }
 
-export async function _updateSticker(
+export async function updateSticker(
   db: Kysely<Database>,
   id: string,
   sticker: StickerUpdate
 ) {
-  const updatedSticker = await db
+  const updated = await db
     .updateTable("sticker")
     .set({
       title: sticker.title ? sanitizeString(sticker.title) : undefined,
@@ -244,10 +235,10 @@ export async function _updateSticker(
     .returning(simplifiedStickerColumns)
     .executeTakeFirstOrThrow();
 
-  onStickerUpdated(id, true, { sticker: updatedSticker });
+  onStickerUpdated(id, true, { sticker: updated });
 }
 
-export async function _deleteSticker(db: Kysely<Database>, id: string) {
+export async function deleteSticker(db: Kysely<Database>, id: string) {
   return db.transaction().execute(async (trx) => {
     const variants = await trx
       .selectFrom("variant")

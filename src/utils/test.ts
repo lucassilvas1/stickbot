@@ -69,3 +69,11 @@ export function mockCommand({
     permissions: permissions ?? [],
   } as CommandData;
 }
+
+export function mockBoundDbFunctions() {
+  return {
+    getUserPermissionsById: vi.fn(),
+    getStickerById: vi.fn(),
+    search: vi.fn(),
+  };
+}

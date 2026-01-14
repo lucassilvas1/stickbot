@@ -8,7 +8,7 @@ import {
   it,
   vi,
 } from "vitest";
-import { _search } from "./search.js";
+import { search } from "./search.js";
 import { generateId } from "../utils/misc.js";
 import { join } from "path";
 import { TEST_DIR_PATH } from "../utils/constants.js";
@@ -23,7 +23,7 @@ import {
 import { initDb } from "./db.js";
 import type { Kysely } from "kysely";
 import type { Database } from "../types/db.js";
-import { _getStickerById, _insertSticker } from "./crud.js";
+import { getStickerById, insertSticker } from "./crud.js";
 
 let db: Kysely<Database>;
 
@@ -62,10 +62,10 @@ describe.each([
     const stickers = Array(5).fill(null).map(generateStickerData);
     const variants = stickers.map((s) => generateStickerVariants(s.id));
     await Promise.all(
-      stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
+      stickers.map((s, i) => insertSticker(db, s, variants[i]!))
     );
 
-    const results = await _search(db, {
+    const results = await search(db, {
       userId: stickers[0]!.uploaderId,
       limit: 10,
     });
@@ -76,19 +76,19 @@ describe.each([
 
   it("properly paginates results", async () => {
     const stickerCount = 13;
-    const { stickers } = await seedStickers(db, _insertSticker, stickerCount);
+    const { stickers } = await seedStickers(db, insertSticker, stickerCount);
     const userId = stickers[0]!.uploaderId;
 
-    const page1 = await _search(db, { userId, limit: 5 });
+    const page1 = await search(db, { userId, limit: 5 });
     expect(page1.stickers.length).toBe(5);
     expect(page1.isLastPage).toBe(false);
     expect(page1.totalResultCount).toBe(stickerCount);
 
-    const page2 = await _search(db, { userId, limit: 5, offset: 5 });
+    const page2 = await search(db, { userId, limit: 5, offset: 5 });
     expect(page2.stickers.length).toBe(5);
     expect(page2.isLastPage).toBe(false);
 
-    const page3 = await _search(db, { userId, limit: 5, offset: 10 });
+    const page3 = await search(db, { userId, limit: 5, offset: 10 });
     expect(page3.stickers.length).toBe(3);
     expect(page3.isLastPage).toBe(true);
 
@@ -106,11 +106,11 @@ describe.each([
     ];
     const variants = stickers.map((s) => generateStickerVariants(s.id));
     await Promise.all(
-      stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
+      stickers.map((s, i) => insertSticker(db, s, variants[i]!))
     );
-    await seedStickers(db, _insertSticker, 10);
+    await seedStickers(db, insertSticker, 10);
 
-    const results = await _search(db, {
+    const results = await search(db, {
       query: "sticker",
       userId: stickers[0]!.uploaderId,
     });
@@ -127,11 +127,11 @@ describe.each([
     ];
     const variants = stickers.map((s) => generateStickerVariants(s.id));
     await Promise.all(
-      stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
+      stickers.map((s, i) => insertSticker(db, s, variants[i]!))
     );
-    await seedStickers(db, _insertSticker, 10);
+    await seedStickers(db, insertSticker, 10);
 
-    const results = await _search(db, {
+    const results = await search(db, {
       query: "laugh",
       userId: stickers[0]!.uploaderId,
     });
@@ -144,10 +144,10 @@ describe.each([
   it("ignores anything that's not a Unicode letter, number, or space", async () => {
     const sticker = { ...generateStickerData(), tags: "NaZaRé confusa" };
     const variants = generateStickerVariants(sticker.id);
-    await _insertSticker(db, sticker, variants);
-    await seedStickers(db, _insertSticker, 10);
+    await insertSticker(db, sticker, variants);
+    await seedStickers(db, insertSticker, 10);
 
-    const results = await _search(db, {
+    const results = await search(db, {
       query: "$n@a%z\na?re!",
       userId: sticker.uploaderId,
     });
@@ -167,32 +167,32 @@ describe.each([
     const userId = "userid";
     const variants = stickers.map((s) => generateStickerVariants(s.id));
     await Promise.all(
-      stickers.map((s, i) => _insertSticker(db, s, variants[i]!))
+      stickers.map((s, i) => insertSticker(db, s, variants[i]!))
     );
-    await seedStickers(db, _insertSticker, 10);
+    await seedStickers(db, insertSticker, 10);
 
     vi.useFakeTimers();
 
     vi.advanceTimersByTime(10_000);
     await Promise.all(
-      stickers.map((s) => _getStickerById(db, s.id, true, userId))
+      stickers.map((s) => getStickerById(db, s.id, true, userId))
     );
     vi.advanceTimersByTime(10_000);
     await Promise.all(
-      stickers.slice(1).map((s) => _getStickerById(db, s.id, true, userId))
+      stickers.slice(1).map((s) => getStickerById(db, s.id, true, userId))
     );
     vi.advanceTimersByTime(10_000);
     await Promise.all(
-      stickers.slice(2).map((s) => _getStickerById(db, s.id, true, userId))
+      stickers.slice(2).map((s) => getStickerById(db, s.id, true, userId))
     );
     vi.advanceTimersByTime(10_000);
     await Promise.all(
-      stickers.slice(3).map((s) => _getStickerById(db, s.id, true, userId))
+      stickers.slice(3).map((s) => getStickerById(db, s.id, true, userId))
     );
 
     vi.useRealTimers();
 
-    const mostUsedResults = await _search(db, {
+    const mostUsedResults = await search(db, {
       query: "funny",
       userId,
       order: "usage.count",
@@ -212,7 +212,7 @@ describe.each([
     const usage = realMostUsedResults.map((u) => u!.count);
     expect(usage).toStrictEqual(usage.toSorted((a, b) => b - a));
 
-    const recentResults = await _search(db, {
+    const recentResults = await search(db, {
       query: "funny",
       userId,
       order: "usage.timeLastUsed",
@@ -235,8 +235,8 @@ describe.each([
 
   it("correctly handles offsets higher than total result count", async () => {
     const total = 20;
-    await seedStickers(db, _insertSticker, total);
-    const results = await _search(db, { userId: "user", offset: 9999 });
+    await seedStickers(db, insertSticker, total);
+    const results = await search(db, { userId: "user", offset: 9999 });
     expect(results).toStrictEqual({
       stickers: [],
       isLastPage: true,

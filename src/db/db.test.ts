@@ -19,17 +19,17 @@ import {
 } from "../utils/constants.js";
 import type { Database, NewUserPermissions, Permissions } from "../types/db.js";
 import {
-  _deleteSticker,
-  _deleteUserPermissions,
-  _getUsers,
-  _getStickerById,
-  _getStickerByTitle,
-  _getUserPermissionsById,
-  _incrementStickerUsage,
-  _insertSticker,
-  _insertUserPermissions,
-  _updateSticker,
-  _updateUserPermissions,
+  deleteSticker,
+  deleteUserPermissions,
+  getUsers,
+  getStickerById,
+  getStickerByTitle,
+  getUserPermissionsById,
+  incrementStickerUsage,
+  insertSticker,
+  insertUserPermissions,
+  updateSticker,
+  updateUserPermissions,
 } from "./crud.js";
 import { generateId, sanitizeString } from "../utils/misc.js";
 import {
@@ -118,7 +118,7 @@ describe.each([
 
   it("inserts user permissions in db", async () => {
     const user = generateRandomUser();
-    const result = await _insertUserPermissions(db, user);
+    const result = await insertUserPermissions(db, user);
 
     expect(result).toBe(true);
 
@@ -134,26 +134,26 @@ describe.each([
   it("retrieves permissions for the correct user", async () => {
     const users = Array(10).fill(null).map(generateRandomUser);
     const result = await Promise.all(
-      users.map((user) => _insertUserPermissions(db, user))
+      users.map((user) => insertUserPermissions(db, user))
     );
     expect(result.every(Boolean)).toBe(true);
 
     const targetUser = users[5]!;
-    const retrievedUser = await _getUserPermissionsById(db, targetUser.id);
+    const retrievedUser = await getUserPermissionsById(db, targetUser.id);
     expect(retrievedUser).toStrictEqual(targetUser);
   });
 
   it("does not insert duplicate user permissions", async () => {
     const user = generateRandomUser();
-    const firstInsert = await _insertUserPermissions(db, user);
+    const firstInsert = await insertUserPermissions(db, user);
     expect(firstInsert).toBe(true);
-    const secondInsert = await _insertUserPermissions(db, user);
+    const secondInsert = await insertUserPermissions(db, user);
     expect(secondInsert).toBe(false);
   });
 
   it("defaults permission values to 0 (false)", async () => {
     const id = generateId(6);
-    await _insertUserPermissions(db, { id, username: generateId(6) });
+    await insertUserPermissions(db, { id, username: generateId(6) });
     const insertedUser = await db
       .selectFrom("userPermissions")
       .selectAll()
@@ -165,13 +165,13 @@ describe.each([
 
   it("updates user permissions", async () => {
     const user = generateRandomUser();
-    await _insertUserPermissions(db, user);
+    await insertUserPermissions(db, user);
 
     const userFlipped = { ...user };
     permissions.forEach((p) => {
       userFlipped[p] = ~~!user[p];
     });
-    const updated = await _updateUserPermissions(db, user.id, userFlipped);
+    const updated = await updateUserPermissions(db, user.id, userFlipped);
     expect(updated).toStrictEqual(userFlipped);
 
     const retrievedUser = await db
@@ -185,9 +185,9 @@ describe.each([
   it("deletes user permissions", async () => {
     const target = generateRandomUser();
     const other = generateRandomUser();
-    await _insertUserPermissions(db, target);
-    await _insertUserPermissions(db, other);
-    await _deleteUserPermissions(db, target.id);
+    await insertUserPermissions(db, target);
+    await insertUserPermissions(db, other);
+    await deleteUserPermissions(db, target.id);
     const users = await db.selectFrom("userPermissions").selectAll().execute();
     expect(users).toStrictEqual([other]);
   });
@@ -199,10 +199,10 @@ describe.each([
       { id: "user3", username: "bob" },
     ];
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const result = await _getUsers(db, 0, 10);
+    const result = await getUsers(db, 0, 10);
 
     expect(result.users).toHaveLength(3);
     expect(result.users[0]!.username).toBe("alice");
@@ -218,10 +218,10 @@ describe.each([
         username: `user${i}`,
       }));
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const result = await _getUsers(db, 0, 5);
+    const result = await getUsers(db, 0, 5);
 
     expect(result.isLastPage).toBe(true);
     expect(result.totalResultCount).toBe(5);
@@ -235,10 +235,10 @@ describe.each([
         username: `user${i}`,
       }));
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const result = await _getUsers(db, 0, 5);
+    const result = await getUsers(db, 0, 5);
 
     expect(result.isLastPage).toBe(false);
     expect(result.users).toHaveLength(5);
@@ -252,10 +252,10 @@ describe.each([
         username: `user${String(i).padStart(2, "0")}`, // user00, user01, etc.
       }));
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const result = await _getUsers(db, 5, 3);
+    const result = await getUsers(db, 5, 3);
 
     expect(result.users).toHaveLength(3);
     expect(result.users[0]!.username).toBe("user05");
@@ -271,19 +271,19 @@ describe.each([
         username: `user${i}`,
       }));
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const result = await _getUsers(db, 0, 3);
+    const result = await getUsers(db, 0, 3);
 
     expect(result.totalResultCount).toBe(7);
   });
 
   // it("caches users after retrieval", async () => {
   //   const user = generateRandomUser();
-  //   await _insertUserPermissions(db, user);
+  //   await insertUserPermissions(db, user);
 
-  //   const result = await _getUsers(db, 0, 10);
+  //   const result = await getUsers(db, 0, 10);
 
   //   const cachedModule = await import("./cache.js");
   //   const cachedUser = cachedModule.userPermissionsCache.get(user.id);
@@ -299,10 +299,10 @@ describe.each([
         username: `user${i}`,
       }));
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const result = await _getUsers(db, 10, 5);
+    const result = await getUsers(db, 10, 5);
 
     expect(result.users).toHaveLength(0);
     expect(result.isLastPage).toBe(true);
@@ -311,9 +311,9 @@ describe.each([
 
   it("works with single user", async () => {
     const user = generateRandomUser();
-    await _insertUserPermissions(db, user);
+    await insertUserPermissions(db, user);
 
-    const result = await _getUsers(db, 0, 10);
+    const result = await getUsers(db, 0, 10);
 
     expect(result.users).toHaveLength(1);
     expect(result.users[0]).toStrictEqual(user);
@@ -329,12 +329,12 @@ describe.each([
         username: `user${String(i).padStart(2, "0")}`,
       }));
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const page1 = await _getUsers(db, 0, 10);
-    const page2 = await _getUsers(db, 10, 10);
-    const page3 = await _getUsers(db, 20, 10);
+    const page1 = await getUsers(db, 0, 10);
+    const page2 = await getUsers(db, 10, 10);
+    const page3 = await getUsers(db, 20, 10);
 
     expect(page1.users).toHaveLength(10);
     expect(page1.isLastPage).toBe(false);
@@ -357,9 +357,9 @@ describe.each([
       editUser: 1,
       deleteUser: 0,
     };
-    await _insertUserPermissions(db, user);
+    await insertUserPermissions(db, user);
 
-    const result = await _getUsers(db, 0, 10);
+    const result = await getUsers(db, 0, 10);
 
     expect(result.users[0]).toStrictEqual(user);
   });
@@ -372,10 +372,10 @@ describe.each([
         username: `user${i}`,
       }));
     for (const user of users) {
-      await _insertUserPermissions(db, user as NewUserPermissions);
+      await insertUserPermissions(db, user as NewUserPermissions);
     }
 
-    const result = await _getUsers(db, 0, 100);
+    const result = await getUsers(db, 0, 100);
 
     expect(result.users).toHaveLength(3);
     expect(result.isLastPage).toBe(true);
@@ -384,7 +384,7 @@ describe.each([
   it("inserts new sticker and variants", async () => {
     const newSticker = generateStickerData();
     const variants = generateStickerVariants(newSticker.id);
-    await _insertSticker(db, newSticker, variants);
+    await insertSticker(db, newSticker, variants);
 
     const insertedSticker = await db
       .selectFrom("sticker")
@@ -411,9 +411,9 @@ describe.each([
 
   it("increments usage stats for a user and sticker", async () => {
     const sticker = generateStickerData();
-    await _insertSticker(db, sticker, generateStickerVariants(sticker.id));
+    await insertSticker(db, sticker, generateStickerVariants(sticker.id));
     const now = Date.now();
-    await _incrementStickerUsage(db, sticker.id, sticker.uploaderId);
+    await incrementStickerUsage(db, sticker.id, sticker.uploaderId);
     const usage = await db
       .selectFrom("usage")
       .selectAll()
@@ -433,11 +433,11 @@ describe.each([
 
   it("should be able to increment usage stats only for the user", async () => {
     const sticker = generateStickerData();
-    await _insertSticker(db, sticker, generateStickerVariants(sticker.id));
+    await insertSticker(db, sticker, generateStickerVariants(sticker.id));
 
     const before = Date.now();
     await new Promise((r) => setTimeout(r, 10));
-    await _incrementStickerUsage(
+    await incrementStickerUsage(
       db,
       sticker.id,
       sticker.uploaderId,
@@ -466,9 +466,9 @@ describe.each([
   it("retrieves simplified sticker by id without incrementing usage", async () => {
     const sticker = generateStickerData();
     const variants = generateStickerVariants(sticker.id);
-    await _insertSticker(db, sticker, variants);
+    await insertSticker(db, sticker, variants);
 
-    const fetchedSticker = await _getStickerById(db, sticker.id);
+    const fetchedSticker = await getStickerById(db, sticker.id);
     expect(compareStickers(sticker, fetchedSticker!)).toBe(true);
     expect(fetchedSticker!.usageCount).toBe(1);
   });
@@ -476,13 +476,13 @@ describe.each([
   it("retrieves simplified sticker and increments usage", async () => {
     const target = generateStickerData();
     const variants = generateStickerVariants(target.id);
-    await _insertSticker(db, target, variants);
+    await insertSticker(db, target, variants);
 
     const other = generateStickerData();
     const otherVariants = generateStickerVariants(other.id);
-    await _insertSticker(db, other, otherVariants);
+    await insertSticker(db, other, otherVariants);
 
-    const fetchedTarget = await _getStickerById(
+    const fetchedTarget = await getStickerById(
       db,
       target.id,
       true,
@@ -499,7 +499,7 @@ describe.each([
       .executeTakeFirst();
     expect(targetUsage!.count).toBe(2);
 
-    const fetchedOther = await _getStickerById(db, other.id);
+    const fetchedOther = await getStickerById(db, other.id);
     expect(fetchedOther!.usageCount).toBe(1);
   });
 
@@ -507,44 +507,44 @@ describe.each([
     const title = "UniqueTitle123";
     const sticker = generateStickerData({ title });
     const variants = generateStickerVariants(sticker.id);
-    await _insertSticker(db, sticker, variants);
-    await seedStickers(db, _insertSticker, 5);
+    await insertSticker(db, sticker, variants);
+    await seedStickers(db, insertSticker, 5);
 
-    const fetchedSticker = await _getStickerByTitle(db, title);
+    const fetchedSticker = await getStickerByTitle(db, title);
     expect(compareStickers(sticker, fetchedSticker!)).toBe(true);
   });
 
   it("updates sticker title and tags", async () => {
     const target = generateStickerData();
     const targetVariants = generateStickerVariants(target.id);
-    await _insertSticker(db, target, targetVariants);
+    await insertSticker(db, target, targetVariants);
 
     const other = generateStickerData();
     const otherVariants = generateStickerVariants(other.id);
-    await _insertSticker(db, other, otherVariants);
+    await insertSticker(db, other, otherVariants);
 
     const newTitle = generateTestString(20);
     const newTags = generateTestString(40);
-    await _updateSticker(db, target.id, { title: newTitle, tags: newTags });
-    const updatedSticker = await _getStickerById(db, target.id);
+    await updateSticker(db, target.id, { title: newTitle, tags: newTags });
+    const updatedSticker = await getStickerById(db, target.id);
     expect(updatedSticker!.title).toBe(sanitizeString(newTitle));
     expect(updatedSticker!.tags).toBe(sanitizeString(newTags));
 
-    const otherSticker = await _getStickerById(db, other.id);
+    const otherSticker = await getStickerById(db, other.id);
     expect(compareStickers(other, otherSticker!)).toBe(true);
   });
 
   it("does not update non-editable fields", async () => {
     const sticker = generateStickerData();
     const variants = generateStickerVariants(sticker.id);
-    await _insertSticker(db, sticker, variants);
+    await insertSticker(db, sticker, variants);
 
-    await _updateSticker(db, sticker.id, {
+    await updateSticker(db, sticker.id, {
       usageCount: 1000,
       timeLastUsed: Date.now() + 1000000,
     });
 
-    const updatedSticker = await _getStickerById(db, sticker.id);
+    const updatedSticker = await getStickerById(db, sticker.id);
     expect(updatedSticker!.usageCount).toBe(1);
     expect(updatedSticker!.timeLastUsed).toBeLessThanOrEqual(Date.now());
   });
@@ -552,14 +552,14 @@ describe.each([
   it("deletes stickers from database and filesystem", async () => {
     const sticker = generateStickerData();
     const variants = generateStickerVariants(sticker.id);
-    await _insertSticker(db, sticker, variants);
+    await insertSticker(db, sticker, variants);
 
     const processingModule = await import("../utils/processing.js");
     const spy = vi.spyOn(processingModule, "deleteAllVariants");
 
-    await _deleteSticker(db, sticker.id);
+    await deleteSticker(db, sticker.id);
 
-    const fetchedSticker = await _getStickerById(db, sticker.id);
+    const fetchedSticker = await getStickerById(db, sticker.id);
     expect(fetchedSticker).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(1);
 
@@ -574,7 +574,7 @@ describe.each([
   it("deletes tables on cascade", async () => {
     const sticker = generateStickerData();
     const variants = generateStickerVariants(sticker.id);
-    await _insertSticker(db, sticker, variants);
+    await insertSticker(db, sticker, variants);
 
     await db.deleteFrom("sticker").where("id", "=", sticker.id).execute();
 

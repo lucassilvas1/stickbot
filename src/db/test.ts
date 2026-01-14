@@ -10,7 +10,7 @@ import type {
 } from "../types/db.js";
 import { VariantEncodingMap } from "../utils/constants.js";
 import type { SimplifiedSticker } from "../types/stickers.js";
-import type { _insertSticker } from "./crud.js";
+import type { insertSticker } from "./crud.js";
 
 export function deleteTestFolder(rootPath: string) {
   return Promise.all([rm(rootPath, { recursive: true, force: true })]);
@@ -132,7 +132,7 @@ export function compareStickers(
 
 export async function seedStickers(
   db: Kysely<Database>,
-  insertSticker: typeof _insertSticker,
+  insert: typeof insertSticker,
   amount: number,
   stickerModifier?: (
     sticker: NewStickerWithoutTimestamps
@@ -151,6 +151,6 @@ export async function seedStickers(
     if (variantModifier) variants = variantModifier(variants);
     return variants;
   });
-  await Promise.all(stickers.map((s, i) => insertSticker(db, s, variants[i]!)));
+  await Promise.all(stickers.map((s, i) => insert(db, s, variants[i]!)));
   return { stickers, variants };
 }

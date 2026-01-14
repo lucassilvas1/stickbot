@@ -9,6 +9,7 @@ import type {
   ModalSubmitInteraction,
 } from "discord.js";
 import { logger } from "../logging/logger.js";
+import type { BoundDBFunctions } from "../db/dbActions.js";
 
 export function safeReply(
   interaction: CommandInteraction | ModalSubmitInteraction | ButtonInteraction,
@@ -60,6 +61,7 @@ export async function getCommands(
 
 export async function registerEventHandlers(
   client: Client,
+  db: BoundDBFunctions,
   eventsDirPath = path.join(import.meta.dirname, "../events")
 ) {
   const eventFiles = fs
@@ -71,9 +73,9 @@ export async function registerEventHandlers(
     const handler = await import("file://" + filePath);
 
     if (handler.once) {
-      client.once(handler.name, (...args) => handler.handle(...args));
+      client.once(handler.name, (...args) => handler.handle(db, ...args));
     } else {
-      client.on(handler.name, (...args) => handler.handle(...args));
+      client.on(handler.name, (...args) => handler.handle(db, ...args));
     }
   }
 }

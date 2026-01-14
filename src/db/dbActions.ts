@@ -1,69 +1,38 @@
-import { initDb } from "./db.js";
-import {
-  _deleteSticker,
-  _deleteUserPermissions,
-  _getStickerById,
-  _getStickerByTitle,
-  _getUserPermissionsById,
-  _getUsers,
-  _incrementStickerUsage,
-  _insertSticker,
-  _insertUserPermissions,
-  _updateSticker,
-  _updateUserPermissions,
-} from "./crud.js";
-import { _search } from "./search.js";
 import type { Kysely } from "kysely";
 import type { Database } from "../types/db.js";
 
-let hasInit = false;
-let promise: Promise<Kysely<Database>> | null;
-let db: Kysely<Database>;
+type DBFunctions = typeof import("./crud.js") & typeof import("./search.js");
 
-async function getDb() {
-  if (!hasInit) {
-    if (!promise) promise = initDb();
-    db = await promise;
-    hasInit = true;
-    promise = null;
-  }
-  return db;
-}
+/**
+ * Shifts the `db` parameter of the crud functions,
+ * leaves the rest of the parameters
+ */
+type WithDB<F> = F extends (db: any, ...args: infer Rest) => infer R
+  ? (...args: Rest) => R
+  : never;
+
+export type BoundDBFunctions<Module = DBFunctions> = {
+  [K in keyof Module as Module[K] extends (...args: any[]) => any
+    ? K
+    : never]: WithDB<Module[K]>;
+};
 
 function withDb<F extends (db: Kysely<Database>, ...args: any[]) => any>(
+  db: Kysely<Database>,
   fn: F
 ) {
-  return async (
-    ...args: Parameters<F> extends [any, ...infer Rest] ? Rest : never
-  ): Promise<Awaited<ReturnType<F>>> => {
-    const db = await getDb();
-    return fn(db, ...args);
-  };
+  return ((...args: any) => fn(db, ...args)) as WithDB<F>;
 }
 
-export const insertUserPermissions = withDb(_insertUserPermissions);
-export const getUserPermissionsById = withDb(_getUserPermissionsById);
-export const updatedUserPermissions = withDb(_updateUserPermissions);
-export const deleteUserPermissions = withDb(_deleteUserPermissions);
-export const getUsers = withDb(_getUsers);
-export const insertSticker = withDb(_insertSticker);
-export const incrementStickerUsage = withDb(_incrementStickerUsage);
-export const updateSticker = withDb(_updateSticker);
-export const deleteSticker = withDb(_deleteSticker);
-export const search = withDb(_search);
-export const getStickerByTitle = withDb(_getStickerByTitle);
+export function bindDbFunctions(
+  db: Kysely<Database>,
+  functions: DBFunctions
+): BoundDBFunctions<typeof functions> {
+  const bound = {} as any;
 
-export function getStickerById(id: string): ReturnType<typeof _getStickerById>;
-export function getStickerById(
-  id: string,
-  incrementUsage: true,
-  userId: string
-): ReturnType<typeof _getStickerById>;
-export async function getStickerById(
-  id: string,
-  incrementUsage?: boolean,
-  userId?: string
-) {
-  const db = await getDb();
-  return _getStickerById(db, id, incrementUsage, userId);
+  for (const [name, fn] of Object.entries(functions)) {
+    bound[name] = withDb(db, fn);
+  }
+
+  return bound;
 }

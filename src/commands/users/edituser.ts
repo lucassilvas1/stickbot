@@ -1,10 +1,6 @@
 import { MessageFlags } from "discord.js";
 import type { CommandData } from "../../types/commands.js";
 import {
-  getUserPermissionsById,
-  updatedUserPermissions,
-} from "../../db/dbActions.js";
-import {
   baseUserCommand,
   canAlterPermissions,
   isFromOwner,
@@ -20,7 +16,7 @@ const commandData: CommandData = {
   data: baseUserCommand()
     .setName("edituser")
     .setDescription("Edit username or permissions of an existing user"),
-  async execute(interaction) {
+  async execute(db, interaction) {
     const isInvalidInput = await invalidCharGuard(interaction);
     if (isInvalidInput) return;
 
@@ -29,7 +25,7 @@ const commandData: CommandData = {
     const info = { editorId: interaction.user.id, targetId, newPermissions };
 
     if (!isFromOwner(interaction)) {
-      const editor = await getUserPermissionsById(interaction.user.id);
+      const editor = await db.getUserPermissionsById(interaction.user.id);
 
       if (!editor) {
         logger.error(info, "user not found after authorization");
@@ -39,7 +35,7 @@ const commandData: CommandData = {
         });
       }
 
-      const oldPermissions = await getUserPermissionsById(targetId);
+      const oldPermissions = await db.getUserPermissionsById(targetId);
 
       if (!canAlterPermissions(editor, newPermissions, oldPermissions)) {
         logger.info(
@@ -56,7 +52,7 @@ const commandData: CommandData = {
     try {
       const username = interaction.options.getString("username") ?? undefined;
 
-      const updated = await updatedUserPermissions(targetId, {
+      const updated = await db.updateUserPermissions(targetId, {
         username,
         ...newPermissions,
       });
