@@ -22,11 +22,7 @@ import {
 } from "./test.js";
 import { initDb } from "./db.js";
 import type { Kysely } from "kysely";
-import type {
-  Database,
-  NewStickerWithoutTimestamps,
-  NewVariant,
-} from "../types/db.js";
+import type { Database } from "../types/db.js";
 import { _getStickerById, _insertSticker } from "./crud.js";
 
 let db: Kysely<Database>;
