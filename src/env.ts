@@ -17,12 +17,7 @@ if (!(environment in envFileMap)) {
 }
 const envFile = envFileMap[environment as keyof typeof envFileMap];
 
-const envResult = dotenv.config({ path: envFile, override: true });
-if (envResult.error) {
-  throw new Error(
-    `Failed to load env file "${envFile}": ${envResult.error.message}`
-  );
-}
+dotenv.config({ path: envFile, override: true });
 
 export const env = envSchema.parse(process.env);
 
