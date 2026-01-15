@@ -200,34 +200,34 @@ You can find the Application ID in the General Information tab, and the bot toke
 5. Open `.env` in any text editor and fill out every variable marked Required:
    1. Set `BOT_TOKEN` and `APPLICATION_ID` to [the values you found](#creating-a-discord-app) in the Developer Portal.
    2. Create a Discord server and copy its ID by right-clicking on it in the server list and clicking Copy Server ID[^discord_dev_mode]. Paste the ID after `GUILD_ID=`. You may use an existing server for this[^bot_guild].
-   3. Decide where you want the sticker database, the media files themselves, and the app's logs to be saved. Set the variables in the `Storage` section of to the absolute paths you decide on. For example, I have mine configured like this: `DB_DIR_PATH=C:/Users/Lucas/stickbot/db`, `ASSETS_DIR_PATH=C:/Users/Lucas/stickbot/assets`, `LOG_DIR_PATH=C:/Users/Lucas/stickbot/logs`[^storage_paths].
-   4. Set the `FFMPEG_PATH` and `FFPROBE_PATH` variables to the absolute path to the `ffmpeg.exe` and `ffprobe.exe` executables that can be found in the `bin` folder after you extract the ffmpeg zip. For example: `FFMPEG_PATH=C:\Lucas\ffmpeg\bin\ffmpeg.exe`.
+   3. Decide where you want the sticker database, the media files themselves, and the app's logs to be saved. Set the variables in the `Storage` section of the `.env` file to the absolute paths you decide on. For example, I have mine configured like this: `DB_DIR_PATH="C:/Users/Lucas/stickbot/db"`, `ASSETS_DIR_PATH="C:/Users/Lucas/stickbot/assets"`, `LOG_DIR_PATH="C:/Users/Lucas/stickbot/logs"`[^storage_paths].
+   4. Set the `FFMPEG_PATH` and `FFPROBE_PATH` variables to the absolute path to the `ffmpeg.exe` and `ffprobe.exe` executables that can be found in the `bin` folder after you extract [the ffmpeg zip](#requirements). For example: `FFMPEG_PATH=C:\Lucas\ffmpeg\bin\ffmpeg.exe`.
    5. `ASSETS_SERVER_PORT` is set to `4675` by default. You don't need to alter it unless that port is already in use for you.
    6. If you go the port forwarding route, set `ASSETS_SERVER_HOSTNAME` to `http://<YOUR PUBLIC IP>:<ASSETS_SERVER_PORT>`. E.g., `http://41.120.142.24:4675`[^server_address]. If you plan on using a custom domain for serving the stickers, `ASSETS_SERVER_HOSTNAME` should be set to your domain. E.g., `https://my-sticker-bot.net/`
-6. [Run](#running-commands) `npm run deploy:prod` to deploy the commands to Discord. You may need to restart/reload Discord, and possibly wait up to an hour for the commands to become available for the first time. You **only** need to run this command during installation unless instructed otherwise!
 
 > [!NOTE]
 > Paths containing spaces need to be wrapped in double quotes (" ") both in the `.env` and CLI!
 
-> [!TIP]
-> If you wish to see the logs in the terminal as well, set `LOG_TO_CONSOLE` to `true` in `.env`.
-
 ## Adding the Bot
 
-After installing, you'll need to add the bot to the guild you created, otherwise you won't be able to allow other users to use the bot.
+After installing, you'll need to add the bot to the guild you created.
 
 Go to the Installation tab of the [Developer Portal](https://discord.com/developers/applications), copy the Install Link and follow it.
 
 Choose "Add to Server", pick the server you created earlier from the list, and authorize it.
 
-You can follow this same link again to add the bot to your account, so you can use it in DMs or other servers. You can also add directly from Discord now by clicking "Add App" on the bot's profile.
+You can follow this same link again to add the bot to your account, so you can use it in DMs or other servers.
+
+## Deploying the Commands
+
+After adding the bot to your server, you'll need to deploy the commands to Discord. To do so, [run](#running-commands) `npm run deploy:prod`. You may need to restart/reload Discord, and possibly wait up to an hour for the commands to become available for the first time, though it usually takes seconds. You **only** need to run this command once, unless instructed otherwise!
 
 
 ## Running
 
 [Run](#running-commands) `npm run start:prod` 
 
-If everything worked, your bot should now be online and working on Discord.
+If everything worked, you should see `INFO: BOT connected` in the console.
 
 ## Running Commands
 
