@@ -231,7 +231,7 @@ If everything worked, you should see `INFO: BOT connected` in the console.
 
 ## Running Commands
 
-You'll need to run some commands to setup and start the app. If you're unfamilar with running CLI commands:  
+You'll need to run some commands to set up and start the app. If you're unfamilar with running CLI commands:  
 1. On **Windows**, open The Terminal, PowerShell, or Command Prompt from the Start Menu. On **Mac**, find the Terminal in the Launchpad and open it. You should know what you're doing if you're on Linux.
 2. Navigate to the app's root folder with the `cd` command. E.g. `cd "C:\Lucas\stickbot"`. This is where all `npm` commands mentioned in the instructions **need** to be run in.
 
