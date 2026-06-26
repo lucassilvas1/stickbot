@@ -51,7 +51,7 @@ class FileMigrationProvider {
 export async function migrateToLatest(database: Kysely<any>) {
   const migrator = new Migrator({
     db: database,
-    provider: new FileMigrationProvider("./migrations"),
+    provider: new FileMigrationProvider(join(import.meta.dirname, "migrations")),
   });
 
   const { error, results } = await migrator.migrateToLatest();

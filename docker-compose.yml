@@ -1,0 +1,23 @@
+services:
+  bot:
+    build: .
+    env_file: .env.docker
+    environment:
+      DB_DIR_PATH: /data/db
+      ASSETS_DIR_PATH: /data/assets
+      LOG_DIR_PATH: /data/logs
+      FFMPEG_PATH: ffmpeg
+      FFPROBE_PATH: ffprobe
+    volumes:
+      - ./data/db:/data/db
+      - ./data/assets:/data/assets
+      - ./data/logs:/data/logs
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    env_file: .env.docker
+    command: tunnel --no-autoupdate run
+    depends_on:
+      - bot
+    restart: unless-stopped

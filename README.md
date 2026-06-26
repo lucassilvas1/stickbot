@@ -171,6 +171,9 @@ You don't have to keep track of every user you add to the app. `/manageusers` al
 
 ## Requirements
 
+> [!NOTE]
+> If you're deploying with Docker, you don't need to install Node.js or ffmpeg — they're bundled in the image. Skip ahead to [Deploying with Docker](#deploying-with-docker).
+
 - [NodeJS v18+](https://nodejs.org/en/download/).
 - Recent version of [FFMPEG](https://github.com/BtbN/FFmpeg-Builds/releases). Download and extract the full GPL version (not `shared`) compatible with your setup. E.g., if you're running Windows on an Intel or AMD CPU, download the win64 GPL zip file.
 - If you plan on self-hosting, you'll need to be reachable. If you're not behind [CGNAT](https://en.wikipedia.org/wiki/Carrier-grade_NAT#:~:text=prevents%20the%20ISP%27s%20customers%20from%20using%20port%20forwarding) all you'll need to do is forward port `ASSETS_SERVER_PORT` on your router (read step 5.vi. of the installation section for more). If you are, however, you'll need to use a service like [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/) to work around that limitation. You can check if port forwarding worked [here](https://portchecker.co/), just enter the value of `ASSETS_SERVER_PORT` in "Port Number" and click check. If you can't find a way of being reachable, users won't be able to see your stickers.
@@ -188,10 +191,10 @@ Before using the bot, you'll need to create a Discord App to deploy the commands
 
 To do this, go to the [Discord Developer Portal](https://discord.com/developers/applications), sign in, click "New Application" at the top right, give your app a name, and create the app.
 
-You can find the Application ID in the General Information tab, and the bot token in the Bot tab. You'll need these values during [installation](#setup).
+You can find the Application ID in the General Information tab, and the bot token in the Bot tab. You'll need these values during setup.
 
 
-## Setup
+## Manual Setup
 
 1. [Download](/../../releases/latest) the latest version of the project and extract it.
 2. [Run](#running-commands) `npm install` to install all necessary dependencies.
@@ -220,14 +223,68 @@ You can follow this same link again to add the bot to your account, so you can u
 
 ## Deploying the Commands
 
-After adding the bot to your server, you'll need to deploy the commands to Discord. To do so, [run](#running-commands) `npm run deploy:prod`. You may need to restart/reload Discord, and possibly wait up to an hour for the commands to become available for the first time, though it usually takes seconds. You **only** need to run this command once, unless instructed otherwise!
+After adding the bot to your server, you'll need to deploy the commands to Discord. You **only** need to do this once, unless instructed otherwise!
+
+If you're deploying manually, [run](#running-commands) `npm run deploy:prod`. If you're deploying with Docker, refer to the [Docker section](#deploying-the-commands-1) for this step.
+
+You may need to restart/reload Discord, and possibly wait up to an hour for the commands to become available for the first time, though it usually takes seconds.
 
 
-## Running
+## Running (Manual)
 
 [Run](#running-commands) `npm run start:prod` 
 
 If everything worked, you should see `INFO: BOT connected` in the console.
+
+## Deploying with Docker
+
+Docker is the recommended way to deploy stickbot on Linux. Node.js and ffmpeg are bundled in the image, so you don't need to install them on your machine.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/engine/install/) with the Compose plugin (`docker compose`, not `docker-compose`)
+- A [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/) if you need to work around CGNAT (see [Requirements](#requirements))
+
+### Setup
+
+1. [Download](/../../releases/latest) the latest version of the project and extract it.
+2. Copy `docker.env.example` to `.env.docker` and open it in a text editor.
+3. Fill in the required variables:
+   1. Set `BOT_TOKEN` and `APPLICATION_ID` to [the values from the Developer Portal](#creating-a-discord-app).
+   2. Set `GUILD_ID` to your server's ID, which you can copy by right-clicking it in Discord[^discord_dev_mode].
+   3. Set `ASSETS_SERVER_HOSTNAME` to the public URL where your stickers will be served. E.g., `https://assets.example.com/`.
+   4. If you're using a Cloudflare Tunnel, set `TUNNEL_TOKEN` to the token from your tunnel's connector. You can find it in the Zero Trust dashboard under **Networks → Tunnels → your tunnel**.
+
+> [!NOTE]
+> Storage paths and ffmpeg paths are already configured for the container environment. You don't need to change them.
+
+### Running
+
+Build and start the bot:
+
+```
+docker compose up -d
+```
+
+This also starts the Cloudflare Tunnel connector if you've set `TUNNEL_TOKEN`. To follow the logs, run `docker compose logs -f bot`.
+
+### Deploying the Commands
+
+Same as the standard setup, you only need to do this once:
+
+```
+docker compose run --rm bot node dist/deploy-commands.js
+```
+
+### Starting on Boot
+
+Enable Docker as a system service:
+
+```
+sudo systemctl enable docker
+```
+
+The containers are already configured with `restart: unless-stopped`, so once you've run `docker compose up -d`, they'll come back up automatically on every reboot without any further configuration.
 
 ## Running Commands
 
